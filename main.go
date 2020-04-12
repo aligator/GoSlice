@@ -15,5 +15,10 @@ func main() {
 	}
 
 	s := slicer.Slicer{Path: args[0]}
-	s.Process()
+	err := s.Process()
+
+	if err != nil {
+		fmt.Println("error while processing file")
+		os.Exit(2)
+	}
 }

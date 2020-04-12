@@ -1,7 +1,9 @@
 package slicer
 
 import (
+	"GoSlicer/slicer/model"
 	"GoSlicer/util"
+	"fmt"
 	"time"
 )
 
@@ -17,7 +19,7 @@ type config struct {
 	insetCount            int
 }
 
-func (s *Slicer) Process() {
+func (s *Slicer) Process() error {
 	c := config{
 		layerThickness:        100,
 		initialLayerThickness: 200,
@@ -26,9 +28,24 @@ func (s *Slicer) Process() {
 		insetCount:            20,
 	}
 
-	matrix := util.NewFMatrix3x3()
-
 	t := time.Now()
-	model := loadModel()
+	m, err := model.LoadSTL(s.Path)
 
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("load from disk time: ", time.Now().Sub(t))
+
+	fmt.Println(c)
+
+	fmt.Println(m)
+
+	om := model.OptimizeModel(m, 30, util.NewMicroVec3(102500, 102500, 0))
+
+	fmt.Println(om)
+
+	fmt.Println("time needed: ", time.Now().Sub(t))
+
+	return nil
 }
