@@ -1,5 +1,3 @@
 .idea
 *.iml
-# temporarily add the stl lib directly to the project.
-# cloen it using git clone git@github.com:aligator/stl.git
-stl
+*.stl

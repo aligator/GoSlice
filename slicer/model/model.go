@@ -86,7 +86,7 @@ func (m *model) AddFace(face Face) {
 }
 
 func (m *model) Min() util.MicroVec3 {
-	ret := m.faces[0].Vectors()[0]
+	ret := m.faces[0].Vectors()[0].Copy()
 
 	for _, face := range m.faces {
 		for _, vertice := range face.Vectors() {
@@ -108,7 +108,7 @@ func (m *model) Min() util.MicroVec3 {
 }
 
 func (m *model) Max() util.MicroVec3 {
-	ret := m.faces[0].Vectors()[0]
+	ret := m.faces[0].Vectors()[0].Copy()
 
 	for _, face := range m.faces {
 		for _, vertice := range face.Vectors() {

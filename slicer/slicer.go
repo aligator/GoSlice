@@ -47,5 +47,7 @@ func (s *Slicer) Process() error {
 
 	fmt.Println("time needed: ", time.Now().Sub(t))
 
+	om.SaveDebugSTL("debug.stl")
+
 	return nil
 }

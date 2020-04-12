@@ -1,123 +1,201 @@
 package model
 
-import "GoSlicer/util"
+import (
+	"GoSlicer/util"
+	"fmt"
+	"github.com/hschendel/stl"
+)
 
 type OptimizedFace interface {
-	Index() [3]int
-	touching() [3]int
+	Indices() [3]int
+	Touching() [3]int
+	SetTouching([3]int)
 }
 
 type optimizedFace struct {
-	index    [3]int
+	indices  [3]int
 	touching [3]int
 }
 
-type OptimizedVector interface {
-	Vector() util.MicroVec3
-	FaceIndices() []int
+func (o *optimizedFace) Indices() [3]int {
+	return o.indices
 }
 
-type optimizedVector struct {
-	vector      util.MicroVec3
+func (o *optimizedFace) Touching() [3]int {
+	return o.touching
+}
+
+func (o *optimizedFace) SetTouching(touching [3]int) {
+	o.touching = touching
+}
+
+type OptimizedPoint3 interface {
+	Point() util.MicroVec3
+	FaceIndices() []int
+	AddFaceIndex(index int)
+}
+
+type optimizedPoint3 struct {
+	point3      util.MicroVec3
 	faceIndices []int
 }
 
-func NewOptimizedVector(vec3 util.MicroVec3) OptimizedVector {
-	return &optimizedVector{
-		vector:      vec3,
-		faceIndices: make([]int, 0),
+func newOptimizedPoint(vec3 util.MicroVec3) OptimizedPoint3 {
+	return &optimizedPoint3{
+		point3: vec3,
 	}
 }
 
-func (v *optimizedVector) Vector() util.MicroVec3 {
-	return v.vector
+func (v *optimizedPoint3) Point() util.MicroVec3 {
+	return v.point3
 }
 
-func (v *optimizedVector) FaceIndices() []int {
+func (v *optimizedPoint3) FaceIndices() []int {
 	return v.faceIndices
 }
 
+func (v *optimizedPoint3) AddFaceIndex(index int) {
+	v.faceIndices = append(v.faceIndices, index)
+}
+
 type OptimizedModel interface {
-	Vectors() []OptimizedVector
+	Points() []OptimizedPoint3
 	Faces() []OptimizedFace
 	Size() util.MicroVec3
+
+	SaveDebugSTL(filename string) error
 }
 
 type optimizedModel struct {
 	meldDistance util.Micrometer
-	vectors      []OptimizedVector
+	points       []OptimizedPoint3
 	faces        []OptimizedFace
 	modelSize    util.MicroVec3
 }
 
-type vectorHash int
+type pointHash uint
 
 func OptimizeModel(m Model, meldDistance util.Micrometer, center util.MicroVec3) OptimizedModel {
 	om := &optimizedModel{
 		meldDistance: meldDistance,
-		vectors:      make([]OptimizedVector, 0),
-		faces:        make([]OptimizedFace, 0),
 	}
 
-	//minVector := m.Min()
-	//maxVector := m.Max()
+	minVector := m.Min()
+	maxVector := m.Max()
 
 	// map of same faces grouped by their calculated hash
-	indices := make(map[vectorHash][]int, 0)
+	indices := make(map[pointHash][]int, 0)
 
-	// filter nearly double vectors
+FacesLoop:
 	for _, face := range m.Faces() {
-		optimizedFace := optimizedFace{
-			index:    [3]int{},
+		optimizedFace := &optimizedFace{
+			indices:  [3]int{},
 			touching: [3]int{},
 		}
 		for j := 0; j < 3; j++ {
-			currentVector := face.Vectors()[j]
-			// not exactly sure how this calculation works...
-			hash := vectorHash(((currentVector.X() + meldDistance/2) / meldDistance) ^ (((currentVector.Y() + meldDistance/2) / meldDistance) << 10) ^ (((currentVector.Z() + meldDistance/2) / meldDistance) << 20))
+			currentPoint := face.Vectors()[j]
+			// create hash for the point
+			// points which are within the meldDistance fall into the same category of the indices map
+			meldDistanceHash := pointHash(meldDistance)
+			hash := ((pointHash(currentPoint.X()) + meldDistanceHash/2) / meldDistanceHash) ^
+				(((pointHash(currentPoint.Y()) + meldDistanceHash/2) / meldDistanceHash) << 10) ^
+				(((pointHash(currentPoint.Z()) + meldDistanceHash/2) / meldDistanceHash) << 20)
 			var idx int
 			add := true
 
-			// for each vector-index with this hash
-			// check if the difference between it and the currentVector
-			// is smaller (or same) than the currently tested vector
+			// for each point3-indices with this hash
+			// check if the difference between it and the currentPoint
+			// is smaller (or same) than the currently tested point3
 			for _, index := range indices[hash] {
-				differenceVec := om.Vectors()[index].Vector().Copy()
-				differenceVec.Sub(currentVector)
+				differenceVec := om.Points()[index].Point().Copy()
+				differenceVec.Sub(currentPoint)
 				if differenceVec.TestLength(meldDistance) {
-					// if true for any of the vectors with the same hash,
-					// do not add the current vector to the indices map
-					// but save the index of the already existing duplicate
+					// if true for any of the points with the same hash,
+					// do not add the current point3 to the indices map
+					// but save the indices of the already existing duplicate
 					idx = index
 					add = false
 					break
 				}
 			}
 			if add {
-				// add the new vector-index to the indices
-				indices[hash] = append(indices[hash], len(om.vectors))
-				idx = len(om.vectors)
-				om.vectors = append(om.vectors, NewOptimizedVector(currentVector))
+				// add the new point3-indices to the indices
+				indices[hash] = append(indices[hash], len(om.points))
+				idx = len(om.points)
+				om.points = append(om.points, newOptimizedPoint(currentPoint))
 			}
 
-			optimizedFace.index[j] = idx
+			optimizedFace.indices[j] = idx
 		}
 
-		if optimizedFace.index[0] != optimizedFace.index[1] &&
-			optimizedFace.index[0] != optimizedFace.index[2] &&
-			optimizedFace.index[1] != optimizedFace.index[2] {
+		// ignore duplicate search for faces
+		// which have two vertices with the same location
+		if optimizedFace.indices[0] == optimizedFace.indices[1] ||
+			optimizedFace.indices[0] == optimizedFace.indices[2] ||
+			optimizedFace.indices[1] == optimizedFace.indices[2] {
+			continue
+		}
 
-			// Check if there is a face with the same points
-			//duplicate := false
+		// check if there is a face with the same points
+		for _, faceIndex0 := range om.points[optimizedFace.indices[0]].FaceIndices() {
+			for _, faceIndex1 := range om.points[optimizedFace.indices[1]].FaceIndices() {
+				for _, faceIndex2 := range om.points[optimizedFace.indices[2]].FaceIndices() {
+					if faceIndex0 == faceIndex1 &&
+						faceIndex0 == faceIndex2 {
+						// no need to go further
+						continue FacesLoop
+					}
+				}
+			}
+		}
 
+		// if it comes here, no duplicate was detected
+		om.points[optimizedFace.indices[0]].AddFaceIndex(len(om.faces))
+		om.points[optimizedFace.indices[1]].AddFaceIndex(len(om.faces))
+		om.points[optimizedFace.indices[2]].AddFaceIndex(len(om.faces))
+		om.faces = append(om.faces, optimizedFace)
+	}
+
+	// count open faces
+	openFaces := 0
+	for i, face := range om.faces {
+		touching := [3]int{
+			om.getFaceIdxWithPoints(face.Indices()[0], face.Indices()[1], i),
+			om.getFaceIdxWithPoints(face.Indices()[1], face.Indices()[2], i),
+			om.getFaceIdxWithPoints(face.Indices()[2], face.Indices()[0], i),
+		}
+		face.SetTouching(touching)
+
+		if face.Touching()[0] == -1 {
+			openFaces++
+		}
+
+		if face.Touching()[1] == -1 {
+			openFaces++
+		}
+
+		if face.Touching()[2] == -1 {
+			openFaces++
 		}
 	}
+
+	fmt.Printf("Number of open faces: %v\n", openFaces)
+
+	// move points according to the center value
+	vectorOffset := util.NewMicroVec3((minVector.X()+maxVector.X())/2, (minVector.Y()+maxVector.Y())/2, minVector.Z())
+	vectorOffset.Sub(center)
+	for _, point := range om.points {
+		point.Point().Sub(vectorOffset)
+	}
+
+	om.modelSize = maxVector.Copy()
+	om.modelSize.Sub(minVector)
 
 	return om
 }
 
-func (m *optimizedModel) Vectors() []OptimizedVector {
-	return m.vectors
+func (m *optimizedModel) Points() []OptimizedPoint3 {
+	return m.points
 }
 
 func (m *optimizedModel) Faces() []OptimizedFace {
@@ -126,4 +204,65 @@ func (m *optimizedModel) Faces() []OptimizedFace {
 
 func (m *optimizedModel) Size() util.MicroVec3 {
 	return m.modelSize
+}
+
+func (m *optimizedModel) getFaceIdxWithPoints(idx0, idx1, notFaceIdx int) int {
+	for _, faceIndex0 := range m.points[idx0].FaceIndices() {
+		if faceIndex0 == notFaceIdx {
+			continue
+		}
+		for _, faceIndex1 := range m.points[idx1].FaceIndices() {
+			if faceIndex1 == notFaceIdx {
+				continue
+			}
+			if faceIndex0 == faceIndex1 {
+				return faceIndex0
+			}
+		}
+	}
+	return -1
+}
+
+func (m *optimizedModel) SaveDebugSTL(filename string) error {
+	triangles := make([]stl.Triangle, 0)
+
+	for _, face := range m.Faces() {
+		triangles = append(triangles, stl.Triangle{
+			Normal: [3]float32{
+				0, 0, 0,
+			},
+			Vertices: [3]stl.Vec3{
+				[3]float32{
+					float32(m.points[face.Indices()[0]].Point().X().ToMillimeter()),
+					float32(m.points[face.Indices()[0]].Point().Y().ToMillimeter()),
+					float32(m.points[face.Indices()[0]].Point().Z().ToMillimeter()),
+				},
+				[3]float32{
+					float32(m.points[face.Indices()[1]].Point().X().ToMillimeter()),
+					float32(m.points[face.Indices()[1]].Point().Y().ToMillimeter()),
+					float32(m.points[face.Indices()[1]].Point().Z().ToMillimeter()),
+				},
+				[3]float32{
+					float32(m.points[face.Indices()[2]].Point().X().ToMillimeter()),
+					float32(m.points[face.Indices()[2]].Point().Y().ToMillimeter()),
+					float32(m.points[face.Indices()[2]].Point().Z().ToMillimeter()),
+				},
+			},
+			Attributes: 0,
+		})
+	}
+
+	solid := stl.Solid{
+		BinaryHeader: nil,
+		Name:         "GoSlice_STL_export",
+		Triangles:    triangles,
+		IsAscii:      false,
+	}
+
+	err := solid.WriteFile(filename)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
