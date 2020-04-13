@@ -112,8 +112,7 @@ FacesLoop:
 			// check if the difference between it and the currentPoint
 			// is smaller (or same) than the currently tested point
 			for _, index := range indices[hash] {
-				differenceVec := om.Points()[index].Point().Copy()
-				differenceVec.Sub(currentPoint)
+				differenceVec := om.Points()[index].Point().Sub(currentPoint)
 				if differenceVec.TestLength(meldDistance) {
 					// if true for any of the points with the same hash,
 					// do not add the current point to the indices map

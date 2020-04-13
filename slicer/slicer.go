@@ -20,13 +20,13 @@ type config struct {
 }
 
 func (s *Slicer) Process() error {
-	c := config{
+	/*c := config{
 		layerThickness:        100,
 		initialLayerThickness: 200,
 		filamentDiameter:      1500,
 		extrusionWidth:        400,
 		insetCount:            20,
-	}
+	}*/
 
 	t := time.Now()
 	m, err := model.LoadSTL(s.Path)
@@ -37,17 +37,11 @@ func (s *Slicer) Process() error {
 
 	fmt.Println("load from disk time: ", time.Now().Sub(t))
 
-	fmt.Println(c)
-
-	fmt.Println(m)
-
 	om := model.OptimizeModel(m, 30, util.NewMicroVec3(102500, 102500, 0))
 
-	fmt.Println(om)
+	om.SaveDebugSTL("debug.stl")
 
 	fmt.Println("time needed: ", time.Now().Sub(t))
-
-	om.SaveDebugSTL("debug.stl")
 
 	return nil
 }
