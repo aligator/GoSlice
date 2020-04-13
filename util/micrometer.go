@@ -16,8 +16,6 @@ type MicroVec3 interface {
 	SetY(y Micrometer)
 	SetZ(z Micrometer)
 
-	ToMilliVec3() MilliVec3
-
 	Add(vec MicroVec3) MicroVec3
 	Sub(vec MicroVec3) MicroVec3
 	Mul(value Micrometer) MicroVec3
@@ -43,10 +41,6 @@ func NewMicroVec3(x Micrometer, y Micrometer, z Micrometer) MicroVec3 {
 		y: y,
 		z: z,
 	}
-}
-
-func (v *microVec3) ToMilliVec3() MilliVec3 {
-	return NewMilliVec3(v.x.ToMillimeter(), v.y.ToMillimeter(), v.z.ToMillimeter())
 }
 
 func (v *microVec3) X() Micrometer {
