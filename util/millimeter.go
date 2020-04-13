@@ -4,7 +4,10 @@ import "math"
 
 // MilliVec3 represents a point in 3d space
 // which is in a Millimeter-grid.
-// A value of 1 represents 1 mm
+// A value of 1 represents 1 mm.
+// Millimeter vectors are not used most time,
+// because of possible rounding errors.
+// They represent millimeters in 3D space.
 type MilliVec3 interface {
 	X() Millimeter
 	Y() Millimeter
@@ -16,10 +19,10 @@ type MilliVec3 interface {
 
 	ToMicroVec3() MicroVec3
 
-	Add(vec MilliVec3)
-	Sub(vec MilliVec3)
-	Mul(value Millimeter)
-	Div(value Millimeter)
+	Add(vec MilliVec3) MilliVec3
+	Sub(vec MilliVec3) MilliVec3
+	Mul(value Millimeter) MilliVec3
+	Div(value Millimeter) MilliVec3
 
 	Max() Millimeter
 	TestLength(length Millimeter) bool
@@ -71,28 +74,36 @@ func (v *milliVec3) ToMicroVec3() MicroVec3 {
 	return NewMicroVec3(v.x.ToMicrometer(), v.y.ToMicrometer(), v.z.ToMicrometer())
 }
 
-func (v *milliVec3) Add(vec MilliVec3) {
-	v.x += vec.X()
-	v.y += vec.Y()
-	v.z += vec.Z()
+func (v *milliVec3) Add(vec MilliVec3) MilliVec3 {
+	result := v.Copy()
+	result.SetX(result.X() + vec.X())
+	result.SetY(result.Y() + vec.Y())
+	result.SetZ(result.Z() + vec.Z())
+	return result
 }
 
-func (v *milliVec3) Sub(vec MilliVec3) {
-	v.x -= vec.X()
-	v.y -= vec.Y()
-	v.z -= vec.Z()
+func (v *milliVec3) Sub(vec MilliVec3) MilliVec3 {
+	result := v.Copy()
+	result.SetX(result.X() - vec.X())
+	result.SetY(result.Y() - vec.Y())
+	result.SetZ(result.Z() - vec.Z())
+	return result
 }
 
-func (v *milliVec3) Mul(value Millimeter) {
-	v.x *= value
-	v.y *= value
-	v.z *= value
+func (v *milliVec3) Mul(value Millimeter) MilliVec3 {
+	result := v.Copy()
+	result.SetX(result.X() * value)
+	result.SetY(result.Y() * value)
+	result.SetZ(result.Z() * value)
+	return result
 }
 
-func (v *milliVec3) Div(value Millimeter) {
-	v.x /= value
-	v.y /= value
-	v.z /= value
+func (v *milliVec3) Div(value Millimeter) MilliVec3 {
+	result := v.Copy()
+	result.SetX(result.X() / value)
+	result.SetY(result.Y() / value)
+	result.SetZ(result.Z() / value)
+	return result
 }
 
 func (v *milliVec3) Max() Millimeter {
@@ -118,9 +129,7 @@ func (v *milliVec3) Size() Millimeter {
 }
 
 func (v *milliVec3) Normalized() MilliVec3 {
-	newVec := v.Copy()
-	newVec.Div(v.Size())
-	return newVec
+	return v.Div(v.Size())
 }
 
 func (v *milliVec3) Cross(p2 MilliVec3) MilliVec3 {

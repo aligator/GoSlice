@@ -29,37 +29,42 @@ func (o *optimizedFace) SetTouching(touching [3]int) {
 	o.touching = touching
 }
 
-type OptimizedPoint3 interface {
+type OptimizedPoint interface {
 	Point() util.MicroVec3
+	SetPoint(point util.MicroVec3)
 	FaceIndices() []int
 	AddFaceIndex(index int)
 }
 
-type optimizedPoint3 struct {
-	point3      util.MicroVec3
+type optimizedPoint struct {
+	point       util.MicroVec3
 	faceIndices []int
 }
 
-func newOptimizedPoint(vec3 util.MicroVec3) OptimizedPoint3 {
-	return &optimizedPoint3{
-		point3: vec3,
+func newOptimizedPoint(vec util.MicroVec3) OptimizedPoint {
+	return &optimizedPoint{
+		point: vec,
 	}
 }
 
-func (v *optimizedPoint3) Point() util.MicroVec3 {
-	return v.point3
+func (p *optimizedPoint) Point() util.MicroVec3 {
+	return p.point
 }
 
-func (v *optimizedPoint3) FaceIndices() []int {
-	return v.faceIndices
+func (p *optimizedPoint) SetPoint(point util.MicroVec3) {
+	p.point = point
 }
 
-func (v *optimizedPoint3) AddFaceIndex(index int) {
-	v.faceIndices = append(v.faceIndices, index)
+func (p *optimizedPoint) FaceIndices() []int {
+	return p.faceIndices
+}
+
+func (p *optimizedPoint) AddFaceIndex(index int) {
+	p.faceIndices = append(p.faceIndices, index)
 }
 
 type OptimizedModel interface {
-	Points() []OptimizedPoint3
+	Points() []OptimizedPoint
 	Faces() []OptimizedFace
 	Size() util.MicroVec3
 
@@ -68,7 +73,7 @@ type OptimizedModel interface {
 
 type optimizedModel struct {
 	meldDistance util.Micrometer
-	points       []OptimizedPoint3
+	points       []OptimizedPoint
 	faces        []OptimizedFace
 	modelSize    util.MicroVec3
 }
@@ -103,15 +108,15 @@ FacesLoop:
 			var idx int
 			add := true
 
-			// for each point3-indices with this hash
+			// for each point-indices with this hash
 			// check if the difference between it and the currentPoint
-			// is smaller (or same) than the currently tested point3
+			// is smaller (or same) than the currently tested point
 			for _, index := range indices[hash] {
 				differenceVec := om.Points()[index].Point().Copy()
 				differenceVec.Sub(currentPoint)
 				if differenceVec.TestLength(meldDistance) {
 					// if true for any of the points with the same hash,
-					// do not add the current point3 to the indices map
+					// do not add the current point to the indices map
 					// but save the indices of the already existing duplicate
 					idx = index
 					add = false
@@ -119,7 +124,7 @@ FacesLoop:
 				}
 			}
 			if add {
-				// add the new point3-indices to the indices
+				// add the new point-indices to the indices
 				indices[hash] = append(indices[hash], len(om.points))
 				idx = len(om.points)
 				om.points = append(om.points, newOptimizedPoint(currentPoint))
@@ -183,18 +188,17 @@ FacesLoop:
 
 	// move points according to the center value
 	vectorOffset := util.NewMicroVec3((minVector.X()+maxVector.X())/2, (minVector.Y()+maxVector.Y())/2, minVector.Z())
-	vectorOffset.Sub(center)
+	vectorOffset = vectorOffset.Sub(center)
 	for _, point := range om.points {
-		point.Point().Sub(vectorOffset)
+		point.SetPoint(point.Point().Sub(vectorOffset))
 	}
 
-	om.modelSize = maxVector.Copy()
-	om.modelSize.Sub(minVector)
+	om.modelSize = maxVector.Sub(minVector)
 
 	return om
 }
 
-func (m *optimizedModel) Points() []OptimizedPoint3 {
+func (m *optimizedModel) Points() []OptimizedPoint {
 	return m.points
 }
 
