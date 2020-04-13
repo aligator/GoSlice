@@ -154,11 +154,21 @@ type MicroPoint interface {
 	Mul(value Micrometer) MicroPoint
 	Div(value Micrometer) MicroPoint
 
+	ShorterThan(length Micrometer) bool
+	Size2() Micrometer
+	Size() Micrometer
+
 	Copy() MicroPoint
 }
 
 type microPoint struct {
 	x, y Micrometer
+}
+
+func NewMicroPoint(x, y Micrometer) MicroPoint {
+	return &microPoint{
+		x, y,
+	}
 }
 
 func (p *microPoint) X() Micrometer {
@@ -203,6 +213,26 @@ func (p *microPoint) Div(value Micrometer) MicroPoint {
 	result.SetX(result.X() / value)
 	result.SetY(result.Y() / value)
 	return result
+}
+
+// ShorterThan just checks if the given length is smaller than the
+// length of the vector to this point.
+// This method first tries a more performant way before actually calculating the suize
+func (p *microPoint) ShorterThan(length Micrometer) bool {
+	if p.x > length || p.x < -length ||
+		p.y > length || p.y < -length {
+		return false
+	}
+
+	return p.Size2() <= length*length
+}
+
+func (p *microPoint) Size2() Micrometer {
+	return p.x*p.x + p.y*p.y
+}
+
+func (p *microPoint) Size() Micrometer {
+	return Micrometer(math.Sqrt(float64(p.Size2())))
 }
 
 func (p *microPoint) Copy() MicroPoint {

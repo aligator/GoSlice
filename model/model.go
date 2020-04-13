@@ -90,15 +90,15 @@ func (m *model) Min() util.MicroVec3 {
 
 	for _, face := range m.faces {
 		for _, vertice := range face.Vectors() {
-			if ret.X() < vertice.X() {
+			if ret.X() > vertice.X() {
 				ret.SetX(vertice.X())
 			}
 
-			if ret.Y() < vertice.Y() {
+			if ret.Y() > vertice.Y() {
 				ret.SetY(vertice.Y())
 			}
 
-			if ret.Z() < vertice.Z() {
+			if ret.Z() > vertice.Z() {
 				ret.SetZ(vertice.Z())
 			}
 		}
@@ -112,15 +112,15 @@ func (m *model) Max() util.MicroVec3 {
 
 	for _, face := range m.faces {
 		for _, vertice := range face.Vectors() {
-			if ret.X() > vertice.X() {
+			if ret.X() < vertice.X() {
 				ret.SetX(vertice.X())
 			}
 
-			if ret.Y() > vertice.Y() {
+			if ret.Y() < vertice.Y() {
 				ret.SetY(vertice.Y())
 			}
 
-			if ret.Z() > vertice.Z() {
+			if ret.Z() < vertice.Z() {
 				ret.SetZ(vertice.Z())
 			}
 		}

@@ -4,6 +4,7 @@ import (
 	"GoSlicer/util"
 	"fmt"
 	"github.com/hschendel/stl"
+	"time"
 )
 
 type OptimizedFace interface {
@@ -67,23 +68,21 @@ type OptimizedModel interface {
 	Points() []OptimizedPoint
 	Faces() []OptimizedFace
 	Size() util.MicroVec3
+	FacePoints(i int) [3]util.MicroVec3
 
 	SaveDebugSTL(filename string) error
 }
 
 type optimizedModel struct {
-	meldDistance util.Micrometer
-	points       []OptimizedPoint
-	faces        []OptimizedFace
-	modelSize    util.MicroVec3
+	points    []OptimizedPoint
+	faces     []OptimizedFace
+	modelSize util.MicroVec3
 }
 
 type pointHash uint
 
 func OptimizeModel(m Model, meldDistance util.Micrometer, center util.MicroVec3) OptimizedModel {
-	om := &optimizedModel{
-		meldDistance: meldDistance,
-	}
+	om := &optimizedModel{}
 
 	minVector := m.Min()
 	maxVector := m.Max()
@@ -193,6 +192,11 @@ FacesLoop:
 	}
 
 	om.modelSize = maxVector.Sub(minVector)
+	fmt.Printf("asdf%v\n", maxVector)
+	fmt.Printf("asdf%v\n", minVector)
+	fmt.Printf("asdf%v\n", om.modelSize)
+
+	time.Sleep(2 * time.Second)
 
 	return om
 }
@@ -224,6 +228,14 @@ func (m *optimizedModel) getFaceIdxWithPoints(idx0, idx1, notFaceIdx int) int {
 		}
 	}
 	return -1
+}
+
+func (m *optimizedModel) FacePoints(i int) [3]util.MicroVec3 {
+	return [3]util.MicroVec3{
+		m.points[m.faces[i].Indices()[0]].Point(),
+		m.points[m.faces[i].Indices()[1]].Point(),
+		m.points[m.faces[i].Indices()[2]].Point(),
+	}
 }
 
 func (m *optimizedModel) SaveDebugSTL(filename string) error {

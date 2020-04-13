@@ -1,7 +1,6 @@
 package main
 
 import (
-	"GoSlicer/slicer"
 	"fmt"
 	"os"
 )
@@ -14,8 +13,8 @@ func main() {
 		os.Exit(2)
 	}
 
-	s := slicer.Slicer{Path: args[0]}
-	err := s.Process()
+	p := Process{Path: args[0]}
+	err := p.Process()
 
 	if err != nil {
 		fmt.Println("error while processing file")

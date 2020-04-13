@@ -1,47 +1,104 @@
 package slicer
 
 import (
-	"GoSlicer/slicer/model"
+	"GoSlicer/model"
 	"GoSlicer/util"
 	"fmt"
-	"time"
 )
 
-type Slicer struct {
-	Path string
+type Slicer interface {
 }
 
-type config struct {
-	layerThickness        int
-	initialLayerThickness int
-	filamentDiameter      int
-	extrusionWidth        int
-	insetCount            int
+type slicer struct {
+	modelSize util.MicroVec3
+	layers    []Layer
 }
 
-func (s *Slicer) Process() error {
-	/*c := config{
-		layerThickness:        100,
-		initialLayerThickness: 200,
-		filamentDiameter:      1500,
-		extrusionWidth:        400,
-		insetCount:            20,
-	}*/
+func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerThickness util.Micrometer) Slicer {
+	s := &slicer{}
 
-	t := time.Now()
-	m, err := model.LoadSTL(s.Path)
+	s.modelSize = om.Size()
+	layerCount := (s.modelSize.Z()-initialThickness)/layerThickness + 1
 
-	if err != nil {
-		return err
+	fmt.Println("Layer count:", layerCount, s.modelSize.Z(), initialThickness, layerThickness)
+
+	s.layers = make([]Layer, layerCount)
+
+	for i, _ := range om.Faces() {
+		points := om.FacePoints(i)
+		minZ := points[0].Z()
+		maxZ := points[0].Z()
+
+		if points[1].Z() < minZ {
+			minZ = points[1].Z()
+		}
+		if points[2].Z() < minZ {
+			minZ = points[2].Z()
+		}
+
+		if points[1].Z() > maxZ {
+			maxZ = points[1].Z()
+		}
+		if points[2].Z() > maxZ {
+			maxZ = points[2].Z()
+		}
+
+		// for each layerNr
+		for layerNr := int((minZ - initialThickness) / layerThickness); util.Micrometer(layerNr) <= (maxZ-initialThickness)/layerThickness; layerNr++ {
+			z := util.Micrometer(layerNr)*layerThickness + initialThickness
+			if z < minZ {
+				continue
+			}
+			if layerNr < 0 {
+				continue
+			}
+
+			if s.layers[layerNr] == nil {
+				s.layers[layerNr] = NewLayer()
+			}
+
+			layer := s.layers[layerNr]
+
+			var seg Segment
+			switch {
+			// only p0 is below z
+			case points[0].Z() < z && points[1].Z() >= z && points[2].Z() >= z:
+				seg = SliceFace(z, points[0], points[2], points[1])
+			// only p1 and p2 are below z
+			case points[0].Z() > z && points[1].Z() < z && points[2].Z() < z:
+				seg = SliceFace(z, points[0], points[1], points[2])
+
+			// only p1 is below z
+			case points[1].Z() < z && points[0].Z() >= z && points[2].Z() >= z:
+				seg = SliceFace(z, points[1], points[0], points[2])
+			// only p0 and p2 are below z
+			case points[1].Z() > z && points[0].Z() < z && points[2].Z() < z:
+				seg = SliceFace(z, points[1], points[2], points[0])
+
+			// only p2 is below z
+			case points[2].Z() < z && points[1].Z() >= z && points[0].Z() >= z:
+				seg = SliceFace(z, points[2], points[1], points[0])
+
+			// only p1 and p0 are below z
+			case points[2].Z() > z && points[1].Z() < z && points[0].Z() < z:
+				seg = SliceFace(z, points[2], points[0], points[1])
+			default:
+				// not all cases create a segment, because
+				// a point of a face could create just a dot
+				// and if all points are below or above no face has to be created
+				continue
+			}
+
+			layer.setFaceToSegment(i, len(layer.Segments()))
+			seg.setFaceIndex(i)
+			seg.setAddedToPolygon(false)
+			layer.addSegment(seg)
+
+		}
 	}
 
-	fmt.Println("load from disk time: ", time.Now().Sub(t))
-
-	om := model.OptimizeModel(m, 30, util.NewMicroVec3(102500, 102500, 0))
-
-	om.SaveDebugSTL("debug.stl")
-
-	fmt.Println("time needed: ", time.Now().Sub(t))
-
-	return nil
+	for _, layer := range s.layers {
+		layer.makePolygons(om)
+	}
+	return s
 }
