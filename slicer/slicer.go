@@ -7,11 +7,13 @@ import (
 )
 
 type Slicer interface {
+	LayerParts()
+	GenerateGCode()
 }
 
 type slicer struct {
 	modelSize util.MicroVec3
-	layers    []Layer
+	layers    []*layer
 }
 
 func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerThickness util.Micrometer) Slicer {
@@ -20,9 +22,9 @@ func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerT
 	s.modelSize = om.Size()
 	layerCount := (s.modelSize.Z()-initialThickness)/layerThickness + 1
 
-	fmt.Println("Layer count:", layerCount, s.modelSize.Z(), initialThickness, layerThickness)
+	fmt.Println("layer count:", layerCount, s.modelSize.Z(), initialThickness, layerThickness)
 
-	s.layers = make([]Layer, layerCount)
+	s.layers = make([]*layer, layerCount)
 
 	for i, _ := range om.Faces() {
 		points := om.FacePoints(i)
@@ -59,7 +61,7 @@ func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerT
 
 			layer := s.layers[layerNr]
 
-			var seg Segment
+			var seg *segment
 			switch {
 			// only p0 is below z
 			case points[0].Z() < z && points[1].Z() >= z && points[2].Z() >= z:
@@ -89,11 +91,10 @@ func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerT
 				continue
 			}
 
-			layer.setFaceToSegment(i, len(layer.Segments()))
-			seg.setFaceIndex(i)
-			seg.setAddedToPolygon(false)
-			layer.addSegment(seg)
-
+			layer.faceToSegmentIndex[i] = len(layer.segments)
+			seg.faceIndex = i
+			seg.addedToPolygon = false
+			layer.segments = append(layer.segments, seg)
 		}
 	}
 
@@ -101,4 +102,12 @@ func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerT
 		layer.makePolygons(om)
 	}
 	return s
+}
+
+func (s *slicer) LayerParts() {
+	panic("implement me")
+}
+
+func (s *slicer) GenerateGCode() {
+	panic("implement me")
 }

@@ -4,7 +4,6 @@ import (
 	"GoSlicer/util"
 	"fmt"
 	"github.com/hschendel/stl"
-	"time"
 )
 
 type OptimizedFace interface {
@@ -192,11 +191,6 @@ FacesLoop:
 	}
 
 	om.modelSize = maxVector.Sub(minVector)
-	fmt.Printf("asdf%v\n", maxVector)
-	fmt.Printf("asdf%v\n", minVector)
-	fmt.Printf("asdf%v\n", om.modelSize)
-
-	time.Sleep(2 * time.Second)
 
 	return om
 }
