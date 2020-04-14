@@ -17,23 +17,23 @@ func NewLayer() *layer {
 	}
 }
 
-func (l layer) makePolygons(om model.OptimizedModel) {
+func (l *layer) makePolygons(om model.OptimizedModel) {
 	// try for each segment to generate a polygon with other segments
 	// if the segment is not already assigned to another polygon
-	for startSegment, segment := range l.segments {
+	for startSegmentIndex, segment := range l.segments {
 		if segment.addedToPolygon {
 			continue
 		}
 
 		var polygon = &polygon{}
-		polygon.points = append(polygon.points, l.segments[startSegment].start)
+		polygon.points = append(polygon.points, l.segments[startSegmentIndex].start)
 
-		segmentIndex := startSegment
+		currentSegmentIndex := startSegmentIndex
 		canClose := false
 
 		for {
 			canClose = false
-			currentSegment := l.segments[segmentIndex]
+			currentSegment := l.segments[currentSegmentIndex]
 			currentSegment.addedToPolygon = true
 			p0 := currentSegment.end
 			polygon.points = append(polygon.points, p0)
@@ -58,7 +58,7 @@ func (l layer) makePolygons(om model.OptimizedModel) {
 					diff := p0.Sub(p1)
 
 					if diff.ShorterThan(30) {
-						if touchingSegmentIndex == startSegment {
+						if touchingSegmentIndex == startSegmentIndex {
 							canClose = true
 						}
 						if l.segments[touchingSegmentIndex].addedToPolygon {
@@ -73,7 +73,7 @@ func (l layer) makePolygons(om model.OptimizedModel) {
 				break
 			}
 
-			segmentIndex = nextIndex
+			currentSegmentIndex = nextIndex
 		}
 
 		if canClose {
@@ -124,7 +124,7 @@ func (l layer) makePolygons(om model.OptimizedModel) {
 			}
 
 			// erase the merged polygon
-			l.removePolygon(best)
+			l.polygons[best] = nil
 		}
 	}
 
@@ -132,6 +132,11 @@ func (l layer) makePolygons(om model.OptimizedModel) {
 	// do not use range to allow modifying i when deleting
 	for i := 0; i < len(l.polygons); i++ {
 		polygon := l.polygons[i]
+
+		if polygon == nil {
+			continue
+		}
+
 		// check if polygon is almost finished
 		// if yes just finish it
 		if polygon.isAlmostFinished(snapDistance) {
@@ -155,8 +160,7 @@ func (l layer) makePolygons(om model.OptimizedModel) {
 		}
 
 		if length < snapDistance || !polygon.closed {
-			l.removePolygon(i)
-			i--
+			l.polygons[i] = nil
 		}
 	}
 }
