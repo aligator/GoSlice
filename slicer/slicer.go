@@ -58,7 +58,7 @@ func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerT
 			}
 
 			if s.layers[layerNr] == nil {
-				s.layers[layerNr] = NewLayer()
+				s.layers[layerNr] = NewLayer(layerNr)
 			}
 
 			layer := s.layers[layerNr]

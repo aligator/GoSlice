@@ -9,11 +9,13 @@ type layer struct {
 	segments           []*segment
 	faceToSegmentIndex map[int]int
 	polygons           []*polygon
+	number             int
 }
 
-func NewLayer() *layer {
+func NewLayer(number int) *layer {
 	return &layer{
 		faceToSegmentIndex: map[int]int{},
+		number:             number,
 	}
 }
 
@@ -29,7 +31,7 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 		polygon.points = append(polygon.points, l.segments[startSegmentIndex].start)
 
 		currentSegmentIndex := startSegmentIndex
-		canClose := false
+		var canClose bool
 
 		for {
 			canClose = false
@@ -87,6 +89,7 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 	// Connect polygons that are not closed yet.
 	// As models are not always perfect manifold we need to join
 	// some stuff up to get proper polygons.
+RerunConnectPolygons:
 	for i, polygon := range l.polygons {
 		if polygon == nil || polygon.closed {
 			continue
@@ -125,6 +128,8 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 
 			// erase the merged polygon
 			l.polygons[best] = nil
+			// restart search
+			goto RerunConnectPolygons
 		}
 	}
 
@@ -155,7 +160,6 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 			if poly.closed && length > snapDistance {
 				break
 			}
-
 		}
 
 		// remove already cleared polygons and filter also not closed / too small ones
