@@ -95,7 +95,7 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 		best := -1
 		bestScore := snapDistance + 1
 		for j, polygon2 := range l.polygons {
-			if polygon == nil || polygon2.closed || i == j {
+			if polygon2 == nil || polygon2.closed || i == j {
 				continue
 			}
 
@@ -128,45 +128,41 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 		}
 	}
 
-	snapDistance = 1000
+	var clearedPolygons []*polygon
+	snapDistance = util.Micrometer(1000)
 	// do not use range to allow modifying i when deleting
-	for i := 0; i < len(l.polygons); i++ {
-		polygon := l.polygons[i]
-
-		if polygon == nil {
+	for i, poly := range l.polygons {
+		if poly == nil {
 			continue
 		}
 
 		// check if polygon is almost finished
 		// if yes just finish it
-		if polygon.isAlmostFinished(snapDistance) {
-			polygon.removeLastPoint()
-			polygon.closed = true
+		if poly.isAlmostFinished(snapDistance) {
+			poly.removeLastPoint()
+			poly.closed = true
 		}
 
 		// remove tiny polygons or not closed polygons
 		length := util.Micrometer(0)
-		for n, point := range polygon.points {
+		for n, point := range poly.points {
 			// ignore first point
 			if n == 0 {
 				continue
 			}
 
-			length += point.Sub(polygon.points[n-1]).Size()
-			if polygon.closed && length > snapDistance {
+			length += point.Sub(poly.points[n-1]).Size()
+			if poly.closed && length > snapDistance {
 				break
 			}
 
 		}
 
-		if length < snapDistance || !polygon.closed {
-			l.polygons[i] = nil
+		// remove already cleared polygons and filter also not closed / too small ones
+		if l.polygons[i] != nil && length > snapDistance && poly.closed {
+			clearedPolygons = append(clearedPolygons, l.polygons[i])
 		}
 	}
-}
 
-func (l *layer) removePolygon(i int) {
-	l.polygons[i] = l.polygons[len(l.polygons)-1] // Copy last element to index i.
-	l.polygons[len(l.polygons)-1] = nil           // Erase last element (write zero value).
-	l.polygons = l.polygons[:len(l.polygons)-1]   // Truncate slice.
+	l.polygons = clearedPolygons
 }

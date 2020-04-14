@@ -120,7 +120,7 @@ func (s *slicer) DumpSegments(filename string) {
 		buf.WriteString("<path d=\"")
 
 		for _, poly := range layer.polygons {
-			if !poly.closed {
+			if poly == nil || !poly.closed {
 				continue
 			}
 
@@ -138,7 +138,7 @@ func (s *slicer) DumpSegments(filename string) {
 		buf.WriteString("</g>\n")
 
 		for _, poly := range layer.polygons {
-			if poly.closed {
+			if poly == nil || poly.closed {
 				continue
 			}
 			buf.WriteString("<polyline points=\"")
