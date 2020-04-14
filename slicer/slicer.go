@@ -4,11 +4,13 @@ import (
 	"GoSlicer/model"
 	"GoSlicer/util"
 	"fmt"
+	"os"
 )
 
 type Slicer interface {
 	LayerParts()
 	GenerateGCode()
+	DumpSegments(filename string)
 }
 
 type slicer struct {
@@ -102,6 +104,52 @@ func NewSlicer(om model.OptimizedModel, initialThickness util.Micrometer, layerT
 		layer.makePolygons(om)
 	}
 	return s
+}
+
+func (s *slicer) DumpSegments(filename string) {
+	buf, err := os.Create(filename)
+	if err != nil {
+		fmt.Println(err)
+	}
+	buf.WriteString("<!DOCTYPE html><html><body>\n")
+	defer buf.Close()
+
+	for _, layer := range s.layers {
+		buf.WriteString("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style='width:150px;height:120px'>\n")
+		buf.WriteString("<g fill-rule='evenodd' style=\"fill: gray; stroke:black;stroke-width:1\">\n")
+		buf.WriteString("<path d=\"")
+
+		for _, poly := range layer.polygons {
+			if !poly.closed {
+				continue
+			}
+
+			for i, point := range poly.points {
+				if i == 0 {
+					buf.WriteString("M")
+				} else {
+					buf.WriteString("L")
+				}
+				buf.WriteString(fmt.Sprintf("%f,%f ", float32(point.X())/1000, float32(point.Y())/1000))
+			}
+			buf.WriteString("Z\n")
+		}
+		buf.WriteString("\"/>")
+		buf.WriteString("</g>\n")
+
+		for _, poly := range layer.polygons {
+			if poly.closed {
+				continue
+			}
+			buf.WriteString("<polyline points=\"")
+			for _, point := range poly.points {
+				buf.WriteString(fmt.Sprintf("%f,%f ", float32(point.X())/1000, float32(point.Y())/1000))
+			}
+			buf.WriteString("\" style=\"fill: none; stroke:red;stroke-width:1\" />\n")
+		}
+		buf.WriteString("</svg>\n")
+	}
+	buf.WriteString("</body></html>")
 }
 
 func (s *slicer) LayerParts() {

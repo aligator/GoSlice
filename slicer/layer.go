@@ -18,10 +18,9 @@ func NewLayer() *layer {
 }
 
 func (l layer) makePolygons(om model.OptimizedModel) {
-	startSegment := 0
 	// try for each segment to generate a polygon with other segments
 	// if the segment is not already assigned to another polygon
-	for _, segment := range l.segments {
+	for startSegment, segment := range l.segments {
 		if segment.addedToPolygon {
 			continue
 		}
@@ -53,19 +52,19 @@ func (l layer) makePolygons(om model.OptimizedModel) {
 			// * if the segment is already added just continue
 			// then set the next index to the touching segment
 			for _, touchingFaceIndex := range face.Touching() {
-				segmentIndex, ok := l.faceToSegmentIndex[touchingFaceIndex]
+				touchingSegmentIndex, ok := l.faceToSegmentIndex[touchingFaceIndex]
 				if touchingFaceIndex > -1 && ok {
-					p1 := l.segments[segmentIndex].start
+					p1 := l.segments[touchingSegmentIndex].start
 					diff := p0.Sub(p1)
 
 					if diff.ShorterThan(30) {
-						if segmentIndex == startSegment {
+						if touchingSegmentIndex == startSegment {
 							canClose = true
 						}
-						if l.segments[segmentIndex].addedToPolygon {
+						if l.segments[touchingSegmentIndex].addedToPolygon {
 							continue
 						}
-						nextIndex = segmentIndex
+						nextIndex = touchingSegmentIndex
 					}
 				}
 			}

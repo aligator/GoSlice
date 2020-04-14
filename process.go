@@ -53,7 +53,7 @@ func (s *Process) Process() error {
 	fmt.Println("Slicing model")
 	// Why is initialLayerThickness / 2 ??
 	slicer := slicer.NewSlicer(om, c.InitialLayerThickness/2, c.LayerThickness)
-	fmt.Println(slicer)
+	slicer.DumpSegments("output.html")
 	fmt.Println("slicing time:", time.Now().Sub(t))
 	t = time.Now()
 
