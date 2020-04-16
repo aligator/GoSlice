@@ -1,16 +1,19 @@
 package slicer
 
-import "GoSlicer/util"
+import (
+	"GoSlicer/util"
+)
 
-type polygon struct {
+// slicePolygon is a internal polygon used while slicing
+type slicePolygon struct {
 	points []util.MicroPoint
 	closed bool
 }
 
-func (p *polygon) removeLastPoint() {
+func (p *slicePolygon) removeLastPoint() {
 	p.points = p.points[:len(p.points)]
 }
 
-func (p *polygon) isAlmostFinished(snapDistance util.Micrometer) bool {
+func (p *slicePolygon) isAlmostFinished(snapDistance util.Micrometer) bool {
 	return p.points[0].Sub(p.points[len(p.points)-1]).ShorterThan(snapDistance)
 }

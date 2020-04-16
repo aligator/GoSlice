@@ -56,6 +56,9 @@ func (s *Process) Process() error {
 	slicer.DumpSegments("output.html")
 	fmt.Println("slicing time:", time.Now().Sub(t))
 	t = time.Now()
+	fmt.Println("Generating layer parts")
+	slicer.GenerateLayerParts()
+	slicer.DumpLayerParts("layerParts.html")
 
 	return nil
 }

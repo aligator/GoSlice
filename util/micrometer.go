@@ -1,6 +1,9 @@
 package util
 
-import "math"
+import (
+	clipper "github.com/ctessum/go.clipper"
+	"math"
+)
 
 // MicroVec3 represents a point in 3d space
 // which is in a Micrometer-grid.
@@ -158,6 +161,8 @@ type MicroPoint interface {
 	Size2() Micrometer
 	Size() Micrometer
 
+	GeomPoint() *clipper.IntPoint
+
 	Copy() MicroPoint
 }
 
@@ -233,6 +238,13 @@ func (p *microPoint) Size2() Micrometer {
 
 func (p *microPoint) Size() Micrometer {
 	return Micrometer(math.Sqrt(float64(p.Size2())))
+}
+
+func (p *microPoint) GeomPoint() *clipper.IntPoint {
+	return &clipper.IntPoint{
+		X: clipper.CInt(p.x),
+		Y: clipper.CInt(p.y),
+	}
 }
 
 func (p *microPoint) Copy() MicroPoint {

@@ -8,9 +8,10 @@ import (
 )
 
 type Slicer interface {
-	LayerParts()
+	GenerateLayerParts()
 	GenerateGCode()
 	DumpSegments(filename string)
+	DumpLayerParts(filename string)
 }
 
 type slicer struct {
@@ -152,8 +153,24 @@ func (s *slicer) DumpSegments(filename string) {
 	buf.WriteString("</body></html>")
 }
 
-func (s *slicer) LayerParts() {
-	panic("implement me")
+func (s *slicer) GenerateLayerParts() {
+	for _, layer := range s.layers {
+		layer.gnerateLayerParts()
+	}
+}
+
+func (s *slicer) DumpLayerParts(filename string) {
+	buf, err := os.Create(filename)
+	if err != nil {
+		fmt.Println(err)
+	}
+	buf.WriteString("<!DOCTYPE html><html><body>\n")
+	defer buf.Close()
+
+	for _, layer := range s.layers {
+		layer.dump(buf, s.modelSize)
+	}
+	buf.WriteString("</body></html>")
 }
 
 func (s *slicer) GenerateGCode() {

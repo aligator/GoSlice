@@ -3,31 +3,41 @@ package slicer
 import (
 	"GoSlicer/model"
 	"GoSlicer/util"
+	"fmt"
+	clipper "github.com/ctessum/go.clipper"
+	"os"
 )
+
+type layerPart struct {
+	polygons clipper.Paths
+}
 
 type layer struct {
 	segments           []*segment
 	faceToSegmentIndex map[int]int
-	polygons           []*polygon
+	polygons           []*slicePolygon
 	number             int
+
+	parts []*layerPart
 }
 
 func NewLayer(number int) *layer {
 	return &layer{
 		faceToSegmentIndex: map[int]int{},
 		number:             number,
+		parts:              []*layerPart{},
 	}
 }
 
 func (l *layer) makePolygons(om model.OptimizedModel) {
-	// try for each segment to generate a polygon with other segments
-	// if the segment is not already assigned to another polygon
+	// try for each segment to generate a slicePolygon with other segments
+	// if the segment is not already assigned to another slicePolygon
 	for startSegmentIndex, segment := range l.segments {
 		if segment.addedToPolygon {
 			continue
 		}
 
-		var polygon = &polygon{}
+		var polygon = &slicePolygon{}
 		polygon.points = append(polygon.points, l.segments[startSegmentIndex].start)
 
 		currentSegmentIndex := startSegmentIndex
@@ -50,7 +60,7 @@ func (l *layer) makePolygons(om model.OptimizedModel) {
 			// and the starting points of the segments of the touching faces.
 			// if it is below the threshold
 			// * check if it is the same segment as the starting segment of this round
-			//   -> close it as a polygon is finished
+			//   -> close it as a slicePolygon is finished
 			// * if the segment is already added just continue
 			// then set the next index to the touching segment
 			for _, touchingFaceIndex := range face.Touching() {
@@ -102,8 +112,8 @@ RerunConnectPolygons:
 				continue
 			}
 
-			// check the distance of the last point from the first unfinished polygon
-			// with the first point of the second unfinished polygon
+			// check the distance of the last point from the first unfinished slicePolygon
+			// with the first point of the second unfinished slicePolygon
 			diff := polygon.points[len(polygon.points)-1].Sub(polygon2.points[0])
 			if diff.ShorterThan(snapDistance) {
 				score := diff.Size() - util.Micrometer(len(polygon2.points)*10)
@@ -114,26 +124,26 @@ RerunConnectPolygons:
 			}
 		}
 
-		// if a matching polygon was found, connect them
+		// if a matching slicePolygon was found, connect them
 		if best > -1 {
 			for _, aPointFromBest := range l.polygons[best].points {
 				polygon.points = append(polygon.points, aPointFromBest)
 			}
 
-			// close polygon if the start end end now fits inside the snap distance
+			// close slicePolygon if the start end end now fits inside the snap distance
 			if polygon.isAlmostFinished(snapDistance) {
 				polygon.removeLastPoint()
 				polygon.closed = true
 			}
 
-			// erase the merged polygon
+			// erase the merged slicePolygon
 			l.polygons[best] = nil
 			// restart search
 			goto RerunConnectPolygons
 		}
 	}
 
-	var clearedPolygons []*polygon
+	var clearedPolygons []*slicePolygon
 	snapDistance = util.Micrometer(1000)
 	// do not use range to allow modifying i when deleting
 	for i, poly := range l.polygons {
@@ -141,7 +151,7 @@ RerunConnectPolygons:
 			continue
 		}
 
-		// check if polygon is almost finished
+		// check if slicePolygon is almost finished
 		// if yes just finish it
 		if poly.isAlmostFinished(snapDistance) {
 			poly.removeLastPoint()
@@ -169,4 +179,75 @@ RerunConnectPolygons:
 	}
 
 	l.polygons = clearedPolygons
+}
+
+func (l *layer) gnerateLayerParts() {
+	l.parts = []*layerPart{}
+
+	polyList := clipper.Paths{}
+	// convert all polygons to clipper polygons
+	for _, layerPolygon := range l.polygons {
+		var path = clipper.Path{}
+
+		prev := 0
+		// convert all points of this polygons
+		for j, layerPoint := range layerPolygon.points {
+			// ignore first as the next check would fail otherwise
+			if j == 1 {
+				path = append(path, layerPolygon.points[0].GeomPoint())
+				continue
+			}
+
+			// filter too near points
+			// check this always with the previous point
+			if layerPoint.Sub(layerPolygon.points[prev]).ShorterThan(200) {
+				continue
+			}
+
+			path = append(path, layerPoint.GeomPoint())
+			prev = j
+		}
+
+		polyList = append(polyList, path)
+	}
+
+	c := clipper.NewClipper(clipper.IoNone)
+	c.AddPaths(polyList, clipper.PtSubject, true)
+	resultPolys, ok := c.Execute2(clipper.CtUnion, clipper.PftEvenOdd, clipper.PftEvenOdd)
+	if !ok {
+		return
+	}
+	for _, p := range resultPolys.Childs() {
+		part := layerPart{}
+		part.polygons = append(part.polygons, p.Contour())
+		for _, child := range p.Childs() {
+			part.polygons = append(part.polygons, child.Contour())
+		}
+		l.parts = append(l.parts, &part)
+	}
+
+}
+
+func dumpPolygon(buf *os.File, polygons clipper.Path, modelSize util.MicroVec3, isRed bool) {
+	buf.WriteString("<polygon points=\"")
+	for _, p := range polygons {
+		buf.WriteString(fmt.Sprintf("%f,%f ", (float64(p.X)+float64(modelSize.X())/2)/float64(modelSize.X())*150, (float64(p.Y)+float64(modelSize.Y())/2)/float64(modelSize.Y())*150))
+
+	}
+	if isRed {
+		buf.WriteString("\" style=\"fill:red; stroke:black;stroke-width:1\" />\n")
+	} else {
+		buf.WriteString("\" style=\"fill:gray; s1031.680000640troke:black;stroke-width:1\" />\n")
+	}
+}
+
+func (l *layer) dump(buf *os.File, modelSize util.MicroVec3) {
+	buf.WriteString("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"width: 150px; height:150px\">\n")
+	for _, part := range l.parts {
+		for j, poly := range part.polygons {
+			dumpPolygon(buf, poly, modelSize, j == 0)
+
+		}
+	}
+	buf.WriteString("</svg>\n")
 }
