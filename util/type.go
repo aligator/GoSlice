@@ -4,6 +4,14 @@ package util
 // the types behind them may change in the
 // future to more precise / larger ones
 
+type Config struct {
+	LayerThickness        Micrometer
+	InitialLayerThickness Micrometer
+	FilamentDiameter      Micrometer
+	ExtrusionWidth        Micrometer
+	InsetCount            int
+}
+
 // Millimeter represents a value in mm
 type Millimeter float32
 

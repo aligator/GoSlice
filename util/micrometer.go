@@ -160,6 +160,7 @@ type MicroPoint interface {
 	ShorterThan(length Micrometer) bool
 	Size2() Micrometer
 	Size() Micrometer
+	SizeMM() Millimeter
 
 	GeomPoint() *clipper.IntPoint
 
@@ -238,6 +239,12 @@ func (p *microPoint) Size2() Micrometer {
 
 func (p *microPoint) Size() Micrometer {
 	return Micrometer(math.Sqrt(float64(p.Size2())))
+}
+
+func (p *microPoint) SizeMM() Millimeter {
+	x := p.x.ToMillimeter()
+	y := p.y.ToMillimeter()
+	return Millimeter(math.Sqrt(float64(x*x + y*y)))
 }
 
 func (p *microPoint) GeomPoint() *clipper.IntPoint {

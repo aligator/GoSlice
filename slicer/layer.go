@@ -12,13 +12,18 @@ type layerPart struct {
 	polygons clipper.Paths
 }
 
+type insetLayer struct {
+	parts []*insetPart
+}
+
 type layer struct {
 	segments           []*segment
 	faceToSegmentIndex map[int]int
 	polygons           []*slicePolygon
 	number             int
 
-	parts []*layerPart
+	parts      []*layerPart
+	insetParts []*insetPart
 }
 
 func NewLayer(number int) *layer {
@@ -250,4 +255,10 @@ func (l *layer) dump(buf *os.File, modelSize util.MicroVec3) {
 		}
 	}
 	buf.WriteString("</svg>\n")
+}
+
+func (l *layer) insetLayer(offset util.Micrometer, insetCount int) {
+	for _, part := range l.parts {
+		l.insetParts = append(l.insetParts, newInsetPart(part, offset, insetCount))
+	}
 }

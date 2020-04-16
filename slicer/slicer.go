@@ -9,7 +9,7 @@ import (
 
 type Slicer interface {
 	GenerateLayerParts()
-	GenerateGCode()
+	GenerateGCode(filename string, c util.Config)
 	DumpSegments(filename string)
 	DumpLayerParts(filename string)
 }
@@ -164,8 +164,9 @@ func (s *slicer) DumpLayerParts(filename string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	buf.WriteString("<!DOCTYPE html><html><body>\n")
 	defer buf.Close()
+
+	buf.WriteString("<!DOCTYPE html><html><body>\n")
 
 	for _, layer := range s.layers {
 		layer.dump(buf, s.modelSize)
@@ -173,6 +174,41 @@ func (s *slicer) DumpLayerParts(filename string) {
 	buf.WriteString("</body></html>")
 }
 
-func (s *slicer) GenerateGCode() {
-	panic("implement me")
+func (s *slicer) GenerateGCode(filename string, c util.Config) {
+	builder := newGCodeBuilder(filename)
+	defer builder.Close()
+
+	totalLayers := len(s.layers)
+
+	builder.addComment("Generated with GoSlicer")
+	builder.addComment("total_layers=%v", totalLayers)
+	builder.addComment("\nG1 X0 Y20 Z0.2 F3000 ; get ready to prime")
+	builder.addComment("\nG92 E0 ; reset extrusion distance")
+	builder.addComment("\nG1 X200 E20 F600 ; prime nozzle")
+	builder.addComment("\nG1 Z5 F5000 ; lift nozzle")
+
+	builder.setExtrusion(c.InitialLayerThickness, c.ExtrusionWidth, c.FilamentDiameter)
+
+	for layerNum, layer := range s.layers {
+		layer.insetLayer(c.ExtrusionWidth, c.InsetCount)
+		fmt.Printf("Processing layer %v of %v...\n", layerNum, totalLayers)
+		builder.addComment("LAYER:%v", layerNum)
+
+		for _, part := range layer.insetParts {
+
+			for insetNr := len(part.inset) - 1; insetNr > -1; insetNr-- {
+				if insetNr == 0 {
+					builder.addComment("TYPE:WALL-OUTER")
+				} else {
+					builder.addComment("TYPE:WALL-INNER")
+				}
+
+				for _, poly := range part.inset[insetNr] {
+					builder.addPolygon(poly, c.InitialLayerThickness+util.Micrometer(layerNum)*c.LayerThickness)
+				}
+			}
+		}
+
+		builder.setExtrusion(c.LayerThickness, c.ExtrusionWidth, c.FilamentDiameter)
+	}
 }

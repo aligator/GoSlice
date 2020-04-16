@@ -12,21 +12,13 @@ type Process struct {
 	Path string
 }
 
-type Config struct {
-	LayerThickness        util.Micrometer
-	InitialLayerThickness util.Micrometer
-	FilamentDiameter      util.Micrometer
-	ExtrusionWidth        util.Micrometer
-	InsetCount            int
-}
-
 func (s *Process) Process() error {
-	c := Config{
-		LayerThickness:        100,
-		InitialLayerThickness: 300, //200,
+	c := util.Config{
+		LayerThickness:        200,
+		InitialLayerThickness: 200,
 		FilamentDiameter:      1500,
 		ExtrusionWidth:        400,
-		InsetCount:            20,
+		InsetCount:            2,
 	}
 
 	t := time.Now()
@@ -58,7 +50,13 @@ func (s *Process) Process() error {
 	t = time.Now()
 	fmt.Println("Generating layer parts")
 	slicer.GenerateLayerParts()
-	slicer.DumpLayerParts("layerParts.html")
+	fmt.Println("layerParts generation time:", time.Now().Sub(t))
+	t = time.Now()
+
+	//slicer.DumpLayerParts("layerParts.html")
+	t = time.Now()
+	slicer.GenerateGCode("output.gcode", c)
+	fmt.Println("gcode generation time:", time.Now().Sub(t))
 
 	return nil
 }
