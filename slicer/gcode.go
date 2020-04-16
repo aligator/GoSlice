@@ -79,7 +79,10 @@ func (g *gcodeBuilder) addMove(p util.MicroVec3, extrusion util.Millimeter) {
 }
 
 func (g *gcodeBuilder) addPolygon(polygon clipper.Path, z util.Micrometer) {
-
+	if len(polygon) == 0 {
+		g.addComment("ignore Too small polygon")
+		return
+	}
 	for i, p := range polygon {
 		if i == 0 {
 			g.addMove(util.NewMicroVec3(

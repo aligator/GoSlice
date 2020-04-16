@@ -18,7 +18,7 @@ func (s *Process) Process() error {
 		InitialLayerThickness: 200,
 		FilamentDiameter:      1500,
 		ExtrusionWidth:        400,
-		InsetCount:            20,
+		InsetCount:            5,
 	}
 
 	t := time.Now()
