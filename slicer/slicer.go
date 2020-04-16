@@ -190,6 +190,10 @@ func (s *slicer) GenerateGCode(filename string, c util.Config) {
 	builder.setExtrusion(c.InitialLayerThickness, c.ExtrusionWidth, c.FilamentDiameter)
 
 	for layerNum, layer := range s.layers {
+		if layerNum == 2 {
+			builder.addComment("\nM106 ; enable fan")
+		}
+
 		layer.insetLayer(c.ExtrusionWidth, c.InsetCount)
 		fmt.Printf("Processing layer %v of %v...\n", layerNum, totalLayers)
 		builder.addComment("LAYER:%v", layerNum)
@@ -211,4 +215,6 @@ func (s *slicer) GenerateGCode(filename string, c util.Config) {
 
 		builder.setExtrusion(c.LayerThickness, c.ExtrusionWidth, c.FilamentDiameter)
 	}
+
+	builder.addComment("\nM107 ; enable fan")
 }
