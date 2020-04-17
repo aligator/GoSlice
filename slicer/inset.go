@@ -33,8 +33,8 @@ func newInsetPart(part *layerPart, offset util.Micrometer, insetCount int) *inse
 				}
 
 				// TODO: Experimental: remove too small segments from path
-				prev := path[k-1]
-				if math.Sqrt(float64((prev.Y-point.Y)*(prev.Y-point.Y)+(point.X-prev.X)*(point.X-prev.X))) > 30.0 {
+				prev := filteredPath[len(filteredPath)-1]
+				if math.Sqrt(float64((prev.Y-point.Y)*(prev.Y-point.Y)+(point.X-prev.X)*(point.X-prev.X))) > 100.0 {
 					filteredPath = append(filteredPath, point)
 				}
 			}

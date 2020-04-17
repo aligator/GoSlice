@@ -10,7 +10,7 @@ https://github.com/Ultimaker/CuraEngine/tree/80dc349e2014eaa9450086c007118e10bda
 ## Run
 go run /path/to/stl/file.stl
 
-##
+## ToDo
 * ~~read stl~~ (initially done by using external lib github.com/hschendel/stl)
 * ~~implement optimisation as in first Cura Commit~~
 * ~~first gcode result~~ YAY!!
@@ -18,4 +18,5 @@ go run /path/to/stl/file.stl
 * simple infill
 * bottom / top layer
 * options as parameters / config file (using cobra / viper)
+* add tests
 * lots of other things...
