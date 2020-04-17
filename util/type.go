@@ -32,7 +32,7 @@ func (m Millimeter3) ToMicrometer() Micrometer {
 }
 
 // Micrometer represents a value in 0.001 mm
-type Micrometer int
+type Micrometer int64
 
 func (m Micrometer) ToMillimeter() Millimeter {
 	return Millimeter(m) * 0.001

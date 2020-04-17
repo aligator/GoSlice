@@ -1,15 +1,15 @@
-package slicer
+package gcode
 
 import (
+	"GoSlicer/slicer/data"
 	"GoSlicer/util"
+	"bytes"
 	"fmt"
-	clipper "github.com/ctessum/go.clipper"
 	"math"
-	"os"
 )
 
 type gcodeBuilder struct {
-	buf *os.File
+	buf *bytes.Buffer
 
 	extrusionAmount                       util.Millimeter
 	extrusionPerMM                        util.Millimeter
@@ -17,19 +17,14 @@ type gcodeBuilder struct {
 	moveSpeed, extrudeSpeed, currentSpeed int
 }
 
-func newGCodeBuilder(filename string) *gcodeBuilder {
+func newGCodeBuilder(buf *bytes.Buffer) *gcodeBuilder {
 	g := &gcodeBuilder{
 		moveSpeed:       150,
 		extrudeSpeed:    50,
 		currentPosition: util.NewMicroVec3(0, 0, 0),
 	}
-	buf, err := os.Create(filename)
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	g.buf = buf
-
 	return g
 }
 
@@ -78,7 +73,7 @@ func (g *gcodeBuilder) addMove(p util.MicroVec3, extrusion util.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *gcodeBuilder) addPolygon(polygon clipper.Path, z util.Micrometer) {
+func (g *gcodeBuilder) addPolygon(polygon data.Path, z util.Micrometer) {
 	if len(polygon) == 0 {
 		g.addComment("ignore Too small polygon")
 		return
@@ -86,45 +81,29 @@ func (g *gcodeBuilder) addPolygon(polygon clipper.Path, z util.Micrometer) {
 	for i, p := range polygon {
 		if i == 0 {
 			g.addMove(util.NewMicroVec3(
-				util.Micrometer(polygon[0].X),
-				util.Micrometer(polygon[0].Y),
+				polygon[0].X(),
+				polygon[0].Y(),
 				z), 0.0)
 			continue
 		}
 
-		point := util.NewMicroPoint(
-			util.Micrometer(p.X),
-			util.Micrometer(p.Y))
+		point := util.NewMicroPoint(p.X(), p.Y())
 
-		prevPoint := util.NewMicroPoint(
-			util.Micrometer(polygon[i-1].X),
-			util.Micrometer(polygon[i-1].Y))
+		prevPoint := util.NewMicroPoint(polygon[i-1].X(), polygon[i-1].Y())
 
-		g.addMove(util.NewMicroVec3(
-			util.Micrometer(p.X),
-			util.Micrometer(p.Y),
-			z),
+		g.addMove(
+			util.NewMicroVec3(p.X(), p.Y(), z),
 			point.Sub(prevPoint).SizeMM()*g.extrusionPerMM,
 		)
 	}
 
-	point0 := util.NewMicroPoint(
-		util.Micrometer(polygon[0].X),
-		util.Micrometer(polygon[0].Y))
+	point0 := util.NewMicroPoint(polygon[0].X(), polygon[0].Y())
 
 	last := len(polygon) - 1
-	pointLast := util.NewMicroPoint(
-		util.Micrometer(polygon[last].X),
-		util.Micrometer(polygon[last].Y))
+	pointLast := util.NewMicroPoint(polygon[last].X(), polygon[last].Y())
 
-	g.addMove(util.NewMicroVec3(
-		util.Micrometer(polygon[0].X),
-		util.Micrometer(polygon[0].Y),
-		z),
+	g.addMove(
+		util.NewMicroVec3(polygon[0].X(), polygon[0].Y(), z),
 		point0.Sub(pointLast).SizeMM()*g.extrusionPerMM,
 	)
-}
-
-func (g *gcodeBuilder) Close() error {
-	return g.buf.Close()
 }

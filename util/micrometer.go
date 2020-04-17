@@ -162,8 +162,6 @@ type MicroPoint interface {
 	Size() Micrometer
 	SizeMM() Millimeter
 
-	GeomPoint() *clipper.IntPoint
-
 	Copy() MicroPoint
 }
 

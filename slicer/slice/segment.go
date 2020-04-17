@@ -1,4 +1,4 @@
-package slicer
+package slice
 
 import (
 	"GoSlicer/util"
