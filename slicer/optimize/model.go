@@ -3,6 +3,7 @@ package optimize
 import (
 	"GoSlicer/slicer/data"
 	"GoSlicer/util"
+	"github.com/hschendel/stl"
 )
 
 type optimizedModel struct {
@@ -50,4 +51,48 @@ func (o optimizedModel) getFaceIdxWithPoints(idx0, idx1, notFaceIdx int) int {
 		}
 	}
 	return -1
+}
+
+func (o optimizedModel) SaveDebugSTL(filename string) error {
+	triangles := make([]stl.Triangle, 0)
+
+	for _, face := range o.faces {
+		triangles = append(triangles, stl.Triangle{
+			Normal: [3]float32{
+				0, 0, 0,
+			},
+			Vertices: [3]stl.Vec3{
+				[3]float32{
+					float32(o.points[face.indices[0]].pos.X().ToMillimeter()),
+					float32(o.points[face.indices[0]].pos.Y().ToMillimeter()),
+					float32(o.points[face.indices[0]].pos.Z().ToMillimeter()),
+				},
+				[3]float32{
+					float32(o.points[face.indices[1]].pos.X().ToMillimeter()),
+					float32(o.points[face.indices[1]].pos.Y().ToMillimeter()),
+					float32(o.points[face.indices[1]].pos.Z().ToMillimeter()),
+				},
+				[3]float32{
+					float32(o.points[face.indices[2]].pos.X().ToMillimeter()),
+					float32(o.points[face.indices[2]].pos.Y().ToMillimeter()),
+					float32(o.points[face.indices[2]].pos.Z().ToMillimeter()),
+				},
+			},
+			Attributes: 0,
+		})
+	}
+
+	solid := stl.Solid{
+		BinaryHeader: nil,
+		Name:         "GoSlice_STL_export",
+		Triangles:    triangles,
+		IsAscii:      false,
+	}
+
+	err := solid.WriteFile(filename)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

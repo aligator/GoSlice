@@ -23,9 +23,7 @@ func NewSlicer(options SlicerOptions) handle.ModelSlicer {
 }
 
 func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
-
 	layerCount := (m.Size().Z()-s.options.InitialThickness)/s.options.LayerThickness + 1
-
 	fmt.Println("layer count:", layerCount)
 
 	layers := make([]*layer, layerCount)
@@ -105,7 +103,7 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 	retLayers := make([]data.PartitionedLayer, len(layers))
 	for i, layer := range layers {
 		layer.makePolygons(m)
-		lp, ok := layer.gnerateLayerParts()
+		lp, ok := layer.generateLayerParts()
 
 		if !ok {
 			return nil, errors.New(fmt.Sprintf("partitioning failed at layer %v", i))
@@ -113,5 +111,6 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 
 		retLayers[i] = lp
 	}
+
 	return retLayers, nil
 }

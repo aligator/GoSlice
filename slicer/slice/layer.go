@@ -127,7 +127,7 @@ RerunConnectPolygons:
 			}
 
 			// close slicePolygon if the start end end now fits inside the snap distance
-			if polygon.IsAlmostFinished(snapDistance) {
+			if l.polygons[i].IsAlmostFinished(snapDistance) {
 				l.removeLastPoint(i)
 				l.closed[i] = true
 			}
@@ -176,7 +176,7 @@ RerunConnectPolygons:
 	l.polygons = clearedPolygons
 }
 
-func (l *layer) gnerateLayerParts() (data.PartitionedLayer, bool) {
+func (l *layer) generateLayerParts() (data.PartitionedLayer, bool) {
 	c := clip.NewClip()
 	return c.GenerateLayerParts(l)
 }

@@ -63,6 +63,8 @@ func (s GoSlicer) Process(filename string, outFilename string) error {
 	}
 	//}
 
+	optimizedModel.SaveDebugSTL("test.stl")
+
 	layers, err := s.slicer.Slice(optimizedModel)
 	if err != nil {
 		return err

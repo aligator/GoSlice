@@ -24,4 +24,5 @@ type OptimizedModel interface {
 	Model
 	Size() util.MicroVec3
 	OptimizedFace(index int) OptimizedFace
+	SaveDebugSTL(filename string) error
 }
