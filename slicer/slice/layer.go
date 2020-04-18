@@ -141,7 +141,6 @@ RerunConnectPolygons:
 
 	var clearedPolygons data.Paths
 	snapDistance = util.Micrometer(1000)
-	// do not use range to allow modifying i when deleting
 	for i, poly := range l.polygons {
 		if poly == nil {
 			continue
