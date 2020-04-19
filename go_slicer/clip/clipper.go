@@ -4,7 +4,6 @@ import (
 	"GoSlicer/go_slicer/data"
 	"GoSlicer/util"
 	clipper "github.com/ctessum/go.clipper"
-	"math"
 )
 
 type Clip interface {
@@ -15,7 +14,8 @@ type Clip interface {
 }
 
 // clipperClip implements Clip using the external clipper library
-type clipperClip struct{}
+type clipperClip struct {
+}
 
 func NewClip() Clip {
 	return clipperClip{}
@@ -82,6 +82,14 @@ func clipperPaths(p data.Paths) clipper.Paths {
 
 func microPoint(p *clipper.IntPoint) util.MicroPoint {
 	return util.NewMicroPoint(util.Micrometer(p.X), util.Micrometer(p.Y))
+}
+
+func microPath(p clipper.Path) data.Path {
+	var result data.Path
+	for _, point := range p {
+		result = append(result, microPoint(point))
+	}
+	return result
 }
 
 func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bool) {
@@ -159,21 +167,10 @@ func (c clipperClip) Inset(part data.LayerPart, offset util.Micrometer, insetCou
 		insets = append(insets, data.Paths{})
 
 		for _, path := range clipperInsets[i] {
-			var filteredPath []util.MicroPoint
 
-			for k, point := range path {
-				if k == 0 || k == len(path)-1 {
-					filteredPath = append(filteredPath, microPoint(point))
-					continue
-				}
+			microPath := microPath(path)
 
-				// TODO: Experimental: remove too small segments from path
-				prev := filteredPath[len(filteredPath)-1]
-				if math.Sqrt(float64((clipper.CInt(prev.Y())-point.Y)*(clipper.CInt(prev.Y())-point.Y)+(point.X-clipper.CInt(prev.X()))*(point.X-clipper.CInt(prev.X())))) > 100.0 {
-					filteredPath = append(filteredPath, microPoint(point))
-				}
-			}
-			insets[i] = append(insets[i], filteredPath)
+			insets[i] = append(insets[i], microPath.Simplify(-1, -1))
 		}
 	}
 

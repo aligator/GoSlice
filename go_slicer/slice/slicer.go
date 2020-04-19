@@ -17,7 +17,7 @@ func NewSlicer(options *data.Options) handle.ModelSlicer {
 }
 
 func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
-	layerCount := (m.Size().Z()-s.options.InitialLayerThickness)/s.options.LayerThickness + 1
+	layerCount := (m.Size().Z()-s.options.Print.InitialLayerThickness)/s.options.Print.LayerThickness + 1
 	fmt.Println("layer count:", layerCount)
 
 	layers := make([]*layer, layerCount)
@@ -42,8 +42,8 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 		}
 
 		// for each layerNr
-		for layerNr := int((minZ - s.options.InitialLayerThickness) / s.options.LayerThickness); util.Micrometer(layerNr) <= (maxZ-s.options.InitialLayerThickness)/s.options.LayerThickness; layerNr++ {
-			z := util.Micrometer(layerNr)*s.options.LayerThickness + s.options.InitialLayerThickness
+		for layerNr := int((minZ - s.options.Print.InitialLayerThickness) / s.options.Print.LayerThickness); util.Micrometer(layerNr) <= (maxZ-s.options.Print.InitialLayerThickness)/s.options.Print.LayerThickness; layerNr++ {
+			z := util.Micrometer(layerNr)*s.options.Print.LayerThickness + s.options.Print.InitialLayerThickness
 			if z < minZ {
 				continue
 			}
@@ -52,7 +52,7 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 			}
 
 			if layers[layerNr] == nil {
-				layers[layerNr] = newLayer(layerNr)
+				layers[layerNr] = newLayer(layerNr, s.options)
 			}
 
 			layer := layers[layerNr]

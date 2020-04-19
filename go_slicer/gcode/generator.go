@@ -31,21 +31,26 @@ func (g *generator) Init() {
 	g.builder.addComment("\nG1 X200 E20 F600 ; prime nozzle")
 	g.builder.addComment("\nG1 Z5 F5000 ; lift nozzle")
 
-	g.builder.setExtrusion(g.options.InitialLayerThickness, g.options.ExtrusionWidth, g.options.FilamentDiameter)
+	g.builder.setExtrusion(g.options.Print.InitialLayerThickness, g.options.Printer.ExtrusionWidth, g.options.Filament.FilamentDiameter)
 }
 
 func (g *generator) Generate(layerNum int, layer data.PartitionedLayer) {
+	if layerNum == 0 {
+		g.builder.setExtrudeSpeed(30)
+	} else {
+		g.builder.setExtrudeSpeed(60)
+	}
+
 	if layerNum == 2 {
 		g.builder.addComment("\nM106 ; enable fan")
 	}
 
 	c := clip.NewClip()
-	insetParts := c.InsetLayer(layer, g.options.ExtrusionWidth, g.options.InsetCount)
+	insetParts := c.InsetLayer(layer, g.options.Printer.ExtrusionWidth, g.options.Print.InsetCount)
 	fmt.Printf("Processing layer %v...\n", layerNum)
 	g.builder.addComment("LAYER:%v", layerNum)
 
 	for _, part := range insetParts {
-
 		for insetNr := len(part) - 1; insetNr > -1; insetNr-- {
 			if insetNr == 0 {
 				g.builder.addComment("TYPE:WALL-OUTER")
@@ -54,14 +59,14 @@ func (g *generator) Generate(layerNum int, layer data.PartitionedLayer) {
 			}
 
 			for _, poly := range part[insetNr] {
-				g.builder.addPolygon(poly, g.options.InitialLayerThickness+util.Micrometer(layerNum)*g.options.LayerThickness)
+				g.builder.addPolygon(poly, g.options.Print.InitialLayerThickness+util.Micrometer(layerNum)*g.options.Print.LayerThickness)
 			}
 		}
 	}
 }
 
 func (g *generator) Finish() string {
-	g.builder.setExtrusion(g.options.LayerThickness, g.options.ExtrusionWidth, g.options.FilamentDiameter)
+	g.builder.setExtrusion(g.options.Print.LayerThickness, g.options.Printer.ExtrusionWidth, g.options.Filament.FilamentDiameter)
 	g.builder.addComment("\nM107 ; enable fan")
 
 	return g.builder.buf.String()

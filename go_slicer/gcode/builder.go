@@ -33,9 +33,12 @@ func (g *gcodeBuilder) setExtrusion(layerThickness, lineWidth, filamentDiameter 
 	g.extrusionPerMM = layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea
 }
 
-func (g *gcodeBuilder) setSpeeds(moveSpeed, extrudeSpeed int) {
-	g.moveSpeed = moveSpeed
-	g.extrudeSpeed = extrudeSpeed
+func (g *gcodeBuilder) setMoveSpeed(moveSpeed util.Millimeter) {
+	g.moveSpeed = int(moveSpeed)
+}
+
+func (g *gcodeBuilder) setExtrudeSpeed(extrudeSpeed util.Millimeter) {
+	g.extrudeSpeed = int(extrudeSpeed)
 }
 
 func (g *gcodeBuilder) addComment(comment string, args ...interface{}) {

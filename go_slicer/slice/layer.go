@@ -10,6 +10,7 @@ import (
 )
 
 type layer struct {
+	options            *data.Options
 	segments           []*segment
 	faceToSegmentIndex map[int]int
 	polygons           data.Paths
@@ -17,8 +18,9 @@ type layer struct {
 	number             int
 }
 
-func newLayer(number int) *layer {
+func newLayer(number int, options *data.Options) *layer {
 	return &layer{
+		options:            options,
 		faceToSegmentIndex: map[int]int{},
 		number:             number,
 	}

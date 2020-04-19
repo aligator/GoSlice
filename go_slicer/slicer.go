@@ -25,6 +25,21 @@ type GoSlicer struct {
 
 func NewGoSlicer(o ...option) *GoSlicer {
 	options := data.Options{
+		Print: data.PrintOptions{
+			IntialLayerSpeed: 30,
+			LayerSpeed:       60,
+
+			InitialLayerThickness: 200,
+			LayerThickness:        200,
+			InsetCount:            2,
+		},
+		Filament: data.FilamentOptions{
+			FilamentDiameter: util.Millimeter(1.75).ToMicrometer(),
+		},
+		Printer: data.PrinterOptions{
+			ExtrusionWidth: 400,
+		},
+
 		MeldDistance: 30,
 		Center: util.NewMicroVec3(
 			util.Millimeter(100).ToMicrometer(),
@@ -33,11 +48,6 @@ func NewGoSlicer(o ...option) *GoSlicer {
 		),
 		JoinPolygonSnapDistance:   100,
 		FinishPolygonSnapDistance: 1000,
-		InitialLayerThickness:     200,
-		LayerThickness:            200,
-		FilamentDiameter:          util.Millimeter(1.75).ToMicrometer(),
-		ExtrusionWidth:            400,
-		InsetCount:                5,
 	}
 
 	s := &GoSlicer{

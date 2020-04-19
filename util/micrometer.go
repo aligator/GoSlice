@@ -46,6 +46,13 @@ func NewMicroVec3(x Micrometer, y Micrometer, z Micrometer) MicroVec3 {
 	}
 }
 
+func Max(a, b Micrometer) Micrometer {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func (v *microVec3) X() Micrometer {
 	return v.x
 }

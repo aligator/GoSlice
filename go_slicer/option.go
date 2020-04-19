@@ -30,14 +30,14 @@ func Center(p util.MicroVec3) option {
 // InitialLayerThickness is the layer thickness for the first layer
 func InitialLayerThickness(m util.Micrometer) option {
 	return func(s *GoSlicer) {
-		s.o.InitialLayerThickness = m
+		s.o.Print.InitialLayerThickness = m
 	}
 }
 
 // LayerThickness is the thickness for all but the first layer
 func LayerThickness(m util.Micrometer) option {
 	return func(s *GoSlicer) {
-		s.o.LayerThickness = m
+		s.o.Print.LayerThickness = m
 	}
 }
 
@@ -61,20 +61,34 @@ func FinishPolygonSnapDistance(m util.Micrometer) option {
 // FilamentDiameter is the filament diameter used by the printer
 func FilamentDiameter(m util.Millimeter) option {
 	return func(s *GoSlicer) {
-		s.o.FilamentDiameter = m.ToMicrometer()
+		s.o.Filament.FilamentDiameter = m.ToMicrometer()
 	}
 }
 
 // ExtrusionWidth is the diameter of your nozzle
 func ExtrusionWidth(m util.Micrometer) option {
 	return func(s *GoSlicer) {
-		s.o.ExtrusionWidth = m
+		s.o.Printer.ExtrusionWidth = m
 	}
 }
 
 // InsetCount is the number of perimeters
 func InsetCount(n int) option {
 	return func(s *GoSlicer) {
-		s.o.InsetCount = n
+		s.o.Print.InsetCount = n
+	}
+}
+
+// InitialLayerSpeed is speed only for the first layer in mm per second
+func InitialLayerSpeed(mmPerS util.Millimeter) option {
+	return func(s *GoSlicer) {
+		s.o.Print.IntialLayerSpeed = mmPerS
+	}
+}
+
+// LayerSpeed is speed only for all but the first layer in mm per second
+func LayerSpeed(mmPerS util.Millimeter) option {
+	return func(s *GoSlicer) {
+		s.o.Print.LayerSpeed = mmPerS
 	}
 }
