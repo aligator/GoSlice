@@ -22,38 +22,20 @@ func NewClip() Clip {
 }
 
 type layerPart struct {
-	// clipperPolygons are the polys set by clipper
-	clipperPolygons clipper.Paths
-
-	// clipPolygons holds the lazy converted polygons.
-	// When calling Polygons the first time all clipperPolygons
-	// are converted to MicroPoint polygons.
-	clipPolygons data.Paths
+	outline data.Path
+	holes   data.Paths
 }
 
-func (l *layerPart) Polygons() data.Paths {
-	if l.clipPolygons != nil {
-		return l.clipPolygons
-	}
+func (l layerPart) Outline() data.Path {
+	return l.outline
+}
 
-	result := data.Paths{}
-
-	for _, poly := range l.clipperPolygons {
-		newPath := data.Path{}
-		for _, point := range poly {
-			newPath = append(newPath, microPoint(point))
-		}
-		result = append(result, newPath)
-	}
-
-	l.clipPolygons = result
-	l.clipperPolygons = nil
-	return l.clipPolygons
+func (l layerPart) Holes() data.Paths {
+	return l.holes
 }
 
 type partitionedLayer struct {
-	parts    []data.LayerPart
-	children []data.PartitionedLayer
+	parts []data.LayerPart
 }
 
 func (p partitionedLayer) LayerParts() []data.LayerPart {
@@ -92,6 +74,24 @@ func microPath(p clipper.Path) data.Path {
 	return result
 }
 
+func microPaths(p clipper.Paths, simplify bool) data.Paths {
+	var result data.Paths
+
+	for _, path := range p {
+		microPath := microPath(path)
+
+		if simplify {
+			microPath = microPath.Simplify(-1, -1)
+		}
+
+		result = append(result,
+			microPath.Simplify(-1, -1),
+		)
+	}
+
+	return result
+}
+
 func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bool) {
 	polyList := clipper.Paths{}
 	// convert all polygons to clipper polygons
@@ -109,7 +109,7 @@ func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bo
 
 			// filter too near points
 			// check this always with the previous point
-			if layerPoint.Sub(layerPolygon[prev]).ShorterThan(200) {
+			if layerPoint.Sub(layerPolygon[prev]).ShorterThan(100) {
 				continue
 			}
 
@@ -129,15 +129,32 @@ func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bo
 		return nil, false
 	}
 
-	for _, p := range resultPolys.Childs() {
-		part := layerPart{}
-		part.clipperPolygons = append(part.clipperPolygons, p.Contour())
-		for _, child := range p.Childs() {
-			part.clipperPolygons = append(part.clipperPolygons, child.Contour())
-		}
-		layer.parts = append(layer.parts, &part)
-	}
+	polysForNextRound := []*clipper.PolyNode{}
 
+	for _, c := range resultPolys.Childs() {
+		polysForNextRound = append(polysForNextRound, c)
+	}
+	for {
+		if polysForNextRound == nil {
+			break
+		}
+		thisRound := polysForNextRound
+		polysForNextRound = nil
+
+		for _, p := range thisRound {
+
+			part := layerPart{
+				outline: microPath(p.Contour()),
+			}
+			for _, child := range p.Childs() {
+				part.holes = append(part.holes, microPath(child.Contour()))
+				for _, c := range child.Childs() {
+					polysForNextRound = append(polysForNextRound, c)
+				}
+			}
+			layer.parts = append(layer.parts, &part)
+		}
+	}
 	return layer, true
 }
 
@@ -151,28 +168,42 @@ func (c clipperClip) InsetLayer(layer data.PartitionedLayer, offset util.Microme
 }
 
 func (c clipperClip) Inset(part data.LayerPart, offset util.Micrometer, insetCount int) []data.Paths {
-	var clipperInsets []clipper.Paths
 	var insets []data.Paths
 
+	// save which insets are already finished and don't process them further (for more performance)
+	insetsFinished := false
+	o := clipper.NewClipperOffset()
+
 	for i := 0; i < insetCount; i++ {
-		clipperInsets = append(clipperInsets, clipper.NewPaths())
-		o := clipper.NewClipperOffset()
-		o.AddPaths(clipperPaths(part.Polygons()), clipper.JtRound, clipper.EtClosedPolygon)
-		o.MiterLimit = 2
-		clipperInsets[i] = o.Execute(float64(-int(offset)*i) - float64(offset/2))
-		if len(clipperInsets[i]) < 1 {
-			break
-		}
+		// insets for the outline
+		if !insetsFinished {
+			o.Clear()
+			o.AddPaths(clipperPaths(data.Paths{part.Outline()}), clipper.JtSquare, clipper.EtClosedPolygon)
+			o.AddPaths(clipperPaths(part.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
 
-		insets = append(insets, data.Paths{})
-
-		for _, path := range clipperInsets[i] {
-
-			microPath := microPath(path)
-
-			insets[i] = append(insets[i], microPath.Simplify(-1, -1))
+			o.MiterLimit = 2
+			newInset := o.Execute(float64(-int(offset)*i) - float64(offset/2))
+			if len(newInset) <= 0 {
+				insetsFinished = true
+			} else {
+				insets = append(insets, microPaths(newInset, true))
+			}
 		}
 	}
 
 	return insets
+}
+
+func (c clipperClip) GetLinearFill(poly data.Path, lineWidth util.Micrometer) {
+	/*paths := clipperPaths(data.Paths{poly})
+	bounds := clipper.GetBounds(paths)
+	cl := clipper.NewClipper(clipper.IoNone)
+
+	cl.AddPath(paths[0], clipper.PtSubject, true)
+	cl.
+
+	currentPos := clipper.NewIntPoint(bounds, 0)
+	for {
+
+	}*/
 }

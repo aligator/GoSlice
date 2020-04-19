@@ -58,8 +58,10 @@ func (g *generator) Generate(layerNum int, layer data.PartitionedLayer) {
 				g.builder.addComment("TYPE:WALL-INNER")
 			}
 
+			z := g.options.Print.InitialLayerThickness + util.Micrometer(layerNum)*g.options.Print.LayerThickness
 			for _, poly := range part[insetNr] {
-				g.builder.addPolygon(poly, g.options.Print.InitialLayerThickness+util.Micrometer(layerNum)*g.options.Print.LayerThickness)
+				fill := insetNr == len(part)-1 && layerNum == 0
+				g.builder.addPolygon(poly, z, fill)
 			}
 		}
 	}

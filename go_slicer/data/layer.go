@@ -135,7 +135,8 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared u
 type Paths []Path
 
 type LayerPart interface {
-	Polygons() Paths
+	Outline() Path
+	Holes() Paths
 }
 
 type Layer interface {

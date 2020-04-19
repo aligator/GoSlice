@@ -33,8 +33,8 @@ func (l *layer) Polygons() data.Paths {
 func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, finishPolygonSnapDistance util.Micrometer) {
 	// try for each segment to generate a slicePolygon with other segments
 	// if the segment is not already assigned to another slicePolygon
-	for startSegmentIndex, segment := range l.segments {
-		if segment.addedToPolygon {
+	for startSegmentIndex := range l.segments {
+		if l.segments[startSegmentIndex].addedToPolygon {
 			continue
 		}
 
@@ -46,14 +46,13 @@ func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, fi
 
 		for {
 			canClose = false
-			currentSegment := l.segments[currentSegmentIndex]
-			currentSegment.addedToPolygon = true
-			p0 := currentSegment.end
+			l.segments[currentSegmentIndex].addedToPolygon = true
+			p0 := l.segments[currentSegmentIndex].end
 			polygon = append(polygon, p0)
 
 			nextIndex := -1
 			// get the whole face for the index
-			face := om.OptimizedFace(currentSegment.faceIndex)
+			face := om.OptimizedFace(l.segments[currentSegmentIndex].faceIndex)
 
 			// For each touching face of the current face
 			// check if touching face is in this layer.
@@ -70,7 +69,7 @@ func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, fi
 					p1 := l.segments[touchingSegmentIndex].start
 					diff := p0.Sub(p1)
 
-					if diff.ShorterThan(30) {
+					if diff.ShorterThan(l.options.MeldDistance) {
 						if touchingSegmentIndex == startSegmentIndex {
 							canClose = true
 						}

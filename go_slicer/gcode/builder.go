@@ -76,7 +76,7 @@ func (g *gcodeBuilder) addMove(p util.MicroVec3, extrusion util.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *gcodeBuilder) addPolygon(polygon data.Path, z util.Micrometer) {
+func (g *gcodeBuilder) addPolygon(polygon data.Path, z util.Micrometer, fill bool) {
 	if len(polygon) == 0 {
 		g.addComment("ignore Too small polygon")
 		return
@@ -109,4 +109,9 @@ func (g *gcodeBuilder) addPolygon(polygon data.Path, z util.Micrometer) {
 		util.NewMicroVec3(polygon[0].X(), polygon[0].Y(), z),
 		point0.Sub(pointLast).SizeMM()*g.extrusionPerMM,
 	)
+
+	if fill {
+		//c := clip.NewClip()
+		//path := c.GetLinearFill(polygon)
+	}
 }
