@@ -14,7 +14,8 @@ go run /path/to/stl/file.stl
 * ~~read stl~~ (initially done by using external lib github.com/hschendel/stl)
 * ~~implement optimisation as in first Cura Commit~~
 * ~~first gcode result~~ YAY!!
-* refactor and Go-ify the code
+* ~~refactor and Go-ify the code~~ (done, for now...)
+* ~~perimeters, with configurable outer perimeter speed~~
 * simple infill
 * bottom / top layer
 * options as parameters / config file (using cobra / viper)
