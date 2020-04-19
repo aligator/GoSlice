@@ -26,8 +26,9 @@ type GoSlicer struct {
 func NewGoSlicer(o ...option) *GoSlicer {
 	options := data.Options{
 		Print: data.PrintOptions{
-			IntialLayerSpeed: 30,
-			LayerSpeed:       60,
+			IntialLayerSpeed:    30,
+			LayerSpeed:          60,
+			OuterPerimeterSpeed: 40,
 
 			InitialLayerThickness: 200,
 			LayerThickness:        200,

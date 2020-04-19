@@ -3,8 +3,9 @@ package data
 import "GoSlicer/util"
 
 type PrintOptions struct {
-	IntialLayerSpeed util.Millimeter
-	LayerSpeed       util.Millimeter
+	IntialLayerSpeed    util.Millimeter
+	LayerSpeed          util.Millimeter
+	OuterPerimeterSpeed util.Millimeter
 
 	InitialLayerThickness util.Micrometer
 	LayerThickness        util.Micrometer

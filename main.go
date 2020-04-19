@@ -16,8 +16,8 @@ func main() {
 	}
 
 	p := go_slicer.NewGoSlicer(
-		go_slicer.Center(util.NewMicroVec3(0, 0, 0)),
-		go_slicer.InsetCount(2))
+		go_slicer.Center(util.NewMicroVec3(util.Millimeter(100).ToMicrometer(), util.Millimeter(100).ToMicrometer(), 0)),
+		go_slicer.InsetCount(5))
 	err := p.Process(args[0], args[0]+".gcode")
 
 	if err != nil {

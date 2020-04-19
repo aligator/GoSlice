@@ -41,6 +41,12 @@ func (g *gcodeBuilder) setExtrudeSpeed(extrudeSpeed util.Millimeter) {
 	g.extrudeSpeed = int(extrudeSpeed)
 }
 
+func (g *gcodeBuilder) addCommand(command string, args ...interface{}) {
+	command = command + "\n"
+	command = fmt.Sprintf(command, args...)
+	g.buf.WriteString(command)
+}
+
 func (g *gcodeBuilder) addComment(comment string, args ...interface{}) {
 	comment = ";" + comment + "\n"
 	comment = fmt.Sprintf(comment, args...)

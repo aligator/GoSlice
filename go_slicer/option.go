@@ -79,16 +79,23 @@ func InsetCount(n int) option {
 	}
 }
 
-// InitialLayerSpeed is speed only for the first layer in mm per second
+// InitialLayerSpeed is the speed only for the first layer in mm per second
 func InitialLayerSpeed(mmPerS util.Millimeter) option {
 	return func(s *GoSlicer) {
 		s.o.Print.IntialLayerSpeed = mmPerS
 	}
 }
 
-// LayerSpeed is speed only for all but the first layer in mm per second
+// LayerSpeed is the speed for all but the first layer in mm per second
 func LayerSpeed(mmPerS util.Millimeter) option {
 	return func(s *GoSlicer) {
 		s.o.Print.LayerSpeed = mmPerS
+	}
+}
+
+// OuterPerimeterSpeed is the speed only for outer perimeters
+func OuterPerimeterSpeed(mmPerS util.Millimeter) option {
+	return func(s *GoSlicer) {
+		s.o.Print.OuterPerimeterSpeed = mmPerS
 	}
 }
