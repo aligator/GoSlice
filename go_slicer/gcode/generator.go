@@ -36,9 +36,9 @@ func (g *generator) Init() {
 
 func (g *generator) Generate(layerNum int, layer data.PartitionedLayer) {
 	if layerNum == 0 {
-		g.builder.setExtrudeSpeed(30)
+		g.builder.setExtrudeSpeed(g.options.Print.IntialLayerSpeed)
 	} else {
-		g.builder.setExtrudeSpeed(60)
+		g.builder.setExtrudeSpeed(g.options.Print.LayerSpeed)
 	}
 
 	if layerNum == 2 {
