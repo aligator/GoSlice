@@ -1,8 +1,8 @@
 package data
 
 import (
-	"GoSlicer/util"
-	"GoSlicer/util/math2d"
+	"GoSlice/util"
+	"GoSlice/util/math2d"
 )
 
 type Path []util.MicroPoint

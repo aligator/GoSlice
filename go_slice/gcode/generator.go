@@ -1,10 +1,10 @@
 package gcode
 
 import (
-	"GoSlicer/go_slicer/clip"
-	"GoSlicer/go_slicer/data"
-	"GoSlicer/go_slicer/handle"
-	"GoSlicer/util"
+	"GoSlice/go_slice/clip"
+	"GoSlice/go_slice/data"
+	"GoSlice/go_slice/handle"
+	"GoSlice/util"
 	"bytes"
 	"fmt"
 )
@@ -25,7 +25,7 @@ func (g *generator) Init() {
 	b := []byte{}
 	g.builder = newGCodeBuilder(bytes.NewBuffer(b))
 
-	g.builder.addComment("Generated with GoSlicer")
+	g.builder.addComment("Generated with GoSlice")
 	g.builder.addCommand("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
 	g.builder.addCommand("G92 E0 ; reset extrusion distance")
 	g.builder.addCommand("G1 X200 E20 F600 ; prime nozzle")

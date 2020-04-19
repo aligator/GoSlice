@@ -1,8 +1,8 @@
 package optimize
 
 import (
-	"GoSlicer/go_slicer/data"
-	"GoSlicer/util"
+	"GoSlice/go_slice/data"
+	"GoSlice/util"
 	"github.com/hschendel/stl"
 )
 

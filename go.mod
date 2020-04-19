@@ -1,4 +1,4 @@
-module GoSlicer
+module GoSlice
 
 go 1.14
 

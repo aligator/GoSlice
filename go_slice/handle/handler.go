@@ -1,6 +1,6 @@
 package handle
 
-import "GoSlicer/go_slicer/data"
+import "GoSlice/go_slice/data"
 
 type ModelReader interface {
 	Read(filename string) ([]data.Model, error)

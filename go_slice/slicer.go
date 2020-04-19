@@ -1,19 +1,19 @@
-package go_slicer
+package go_slice
 
 import (
-	"GoSlicer/go_slicer/data"
-	"GoSlicer/go_slicer/gcode"
-	"GoSlicer/go_slicer/handle"
-	"GoSlicer/go_slicer/optimize"
-	"GoSlicer/go_slicer/slice"
-	"GoSlicer/go_slicer/stl"
-	"GoSlicer/go_slicer/write"
-	"GoSlicer/util"
+	"GoSlice/go_slice/data"
+	"GoSlice/go_slice/gcode"
+	"GoSlice/go_slice/handle"
+	"GoSlice/go_slice/optimize"
+	"GoSlice/go_slice/slice"
+	"GoSlice/go_slice/stl"
+	"GoSlice/go_slice/write"
+	"GoSlice/util"
 	"fmt"
 	"time"
 )
 
-type GoSlicer struct {
+type GoSlice struct {
 	o         *data.Options
 	reader    handle.ModelReader
 	optimizer handle.ModelOptimizer
@@ -23,7 +23,7 @@ type GoSlicer struct {
 	writer    handle.GCodeWriter
 }
 
-func NewGoSlicer(o ...option) *GoSlicer {
+func NewGoSlice(o ...option) *GoSlice {
 	options := data.Options{
 		Print: data.PrintOptions{
 			IntialLayerSpeed:    30,
@@ -51,7 +51,7 @@ func NewGoSlicer(o ...option) *GoSlicer {
 		FinishPolygonSnapDistance: 1000,
 	}
 
-	s := &GoSlicer{
+	s := &GoSlice{
 		o:         &options,
 		reader:    stl.Reader(),
 		optimizer: optimize.NewOptimizer(&options),
@@ -66,7 +66,7 @@ func NewGoSlicer(o ...option) *GoSlicer {
 	return s
 }
 
-func (s *GoSlicer) Process(filename string, outFilename string) error {
+func (s *GoSlice) Process(filename string, outFilename string) error {
 	startTime := time.Now()
 	models, err := s.reader.Read(filename)
 	if err != nil {

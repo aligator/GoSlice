@@ -1,7 +1,7 @@
 package math2d
 
 import (
-	"GoSlicer/util"
+	"GoSlice/util"
 )
 
 func PointsDistance(a, b util.MicroPoint) util.Micrometer {

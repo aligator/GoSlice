@@ -1,7 +1,7 @@
 package optimize
 
 import (
-	"GoSlicer/util"
+	"GoSlice/util"
 )
 
 type optimizedFace struct {

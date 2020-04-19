@@ -1,8 +1,8 @@
 package main
 
 import (
-	"GoSlicer/go_slicer"
-	"GoSlicer/util"
+	"GoSlice/go_slice"
+	"GoSlice/util"
 	"fmt"
 	"os"
 )
@@ -15,9 +15,9 @@ func main() {
 		os.Exit(2)
 	}
 
-	p := go_slicer.NewGoSlicer(
-		go_slicer.Center(util.NewMicroVec3(util.Millimeter(100).ToMicrometer(), util.Millimeter(100).ToMicrometer(), 0)),
-		go_slicer.InsetCount(5))
+	p := go_slice.NewGoSlice(
+		go_slice.Center(util.NewMicroVec3(util.Millimeter(100).ToMicrometer(), util.Millimeter(100).ToMicrometer(), 0)),
+		go_slice.InsetCount(5))
 	err := p.Process(args[0], args[0]+".gcode")
 
 	if err != nil {

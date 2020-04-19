@@ -1,8 +1,8 @@
 package gcode
 
 import (
-	"GoSlicer/go_slicer/data"
-	"GoSlicer/util"
+	"GoSlice/go_slice/data"
+	"GoSlice/util"
 	"bytes"
 	"fmt"
 	"math"

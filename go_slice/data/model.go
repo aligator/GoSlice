@@ -1,6 +1,6 @@
 package data
 
-import "GoSlicer/util"
+import "GoSlice/util"
 
 type Face interface {
 	Points() [3]util.MicroVec3

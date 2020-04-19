@@ -1,6 +1,6 @@
 package optimize
 
-import "GoSlicer/util"
+import "GoSlice/util"
 
 type point struct {
 	pos         util.MicroVec3

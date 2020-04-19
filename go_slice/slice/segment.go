@@ -1,7 +1,7 @@
 package slice
 
 import (
-	"GoSlicer/util"
+	"GoSlice/util"
 )
 
 type segment struct {

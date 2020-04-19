@@ -1,6 +1,6 @@
 package data
 
-import "GoSlicer/util"
+import "GoSlice/util"
 
 type PrintOptions struct {
 	IntialLayerSpeed    util.Millimeter
