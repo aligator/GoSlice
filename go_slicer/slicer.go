@@ -1,19 +1,20 @@
-package slicer
+package go_slicer
 
 import (
-	"GoSlicer/slicer/data"
-	"GoSlicer/slicer/gcode"
-	"GoSlicer/slicer/handle"
-	"GoSlicer/slicer/optimize"
-	"GoSlicer/slicer/slice"
-	"GoSlicer/slicer/stl"
-	"GoSlicer/slicer/write"
+	"GoSlicer/go_slicer/data"
+	"GoSlicer/go_slicer/gcode"
+	"GoSlicer/go_slicer/handle"
+	"GoSlicer/go_slicer/optimize"
+	"GoSlicer/go_slicer/slice"
+	"GoSlicer/go_slicer/stl"
+	"GoSlicer/go_slicer/write"
 	"GoSlicer/util"
 	"fmt"
 	"time"
 )
 
 type GoSlicer struct {
+	o         *data.Options
 	reader    handle.ModelReader
 	optimizer handle.ModelOptimizer
 	slicer    handle.ModelSlicer
@@ -22,31 +23,39 @@ type GoSlicer struct {
 	writer    handle.GCodeWriter
 }
 
-func NewGoSlicer() *GoSlicer {
-	s := &GoSlicer{
-		reader: stl.Reader(),
-		optimizer: optimize.NewOptimizer(optimize.OptimizerOptions{
-			MeldDistance: util.Micrometer(30),
-			Center:       util.NewMicroVec3(102500, 102500, 0),
-		}),
-		slicer: slice.NewSlicer(slice.SlicerOptions{
-			InitialThickness: 200,
-			LayerThickness:   200,
-		}),
-		modifiers: nil,
-		generator: gcode.NewGenerator(gcode.GeneratorOptions{
-			LayerThickness:        200,
-			InitialLayerThickness: 200,
-			FilamentDiameter:      1500,
-			ExtrusionWidth:        400,
-			InsetCount:            5,
-		}),
-		writer: write.Writer(),
+func NewGoSlicer(o ...option) *GoSlicer {
+	options := data.Options{
+		MeldDistance: 30,
+		Center: util.NewMicroVec3(
+			util.Millimeter(100).ToMicrometer(),
+			util.Millimeter(100).ToMicrometer(),
+			0,
+		),
+		JoinPolygonSnapDistance:   100,
+		FinishPolygonSnapDistance: 1000,
+		InitialLayerThickness:     200,
+		LayerThickness:            200,
+		FilamentDiameter:          util.Millimeter(1.75).ToMicrometer(),
+		ExtrusionWidth:            400,
+		InsetCount:                5,
 	}
+
+	s := &GoSlicer{
+		o:         &options,
+		reader:    stl.Reader(),
+		optimizer: optimize.NewOptimizer(&options),
+		slicer:    slice.NewSlicer(&options),
+		modifiers: nil,
+		generator: gcode.NewGenerator(&options),
+		writer:    write.Writer(),
+	}
+
+	s.With(o...)
+
 	return s
 }
 
-func (s GoSlicer) Process(filename string, outFilename string) error {
+func (s *GoSlicer) Process(filename string, outFilename string) error {
 	startTime := time.Now()
 	models, err := s.reader.Read(filename)
 	if err != nil {

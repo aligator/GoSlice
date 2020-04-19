@@ -1,7 +1,7 @@
 package gcode
 
 import (
-	"GoSlicer/slicer/data"
+	"GoSlicer/go_slicer/data"
 	"GoSlicer/util"
 	"bytes"
 	"fmt"

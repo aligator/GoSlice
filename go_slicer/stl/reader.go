@@ -1,8 +1,8 @@
 package stl
 
 import (
-	"GoSlicer/slicer/data"
-	"GoSlicer/slicer/handle"
+	"GoSlicer/go_slicer/data"
+	"GoSlicer/go_slicer/handle"
 	"GoSlicer/util"
 	"errors"
 	"github.com/hschendel/stl"

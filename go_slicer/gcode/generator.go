@@ -1,30 +1,21 @@
 package gcode
 
 import (
-	"GoSlicer/slicer/clip"
-	"GoSlicer/slicer/data"
-	"GoSlicer/slicer/handle"
+	"GoSlicer/go_slicer/clip"
+	"GoSlicer/go_slicer/data"
+	"GoSlicer/go_slicer/handle"
 	"GoSlicer/util"
 	"bytes"
 	"fmt"
 )
 
-// TODO use interface with functional options?
-type GeneratorOptions struct {
-	LayerThickness        util.Micrometer
-	InitialLayerThickness util.Micrometer
-	FilamentDiameter      util.Micrometer
-	ExtrusionWidth        util.Micrometer
-	InsetCount            int
-}
-
 type generator struct {
-	options GeneratorOptions
+	options *data.Options
 	gcode   string
 	builder *gcodeBuilder
 }
 
-func NewGenerator(options GeneratorOptions) handle.GCodeGenerator {
+func NewGenerator(options *data.Options) handle.GCodeGenerator {
 	return &generator{
 		options: options,
 	}

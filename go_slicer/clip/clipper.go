@@ -1,7 +1,7 @@
 package clip
 
 import (
-	"GoSlicer/slicer/data"
+	"GoSlicer/go_slicer/data"
 	"GoSlicer/util"
 	clipper "github.com/ctessum/go.clipper"
 	"math"

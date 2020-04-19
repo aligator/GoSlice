@@ -1,29 +1,23 @@
 package slice
 
 import (
-	"GoSlicer/slicer/data"
-	"GoSlicer/slicer/handle"
+	"GoSlicer/go_slicer/data"
+	"GoSlicer/go_slicer/handle"
 	"GoSlicer/util"
 	"errors"
 	"fmt"
 )
 
-// TODO use interface with functional options?
-type SlicerOptions struct {
-	InitialThickness util.Micrometer
-	LayerThickness   util.Micrometer
-}
-
 type slicer struct {
-	options SlicerOptions
+	options *data.Options
 }
 
-func NewSlicer(options SlicerOptions) handle.ModelSlicer {
+func NewSlicer(options *data.Options) handle.ModelSlicer {
 	return &slicer{options: options}
 }
 
 func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
-	layerCount := (m.Size().Z()-s.options.InitialThickness)/s.options.LayerThickness + 1
+	layerCount := (m.Size().Z()-s.options.InitialLayerThickness)/s.options.LayerThickness + 1
 	fmt.Println("layer count:", layerCount)
 
 	layers := make([]*layer, layerCount)
@@ -48,8 +42,8 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 		}
 
 		// for each layerNr
-		for layerNr := int((minZ - s.options.InitialThickness) / s.options.LayerThickness); util.Micrometer(layerNr) <= (maxZ-s.options.InitialThickness)/s.options.LayerThickness; layerNr++ {
-			z := util.Micrometer(layerNr)*s.options.LayerThickness + s.options.InitialThickness
+		for layerNr := int((minZ - s.options.InitialLayerThickness) / s.options.LayerThickness); util.Micrometer(layerNr) <= (maxZ-s.options.InitialLayerThickness)/s.options.LayerThickness; layerNr++ {
+			z := util.Micrometer(layerNr)*s.options.LayerThickness + s.options.InitialLayerThickness
 			if z < minZ {
 				continue
 			}
@@ -102,7 +96,7 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 
 	retLayers := make([]data.PartitionedLayer, len(layers))
 	for i, layer := range layers {
-		layer.makePolygons(m)
+		layer.makePolygons(m, s.options.JoinPolygonSnapDistance, s.options.FinishPolygonSnapDistance)
 		lp, ok := layer.generateLayerParts()
 
 		if !ok {

@@ -1,23 +1,17 @@
 package optimize
 
 import (
-	"GoSlicer/slicer/data"
-	"GoSlicer/slicer/handle"
+	"GoSlicer/go_slicer/data"
+	"GoSlicer/go_slicer/handle"
 	"GoSlicer/util"
 	"fmt"
 )
 
-// TODO use interface with functional options?
-type OptimizerOptions struct {
-	MeldDistance util.Micrometer
-	Center       util.MicroVec3
-}
-
 type optimizer struct {
-	options OptimizerOptions
+	options *data.Options
 }
 
-func NewOptimizer(options OptimizerOptions) handle.ModelOptimizer {
+func NewOptimizer(options *data.Options) handle.ModelOptimizer {
 	return &optimizer{
 		options: options,
 	}

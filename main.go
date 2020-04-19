@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GoSlicer/slicer"
+	"GoSlicer/go_slicer"
 	"fmt"
 	"os"
 )
@@ -14,7 +14,7 @@ func main() {
 		os.Exit(2)
 	}
 
-	p := slicer.NewGoSlicer()
+	p := go_slicer.NewGoSlicer()
 	err := p.Process(args[0], args[0]+".gcode")
 
 	if err != nil {
