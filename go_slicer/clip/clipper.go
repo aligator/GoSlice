@@ -102,7 +102,7 @@ func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bo
 		// convert all points of this polygons
 		for j, layerPoint := range layerPolygon {
 			// ignore first as the next check would fail otherwise
-			if j == 1 {
+			if j == 0 {
 				path = append(path, clipperPoint(layerPolygon[0]))
 				continue
 			}
