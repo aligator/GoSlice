@@ -176,34 +176,33 @@ func (c clipperClip) InsetLayer(layer data.PartitionedLayer, offset util.Microme
 func (c clipperClip) Inset(part data.LayerPart, offset util.Micrometer, insetCount int) [][]data.Paths {
 	var insets [][]data.Paths
 
-	// save which insets are already finished and don't process them further (for more performance)
-	insetsFinished := false
 	o := clipper.NewClipperOffset()
 
 	for insetNr := 0; insetNr < insetCount; insetNr++ {
 		// insets for the outline
-		if !insetsFinished {
-			o.Clear()
-			o.AddPaths(clipperPaths(data.Paths{part.Outline()}), clipper.JtSquare, clipper.EtClosedPolygon)
-			o.AddPaths(clipperPaths(part.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
+		o.Clear()
+		o.AddPaths(clipperPaths(data.Paths{part.Outline()}), clipper.JtSquare, clipper.EtClosedPolygon)
+		o.AddPaths(clipperPaths(part.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
 
-			o.MiterLimit = 2
-			allNewInsets := o.Execute(float64(-int(offset)*insetNr) - float64(offset/2))
+		o.MiterLimit = 2
+		allNewInsets := o.Execute(float64(-int(offset)*insetNr) - float64(offset/2))
 
-			if len(allNewInsets) <= 0 {
-				insetsFinished = true
-			} else {
-				for wallNr, wall := range microPaths(allNewInsets, true) {
-					if len(insets) <= wallNr {
-						insets = append(insets, []data.Paths{})
-					}
-
-					if len(insets[wallNr]) <= insetNr {
-						insets[wallNr] = append(insets[wallNr], []data.Path{})
-					}
-
-					insets[wallNr][insetNr] = append(insets[wallNr][insetNr], wall)
+		if len(allNewInsets) <= 0 {
+			break
+		} else {
+			for wallNr, wall := range microPaths(allNewInsets, true) {
+				if len(insets) <= wallNr {
+					insets = append(insets, []data.Paths{})
 				}
+
+				// It can happen that clipper generates new walls which the previous insets didn't have
+				// for example if it generates a filling polygon in the corners.
+				// We add empty paths so that the insetNr is still correct.
+				for len(insets[wallNr]) <= insetNr {
+					insets[wallNr] = append(insets[wallNr], []data.Path{})
+				}
+
+				insets[wallNr][insetNr] = append(insets[wallNr][insetNr], wall)
 			}
 		}
 	}
