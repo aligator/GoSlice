@@ -62,10 +62,14 @@ func (g *generator) Generate(layerNum int, layer data.PartitionedLayer) {
 					// set the speed based on the current perimeter
 					if insetNum == 0 {
 						g.builder.addComment("TYPE:WALL-OUTER")
-						g.builder.setExtrudeSpeed(g.options.Print.OuterPerimeterSpeed)
+						if layerNum > 0 {
+							g.builder.setExtrudeSpeed(g.options.Print.OuterPerimeterSpeed)
+						}
 					} else {
 						g.builder.addComment("TYPE:WALL-INNER")
-						g.builder.setExtrudeSpeed(g.options.Print.LayerSpeed)
+						if layerNum > 0 {
+							g.builder.setExtrudeSpeed(g.options.Print.LayerSpeed)
+						}
 					}
 
 					// add the perimeter and check if it is a bottom layer
