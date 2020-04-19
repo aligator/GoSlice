@@ -19,5 +19,6 @@ go run /path/to/stl/file.stl
 * simple infill
 * bottom / top layer
 * options as parameters / config file (using cobra / viper)
+* add function / interface / struct documentations
 * add tests
 * lots of other things...
