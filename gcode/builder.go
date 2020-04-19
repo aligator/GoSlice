@@ -1,7 +1,7 @@
 package gcode
 
 import (
-	"GoSlice/go_slice/data"
+	"GoSlice/data"
 	"GoSlice/util"
 	"bytes"
 	"fmt"

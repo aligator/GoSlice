@@ -1,8 +1,8 @@
 package slice
 
 import (
-	"GoSlice/go_slice/clip"
-	"GoSlice/go_slice/data"
+	"GoSlice/clip"
+	"GoSlice/data"
 	"GoSlice/util"
 	"fmt"
 	clipper "github.com/ctessum/go.clipper"

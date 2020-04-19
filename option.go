@@ -1,4 +1,4 @@
-package go_slice
+package main
 
 import (
 	"GoSlice/util"

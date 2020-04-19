@@ -1,7 +1,7 @@
 package write
 
 import (
-	"GoSlice/go_slice/handle"
+	"GoSlice/handle"
 	"fmt"
 	"os"
 )

@@ -1,8 +1,8 @@
 package optimize
 
 import (
-	"GoSlice/go_slice/data"
-	"GoSlice/go_slice/handle"
+	"GoSlice/data"
+	"GoSlice/handle"
 	"GoSlice/util"
 	"fmt"
 )

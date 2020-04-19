@@ -1,14 +1,14 @@
-package go_slice
+package main
 
 import (
-	"GoSlice/go_slice/data"
-	"GoSlice/go_slice/gcode"
-	"GoSlice/go_slice/handle"
-	"GoSlice/go_slice/optimize"
-	"GoSlice/go_slice/slice"
-	"GoSlice/go_slice/stl"
-	"GoSlice/go_slice/write"
+	"GoSlice/data"
+	"GoSlice/gcode"
+	"GoSlice/handle"
+	"GoSlice/optimize"
+	"GoSlice/slice"
+	"GoSlice/stl"
 	"GoSlice/util"
+	"GoSlice/write"
 	"fmt"
 	"time"
 )

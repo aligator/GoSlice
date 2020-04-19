@@ -1,9 +1,9 @@
 package gcode
 
 import (
-	"GoSlice/go_slice/clip"
-	"GoSlice/go_slice/data"
-	"GoSlice/go_slice/handle"
+	"GoSlice/clip"
+	"GoSlice/data"
+	"GoSlice/handle"
 	"GoSlice/util"
 	"bytes"
 	"fmt"

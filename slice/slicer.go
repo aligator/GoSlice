@@ -1,8 +1,8 @@
 package slice
 
 import (
-	"GoSlice/go_slice/data"
-	"GoSlice/go_slice/handle"
+	"GoSlice/data"
+	"GoSlice/handle"
 	"GoSlice/util"
 	"errors"
 	"fmt"

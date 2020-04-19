@@ -1,8 +1,8 @@
 package stl
 
 import (
-	"GoSlice/go_slice/data"
-	"GoSlice/go_slice/handle"
+	"GoSlice/data"
+	"GoSlice/handle"
 	"GoSlice/util"
 	"errors"
 	"github.com/hschendel/stl"
