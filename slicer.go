@@ -99,12 +99,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 		}
 	}
 
-	s.generator.Init()
-	for i, layer := range layers {
-		s.generator.Generate(i, layer)
-	}
-
-	gcode := s.generator.Finish()
+	gcode := s.generator.Generate(layers)
 
 	err = s.writer.Write(gcode, outFilename)
 

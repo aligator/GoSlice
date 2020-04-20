@@ -19,9 +19,7 @@ type LayerModifier interface {
 }
 
 type GCodeGenerator interface {
-	Init()
-	Generate(layerNum int, layer data.PartitionedLayer)
-	Finish() string
+	Generate(layer []data.PartitionedLayer) string
 }
 
 type GCodeWriter interface {
