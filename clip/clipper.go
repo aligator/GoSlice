@@ -3,6 +3,7 @@ package clip
 import (
 	"GoSlice/data"
 	"GoSlice/util"
+	"fmt"
 	clipper "github.com/ctessum/go.clipper"
 )
 
@@ -17,6 +18,7 @@ type Clip interface {
 	//   and all following are from holes inside of the polygon.
 	InsetLayer(layer data.PartitionedLayer, offset util.Micrometer, insetCount int) [][][]data.Paths
 	Inset(part data.LayerPart, offset util.Micrometer, insetCount int) [][]data.Paths
+	Fill(paths data.Paths, lineWidth util.Micrometer, overlapPercentage int) data.Paths
 }
 
 // clipperClip implements Clip using the external clipper library
@@ -90,9 +92,7 @@ func microPaths(p clipper.Paths, simplify bool) data.Paths {
 			microPath = microPath.Simplify(-1, -1)
 		}
 
-		result = append(result,
-			microPath.Simplify(-1, -1),
-		)
+		result = append(result, microPath)
 	}
 
 	return result
@@ -210,16 +210,70 @@ func (c clipperClip) Inset(part data.LayerPart, offset util.Micrometer, insetCou
 	return insets
 }
 
-func (c clipperClip) GetLinearFill(poly data.Path, lineWidth util.Micrometer) {
-	/*paths := clipperPaths(data.Paths{poly})
-	bounds := clipper.GetBounds(paths)
+func (c clipperClip) Fill(paths data.Paths, lineWidth util.Micrometer, overlapPercentage int) data.Paths {
+	min, max := paths.Size()
+	cPaths := clipperPaths(paths)
+	result := c.getLinearFill(cPaths, min, max, lineWidth, overlapPercentage)
+	return microPaths(result, false)
+}
+
+func (c clipperClip) getLinearFill(polys clipper.Paths, minScanlines util.MicroPoint, maxScanlines util.MicroPoint, lineWidth util.Micrometer, overlapPercentage int) clipper.Paths {
 	cl := clipper.NewClipper(clipper.IoNone)
+	co := clipper.NewClipperOffset()
+	var result clipper.Paths
 
-	cl.AddPath(paths[0], clipper.PtSubject, true)
-	cl.
+	overlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
 
-	currentPos := clipper.NewIntPoint(bounds, 0)
-	for {
+	lines := clipper.Paths{}
+	numLine := 0
+	for x := minScanlines.X(); x <= maxScanlines.X(); x += lineWidth {
+		// switch line direction based on even / odd
+		if numLine%2 == 1 {
+			lines = append(lines, clipper.Path{
+				&clipper.IntPoint{
+					X: clipper.CInt(x),
+					Y: clipper.CInt(maxScanlines.Y()),
+				},
+				&clipper.IntPoint{
+					X: clipper.CInt(x),
+					Y: clipper.CInt(minScanlines.Y()),
+				},
+			})
+		} else {
+			lines = append(lines, clipper.Path{
+				&clipper.IntPoint{
+					X: clipper.CInt(x),
+					Y: clipper.CInt(minScanlines.Y()),
+				},
+				&clipper.IntPoint{
+					X: clipper.CInt(x),
+					Y: clipper.CInt(maxScanlines.Y()),
+				},
+			})
+		}
+		numLine++
+	}
 
-	}*/
+	for _, path := range polys {
+		cl.Clear()
+		co.Clear()
+		co.AddPath(path, clipper.JtSquare, clipper.EtClosedPolygon)
+		co.MiterLimit = 2
+		newInsets := co.Execute(float64(-overlap))
+
+		cl.AddPaths(newInsets, clipper.PtClip, true)
+		cl.AddPaths(lines, clipper.PtSubject, false)
+
+		tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+		if !ok {
+			fmt.Println("getLinearFill failed")
+			return nil
+		}
+
+		for _, c := range tree.Childs() {
+			result = append(result, c.Contour())
+		}
+	}
+
+	return result
 }

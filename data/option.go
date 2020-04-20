@@ -10,6 +10,8 @@ type PrintOptions struct {
 	InitialLayerThickness util.Micrometer
 	LayerThickness        util.Micrometer
 	InsetCount            int
+
+	InfillOverlapPercent int
 }
 
 type FilamentOptions struct {

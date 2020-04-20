@@ -59,6 +59,7 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 									paths: wallInset,
 									Speed: speed,
 								})
+								continue
 							} else {
 								if layerNr > 0 {
 									speed = options.Print.LayerSpeed
@@ -81,17 +82,49 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 				}
 
 				meta[layerNr].Elements["perimeter"] = [3][]GCodePaths{
-					innerPerimeters,
-					middlePerimeters,
 					outerPerimeters,
+					middlePerimeters,
+					innerPerimeters,
 				}
 
+				return meta[layerNr]
+			},
+
+			// bottom layers
+			func(layerNr int, layers []data.PartitionedLayer, meta []LayerMetadata, options *data.Options) LayerMetadata {
+				var bottomLayerInfill []data.Paths
+				if layerNr == 0 {
+					perimeters, ok := meta[layerNr].Elements["perimeter"].([3][]GCodePaths)
+					if !ok {
+						fmt.Println("wrong type for perimeter elements")
+						return meta[layerNr]
+					}
+
+					innerPaths := perimeters[2]
+					if len(innerPaths) == 0 {
+						innerPaths = perimeters[1]
+					}
+					if len(innerPaths) == 0 {
+						innerPaths = perimeters[0]
+					}
+
+					c := clip.NewClip()
+
+					for _, paths := range innerPaths {
+						infill := c.Fill(paths.paths, options.Printer.ExtrusionWidth, options.Print.InfillOverlapPercent)
+						if infill != nil {
+							bottomLayerInfill = append(bottomLayerInfill, infill)
+						}
+					}
+				}
+				meta[layerNr].Elements["bottomLayer"] = bottomLayerInfill
 				return meta[layerNr]
 			},
 		},
 		renderers: []RenderStep{
 			// pre layer
 			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z util.Micrometer, options *data.Options) {
+				builder.addComment("LAYER:%v", layerNr)
 				if layerNr == 0 {
 					builder.setExtrudeSpeed(options.Print.IntialLayerSpeed)
 				} else {
@@ -102,7 +135,7 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 			// fan control
 			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z util.Micrometer, options *data.Options) {
 				if layerNr == 2 {
-					builder.addComment("\nM106 ; enable fan")
+					builder.addCommand("M106 ; enable fan")
 				}
 			},
 
@@ -110,7 +143,7 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z util.Micrometer, options *data.Options) {
 				p, ok := meta[layerNr].Elements["perimeter"].([3][]GCodePaths)
 				if !ok {
-					fmt.Print("wrong type for perimeter elements")
+					fmt.Println("wrong type for perimeter elements")
 					return
 				}
 
@@ -124,9 +157,30 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 					for _, paths := range perimeter {
 						for _, path := range paths.paths {
 							builder.setExtrudeSpeed(paths.Speed)
-							builder.addPolygon(path, z, false)
+							builder.addPolygon(path, z)
 						}
 					}
+				}
+			},
+
+			// bottom layer
+			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z util.Micrometer, options *data.Options) {
+				if meta[layerNr].Elements["bottomLayer"] == nil {
+					return
+				}
+
+				layer, ok := meta[layerNr].Elements["bottomLayer"].([]data.Paths)
+				if !ok {
+					fmt.Println("wrong type for bottomLayer elements")
+					return
+				}
+				builder.addComment("bottomLayer")
+
+				for _, paths := range layer {
+					for _, path := range paths {
+						builder.addPolygon(path, z)
+					}
+
 				}
 			},
 		},
@@ -175,7 +229,7 @@ func (g *generator) Generate(layers []data.PartitionedLayer) string {
 
 func (g *generator) finish() string {
 	g.builder.setExtrusion(g.options.Print.LayerThickness, g.options.Printer.ExtrusionWidth, g.options.Filament.FilamentDiameter)
-	g.builder.addComment("\nM107 ; enable fan")
+	g.builder.addCommand("M107 ; enable fan")
 
 	return g.builder.buf.String()
 }

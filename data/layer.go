@@ -134,6 +134,45 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared u
 
 type Paths []Path
 
+func (p Paths) Size() (util.MicroPoint, util.MicroPoint) {
+	if len(p) == 0 {
+		return util.NewMicroPoint(0, 0), util.NewMicroPoint(0, 0)
+	}
+
+	minX := util.MaxMicrometer
+	minY := util.MaxMicrometer
+
+	maxX := util.MinMicrometer
+	maxY := util.MinMicrometer
+
+	// return 0, 0, 0, 0 if everything is empty
+	any := false
+	for _, path := range p {
+		for _, point := range path {
+			any = true
+			if point.X() < minX {
+				minX = point.X()
+			}
+			if point.X() > maxX {
+				maxX = point.X()
+			}
+
+			if point.Y() < minY {
+				minY = point.Y()
+			}
+			if point.Y() > maxY {
+				maxY = point.Y()
+			}
+		}
+	}
+
+	if !any {
+		return util.NewMicroPoint(0, 0), util.NewMicroPoint(0, 0)
+	}
+
+	return util.NewMicroPoint(minX, minY), util.NewMicroPoint(maxX, maxY)
+}
+
 type LayerPart interface {
 	Outline() Path
 	Holes() Paths

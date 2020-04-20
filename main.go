@@ -3,10 +3,19 @@ package main
 import (
 	"GoSlice/util"
 	"fmt"
+	clipper "github.com/ctessum/go.clipper"
 	"os"
 )
 
 func main() {
+	cl := clipper.NewClipper(clipper.IoNone)
+
+	res, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+
+	if ok {
+		fmt.Println(res)
+	}
+
 	args := os.Args[1:]
 
 	if len(args) != 1 {

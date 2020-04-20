@@ -99,3 +99,10 @@ func OuterPerimeterSpeed(mmPerS util.Millimeter) option {
 		s.o.Print.OuterPerimeterSpeed = mmPerS
 	}
 }
+
+// InfillOverlapPercent says how much the infill should overlap into the perimeters
+func InfillOverlapPercent(percent int) option {
+	return func(s *GoSlice) {
+		s.o.Print.InfillOverlapPercent = percent
+	}
+}

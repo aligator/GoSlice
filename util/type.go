@@ -1,5 +1,7 @@
 package util
 
+import "math"
+
 // type.go holds the basic type definition
 // the types behind them may change in the
 // future to more precise / larger ones
@@ -33,6 +35,9 @@ func (m Millimeter3) ToMicrometer() Micrometer {
 
 // Micrometer represents a value in 0.001 mm
 type Micrometer int64
+
+const MaxMicrometer = Micrometer(math.MaxInt64)
+const MinMicrometer = Micrometer(math.MinInt64)
 
 func (m Micrometer) ToMillimeter() Millimeter {
 	return Millimeter(m) * 0.001
