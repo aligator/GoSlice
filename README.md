@@ -16,8 +16,8 @@ go run /path/to/stl/file.stl
 * ~~first gcode result~~ YAY!!
 * ~~refactor and Go-ify the code~~ (done, for now...)
 * ~~perimeters, with configurable outer perimeter speed~~
+* bottom / top layer (partly done, layer 0 is filled)
 * simple infill
-* bottom / top layer
 * options as parameters / config file (using cobra / viper)
 * add function / interface / struct documentations
 * add tests

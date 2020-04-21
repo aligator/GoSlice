@@ -1,8 +1,10 @@
 package optimize
 
-import "GoSlice/util"
+import (
+	"GoSlice/data"
+)
 
 type point struct {
-	pos         util.MicroVec3
+	pos         data.MicroVec3
 	faceIndices []int
 }

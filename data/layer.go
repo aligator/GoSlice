@@ -1,14 +1,17 @@
+// Package data holds basic data structures and interfaces used by GoSlice.
 package data
 
-import (
-	"GoSlice/util"
-	"GoSlice/util/math2d"
-)
+// layer.go holds types which are needed for 2d layer representation
 
-type Path []util.MicroPoint
+// Path is a simple list of points.
+// It can be used to represent polygons or just lines.
+type Path []MicroPoint
 
-func (p Path) IsAlmostFinished(distance util.Micrometer) bool {
-	return p[0].Sub(p[len(p)-1]).ShorterThan(distance)
+// IsAlmostFinished returns true if the path represents an almost closed polygon.
+// It checks if the distance between the first and last point is smaller
+// than the given threshold distance.
+func (p Path) IsAlmostFinished(distance Micrometer) bool {
+	return p[0].Sub(p[len(p)-1]).ShorterThanOrEqual(distance)
 }
 
 // Simplify removes consecutive line segments with same orientation and changes this polygon.
@@ -26,7 +29,9 @@ func (p Path) IsAlmostFinished(distance util.Micrometer) bool {
 //
 // smallestLineSegmentSquared is the maximal squared length of removed line segments
 // allowedErrorDistanceSquared is the square of the distance of the middle point to the line segment of the consecutive and previous point for which the middle point is removed
-func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared util.Micrometer) Path {
+//
+// Note: this is directly ported from a newer CuraEngine version.
+func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared Micrometer) Path {
 	if smallestLineSegmentSquared == -1 {
 		smallestLineSegmentSquared = 100
 	}
@@ -70,7 +75,7 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared u
 		current = p[i%len(p)]
 
 		// Check if the accumulated area doesn't exceed the maximum.
-		var next util.MicroPoint
+		var next MicroPoint
 
 		switch {
 		case i+1 < len(p):
@@ -114,7 +119,7 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared u
 		// h^2 = L^2 / b^2     [factor the divisor]
 		height2 := areaRemovedSoFar * areaRemovedSoFar / baseLength2
 		if (height2 <= 25 && //Almost exactly colinear (barring rounding errors).
-			math2d.XDistance2ToLine(current, previous, next) <= 25) ||
+			XDistance2ToLine(current, previous, next) <= 25) ||
 			(length2 < smallestLineSegmentSquared &&
 				nextLength2 < smallestLineSegmentSquared && // segments are small
 				height2 <= allowedErrorDistanceSquared) { // removing the vertex doesn't introduce too much error.
@@ -132,18 +137,21 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared u
 	return newPath
 }
 
+// Paths represents a group of Paths.
 type Paths []Path
 
-func (p Paths) Size() (util.MicroPoint, util.MicroPoint) {
+// Size calculates the bounding box of all Paths
+// The returned points are the min-X-Y-Point and the max-X-Y-Point.
+func (p Paths) Size() (MicroPoint, MicroPoint) {
 	if len(p) == 0 {
-		return util.NewMicroPoint(0, 0), util.NewMicroPoint(0, 0)
+		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
 	}
 
-	minX := util.MaxMicrometer
-	minY := util.MaxMicrometer
+	minX := MaxMicrometer
+	minY := MaxMicrometer
 
-	maxX := util.MinMicrometer
-	maxY := util.MinMicrometer
+	maxX := MinMicrometer
+	maxY := MinMicrometer
 
 	// return 0, 0, 0, 0 if everything is empty
 	any := false
@@ -167,31 +175,49 @@ func (p Paths) Size() (util.MicroPoint, util.MicroPoint) {
 	}
 
 	if !any {
-		return util.NewMicroPoint(0, 0), util.NewMicroPoint(0, 0)
+		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
 	}
 
-	return util.NewMicroPoint(minX, minY), util.NewMicroPoint(maxX, maxY)
+	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)
 }
 
+// LayerPart represents one part of a layer.
+// It consists of an outline and may have several holes
+// Some implementations may also provide a Type for it.
 type LayerPart interface {
 	Outline() Path
 	Holes() Paths
+
+	// Type classifies the part.
+	// If the type is irrelevant or not known,
+	// Type() should just return:
+	//  "unknown"
 	Type() string
 }
 
+// Layer represents one layer which can consist of several polygons.
+// These polygons can consist of several paths, with some of them just representing holes.
 type Layer interface {
 	Polygons() Paths
 }
 
+// PartitionedLayer represents one layer with separated layer parts.
+// In contrast to the interface Layer this one contains already processed
+// polygons in the form of LayerParts.
 type PartitionedLayer interface {
 	LayerParts() []LayerPart
 }
 
+// UnknownLayerPart is the simplest implementation of LayerPart.
+// It holds one outline and several hole-paths.
+// You can assume that all paths are closed polygons.
+// (If the instance is created by GoSlice...)
 type UnknownLayerPart struct {
 	outline Path
 	holes   Paths
 }
 
+// NewUnknownLayerPart returns a new, simple LayerPart with the type "unknown".
 func NewUnknownLayerPart(outline Path, holes Paths) LayerPart {
 	return UnknownLayerPart{
 		outline: outline,
@@ -207,6 +233,7 @@ func (l UnknownLayerPart) Holes() Paths {
 	return l.holes
 }
 
+// Type returns always "unknown" in this implementation.
 func (l UnknownLayerPart) Type() string {
 	return "unknown"
 }
@@ -215,6 +242,7 @@ type partitionedLayer struct {
 	parts []LayerPart
 }
 
+// returns a new simple PartitionedLayer which just contains several LayerParts.
 func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
 	return partitionedLayer{
 		parts: parts,

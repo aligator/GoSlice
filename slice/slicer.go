@@ -3,7 +3,6 @@ package slice
 import (
 	"GoSlice/data"
 	"GoSlice/handle"
-	"GoSlice/util"
 	"errors"
 	"fmt"
 )
@@ -42,8 +41,8 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 		}
 
 		// for each layerNr
-		for layerNr := int((minZ - s.options.Print.InitialLayerThickness) / s.options.Print.LayerThickness); util.Micrometer(layerNr) <= (maxZ-s.options.Print.InitialLayerThickness)/s.options.Print.LayerThickness; layerNr++ {
-			z := util.Micrometer(layerNr)*s.options.Print.LayerThickness + s.options.Print.InitialLayerThickness
+		for layerNr := int((minZ - s.options.Print.InitialLayerThickness) / s.options.Print.LayerThickness); data.Micrometer(layerNr) <= (maxZ-s.options.Print.InitialLayerThickness)/s.options.Print.LayerThickness; layerNr++ {
+			z := data.Micrometer(layerNr)*s.options.Print.LayerThickness + s.options.Print.InitialLayerThickness
 			if z < minZ {
 				continue
 			}

@@ -1,7 +1,7 @@
-package util
+// Package data holds basic data structures and interfaces used by GoSlice.
+package data
 
 import (
-	clipper "github.com/ctessum/go.clipper"
 	"math"
 )
 
@@ -19,21 +19,50 @@ type MicroVec3 interface {
 	SetY(y Micrometer)
 	SetZ(z Micrometer)
 
+	// Add returns a new vector which is the sum of the vectors. (this + vec)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
 	Add(vec MicroVec3) MicroVec3
+
+	// Sub returns a new vector which is the difference of the vectors. (this - vec)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
 	Sub(vec MicroVec3) MicroVec3
+
+	// Mul returns a new vector which is the multiplication by the given value. (this * value)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
 	Mul(value Micrometer) MicroVec3
+
+	// Div returns a new vector which is the division by the given value. (this / value)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
 	Div(value Micrometer) MicroVec3
 
 	Max() Micrometer
+
+	// TestLength checks if the length of the vector fits inside the given length.
+	// Returns true if the vector length is <= the given length.
 	TestLength(length Micrometer) bool
+
+	// Size2 returns the length of the vector^2.
+	//
+	// Use this whenever possible as it may be faster than Size().
 	Size2() Micrometer
+
+	// Size2 returns the length of the vector.
+	//
+	// Use Size2() this whenever possible as it may be faster than Size().
 	Size() Micrometer
+
 	Normalized() MicroVec3
 	Cross(p2 MicroVec3) MicroVec3
 
+	// Copy returns a completely new copy of the vector.
 	Copy() MicroVec3
 }
 
+// microVec implements MicroVec3
 type microVec3 struct {
 	x, y, z Micrometer
 }
@@ -152,6 +181,9 @@ func (v *microVec3) Copy() MicroVec3 {
 	}
 }
 
+// MicroPoint represents a point in 2d space
+// which is in a Micrometer-grid.
+// A value of 1 represents 0.001 mm.
 type MicroPoint interface {
 	X() Micrometer
 	Y() Micrometer
@@ -159,19 +191,48 @@ type MicroPoint interface {
 	SetX(x Micrometer)
 	SetY(y Micrometer)
 
-	Add(p MicroPoint) MicroPoint
-	Sub(p MicroPoint) MicroPoint
+	// Add returns a new vector which is the sum of the vectors. (this + vec)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
+	Add(vec MicroPoint) MicroPoint
+
+	// Sub returns a new vector which is the difference of the vectors. (this - vec)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
+	Sub(vec MicroPoint) MicroPoint
+
+	// Mul returns a new vector which is the multiplication by the given value. (this * value)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
 	Mul(value Micrometer) MicroPoint
+
+	// Div returns a new vector which is the division by the given value. (this / value)
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
 	Div(value Micrometer) MicroPoint
 
-	ShorterThan(length Micrometer) bool
+	// ShorterThanOrEqual checks if the length of the vector fits inside the given length.
+	// Returns true if the vector length is <= the given length.
+	ShorterThanOrEqual(length Micrometer) bool
+
+	// Size2 returns the length of the vector^2.
+	//
+	// Use this whenever possible as it may be faster than Size().
 	Size2() Micrometer
+
+	// Size2 returns the length of the vector.
+	//
+	// Use Size2() this whenever possible as it may be faster than Size().
 	Size() Micrometer
+
+	// SizeMM returns the length of the vector in mm.
 	SizeMM() Millimeter
 
+	// Copy returns a completely new copy of the vector.
 	Copy() MicroPoint
 }
 
+// microPoint implements MicroPoint
 type microPoint struct {
 	x, y Micrometer
 }
@@ -226,10 +287,10 @@ func (p *microPoint) Div(value Micrometer) MicroPoint {
 	return result
 }
 
-// ShorterThan just checks if the given length is smaller than the
+// ShorterThanOrEqual just checks if the given length is smaller than the
 // length of the vector to this point.
-// This method first tries a more performant way before actually calculating the suize
-func (p *microPoint) ShorterThan(length Micrometer) bool {
+// This implementation first tries a more performant way before actually calculating the suize
+func (p *microPoint) ShorterThanOrEqual(length Micrometer) bool {
 	if p.x > length || p.x < -length ||
 		p.y > length || p.y < -length {
 		return false
@@ -250,13 +311,6 @@ func (p *microPoint) SizeMM() Millimeter {
 	x := p.x.ToMillimeter()
 	y := p.y.ToMillimeter()
 	return Millimeter(math.Sqrt(float64(x*x + y*y)))
-}
-
-func (p *microPoint) GeomPoint() *clipper.IntPoint {
-	return &clipper.IntPoint{
-		X: clipper.CInt(p.x),
-		Y: clipper.CInt(p.y),
-	}
 }
 
 func (p *microPoint) Copy() MicroPoint {

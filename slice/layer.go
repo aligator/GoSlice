@@ -3,7 +3,6 @@ package slice
 import (
 	"GoSlice/clip"
 	"GoSlice/data"
-	"GoSlice/util"
 	"fmt"
 	clipper "github.com/ctessum/go.clipper"
 	"os"
@@ -30,7 +29,7 @@ func (l *layer) Polygons() data.Paths {
 	return l.polygons
 }
 
-func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, finishPolygonSnapDistance util.Micrometer) {
+func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, finishPolygonSnapDistance data.Micrometer) {
 	// try for each segment to generate a slicePolygon with other segments
 	// if the segment is not already assigned to another slicePolygon
 	for startSegmentIndex := range l.segments {
@@ -69,7 +68,7 @@ func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, fi
 					p1 := l.segments[touchingSegmentIndex].start
 					diff := p0.Sub(p1)
 
-					if diff.ShorterThan(l.options.MeldDistance) {
+					if diff.ShorterThanOrEqual(l.options.MeldDistance) {
 						if touchingSegmentIndex == startSegmentIndex {
 							canClose = true
 						}
@@ -111,8 +110,8 @@ RerunConnectPolygons:
 			// check the distance of the last point from the first unfinished slicePolygon
 			// with the first point of the second unfinished slicePolygon
 			diff := polygon[len(polygon)-1].Sub(polygon2[0])
-			if diff.ShorterThan(joinPolygonSnapDistance) {
-				score := diff.Size() - util.Micrometer(len(polygon2)*10)
+			if diff.ShorterThanOrEqual(joinPolygonSnapDistance) {
+				score := diff.Size() - data.Micrometer(len(polygon2)*10)
 				if score < bestScore {
 					best = j
 					bestScore = score
@@ -154,7 +153,7 @@ RerunConnectPolygons:
 		}
 
 		// remove tiny polygons or not closed polygons
-		length := util.Micrometer(0)
+		length := data.Micrometer(0)
 		for n, point := range poly {
 			// ignore first point
 			if n == 0 {
@@ -177,11 +176,11 @@ RerunConnectPolygons:
 }
 
 func (l *layer) generateLayerParts() (data.PartitionedLayer, bool) {
-	c := clip.NewClip()
+	c := clip.NewClipper()
 	return c.GenerateLayerParts(l)
 }
 
-func dumpPolygon(buf *os.File, polygons clipper.Path, modelSize util.MicroVec3, isRed bool) {
+func dumpPolygon(buf *os.File, polygons clipper.Path, modelSize data.MicroVec3, isRed bool) {
 	buf.WriteString("<polygon points=\"")
 	for _, p := range polygons {
 		buf.WriteString(fmt.Sprintf("%f,%f ", (float64(p.X)+float64(modelSize.X())/2)/float64(modelSize.X())*150, (float64(p.Y)+float64(modelSize.Y())/2)/float64(modelSize.Y())*150))

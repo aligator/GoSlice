@@ -1,23 +1,23 @@
 package slice
 
 import (
-	"GoSlice/util"
+	"GoSlice/data"
 )
 
 type segment struct {
-	start, end     util.MicroPoint
+	start, end     data.MicroPoint
 	faceIndex      int
 	addedToPolygon bool
 }
 
-func SliceFace(z util.Micrometer, p0, p1, p2 util.MicroVec3) *segment {
+func SliceFace(z data.Micrometer, p0, p1, p2 data.MicroVec3) *segment {
 	seg := &segment{
-		start: util.NewMicroPoint(
+		start: data.NewMicroPoint(
 			p0.X()+(p1.X()-p0.X())*(z-p0.Z())/(p1.Z()-p0.Z()),
 			p0.Y()+(p1.Y()-p0.Y())*(z-p0.Z())/(p1.Z()-p0.Z()),
 		),
 
-		end: util.NewMicroPoint(
+		end: data.NewMicroPoint(
 			p0.X()+(p2.X()-p0.X())*(z-p0.Z())/(p2.Z()-p0.Z()),
 			p0.Y()+(p2.Y()-p0.Y())*(z-p0.Z())/(p2.Z()-p0.Z()),
 		),

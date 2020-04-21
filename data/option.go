@@ -1,34 +1,37 @@
+// Package data holds basic data structures and interfaces used by GoSlice.
 package data
 
-import "GoSlice/util"
-
+// PrintOptions contains all Print specific GoSlice options.
 type PrintOptions struct {
-	IntialLayerSpeed    util.Millimeter
-	LayerSpeed          util.Millimeter
-	OuterPerimeterSpeed util.Millimeter
+	IntialLayerSpeed    Millimeter
+	LayerSpeed          Millimeter
+	OuterPerimeterSpeed Millimeter
 
-	InitialLayerThickness util.Micrometer
-	LayerThickness        util.Micrometer
+	InitialLayerThickness Micrometer
+	LayerThickness        Micrometer
 	InsetCount            int
 
 	InfillOverlapPercent int
 }
 
+// FilamentOptions contains all Filament specific GoSlice options.
 type FilamentOptions struct {
-	FilamentDiameter util.Micrometer
+	FilamentDiameter Micrometer
 }
 
+// PrinterOptions contains all Printer specific GoSlice options.
 type PrinterOptions struct {
-	ExtrusionWidth util.Micrometer
+	ExtrusionWidth Micrometer
+	Center         MicroVec3
 }
 
+// Options contains all GoSlice options.
 type Options struct {
 	Printer  PrinterOptions
 	Filament FilamentOptions
 	Print    PrintOptions
 
-	MeldDistance              util.Micrometer
-	Center                    util.MicroVec3
-	JoinPolygonSnapDistance   util.Micrometer
-	FinishPolygonSnapDistance util.Micrometer
+	MeldDistance              Micrometer
+	JoinPolygonSnapDistance   Micrometer
+	FinishPolygonSnapDistance Micrometer
 }

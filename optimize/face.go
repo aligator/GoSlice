@@ -1,7 +1,7 @@
 package optimize
 
 import (
-	"GoSlice/util"
+	"GoSlice/data"
 )
 
 type optimizedFace struct {
@@ -11,8 +11,8 @@ type optimizedFace struct {
 	index    int
 }
 
-func (o optimizedFace) Points() [3]util.MicroVec3 {
-	return [3]util.MicroVec3{
+func (o optimizedFace) Points() [3]data.MicroVec3 {
+	return [3]data.MicroVec3{
 		o.model.points[o.indices[0]].pos,
 		o.model.points[o.indices[1]].pos,
 		o.model.points[o.indices[2]].pos,
@@ -23,7 +23,7 @@ func (o optimizedFace) TouchingFaceIndices() [3]int {
 	return o.touching
 }
 
-func (o optimizedFace) MinZ() util.Micrometer {
+func (o optimizedFace) MinZ() data.Micrometer {
 	points := o.Points()
 	minZ := points[0].Z()
 
@@ -37,7 +37,7 @@ func (o optimizedFace) MinZ() util.Micrometer {
 	return minZ
 }
 
-func (o optimizedFace) MaxZ() util.Micrometer {
+func (o optimizedFace) MaxZ() data.Micrometer {
 	points := o.Points()
 	maxZ := points[0].Z()
 

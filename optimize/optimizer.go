@@ -3,7 +3,6 @@ package optimize
 import (
 	"GoSlice/data"
 	"GoSlice/handle"
-	"GoSlice/util"
 	"fmt"
 )
 
@@ -130,8 +129,8 @@ FacesLoop:
 	min := m.Min()
 	max := m.Max()
 	// move points according to the center value
-	vectorOffset := util.NewMicroVec3((min.X()+max.X())/2, (min.Y()+max.Y())/2, min.Z())
-	vectorOffset = vectorOffset.Sub(o.options.Center)
+	vectorOffset := data.NewMicroVec3((min.X()+max.X())/2, (min.Y()+max.Y())/2, min.Z())
+	vectorOffset = vectorOffset.Sub(o.options.Printer.Center)
 	for i, point := range om.points {
 		om.points[i].pos = point.pos.Sub(vectorOffset)
 	}

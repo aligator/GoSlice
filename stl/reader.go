@@ -3,17 +3,16 @@ package stl
 import (
 	"GoSlice/data"
 	"GoSlice/handle"
-	"GoSlice/util"
 	"errors"
 	"github.com/hschendel/stl"
 	"strings"
 )
 
 type face struct {
-	vectors [3]util.MicroVec3
+	vectors [3]data.MicroVec3
 }
 
-func (f face) Points() [3]util.MicroVec3 {
+func (f face) Points() [3]data.MicroVec3 {
 	return f.vectors
 }
 
@@ -35,7 +34,7 @@ func (m model) Face(index int) data.Face {
 	return m.faces[index]
 }
 
-func (m model) Min() util.MicroVec3 {
+func (m model) Min() data.MicroVec3 {
 	ret := m.faces[0].Points()[0].Copy()
 
 	for _, face := range m.faces {
@@ -57,7 +56,7 @@ func (m model) Min() util.MicroVec3 {
 	return ret
 }
 
-func (m model) Max() util.MicroVec3 {
+func (m model) Max() data.MicroVec3 {
 	ret := m.faces[0].Points()[0].Copy()
 
 	for _, face := range m.faces {
@@ -112,18 +111,18 @@ func (r reader) Read(filename string) ([]data.Model, error) {
 }
 
 func stlTriangleToFace(t stl.Triangle) face {
-	return face{vectors: [3]util.MicroVec3{
-		util.NewMicroVec3(
-			util.Millimeter(t.Vertices[0][0]).ToMicrometer(),
-			util.Millimeter(t.Vertices[0][1]).ToMicrometer(),
-			util.Millimeter(t.Vertices[0][2]).ToMicrometer()),
-		util.NewMicroVec3(
-			util.Millimeter(t.Vertices[1][0]).ToMicrometer(),
-			util.Millimeter(t.Vertices[1][1]).ToMicrometer(),
-			util.Millimeter(t.Vertices[1][2]).ToMicrometer()),
-		util.NewMicroVec3(
-			util.Millimeter(t.Vertices[2][0]).ToMicrometer(),
-			util.Millimeter(t.Vertices[2][1]).ToMicrometer(),
-			util.Millimeter(t.Vertices[2][2]).ToMicrometer()),
+	return face{vectors: [3]data.MicroVec3{
+		data.NewMicroVec3(
+			data.Millimeter(t.Vertices[0][0]).ToMicrometer(),
+			data.Millimeter(t.Vertices[0][1]).ToMicrometer(),
+			data.Millimeter(t.Vertices[0][2]).ToMicrometer()),
+		data.NewMicroVec3(
+			data.Millimeter(t.Vertices[1][0]).ToMicrometer(),
+			data.Millimeter(t.Vertices[1][1]).ToMicrometer(),
+			data.Millimeter(t.Vertices[1][2]).ToMicrometer()),
+		data.NewMicroVec3(
+			data.Millimeter(t.Vertices[2][0]).ToMicrometer(),
+			data.Millimeter(t.Vertices[2][1]).ToMicrometer(),
+			data.Millimeter(t.Vertices[2][2]).ToMicrometer()),
 	}}
 }

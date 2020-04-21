@@ -8,7 +8,6 @@ import (
 	"GoSlice/optimize"
 	"GoSlice/slice"
 	"GoSlice/stl"
-	"GoSlice/util"
 	"GoSlice/write"
 	"fmt"
 	"time"
@@ -37,18 +36,18 @@ func NewGoSlice(o ...option) *GoSlice {
 			InfillOverlapPercent:  30,
 		},
 		Filament: data.FilamentOptions{
-			FilamentDiameter: util.Millimeter(1.75).ToMicrometer(),
+			FilamentDiameter: data.Millimeter(1.75).ToMicrometer(),
 		},
 		Printer: data.PrinterOptions{
 			ExtrusionWidth: 400,
+			Center: data.NewMicroVec3(
+				data.Millimeter(100).ToMicrometer(),
+				data.Millimeter(100).ToMicrometer(),
+				0,
+			),
 		},
 
-		MeldDistance: 30,
-		Center: util.NewMicroVec3(
-			util.Millimeter(100).ToMicrometer(),
-			util.Millimeter(100).ToMicrometer(),
-			0,
-		),
+		MeldDistance:              30,
 		JoinPolygonSnapDistance:   100,
 		FinishPolygonSnapDistance: 1000,
 	}
@@ -72,11 +71,14 @@ func NewGoSlice(o ...option) *GoSlice {
 
 func (s *GoSlice) Process(filename string, outFilename string) error {
 	startTime := time.Now()
+
+	// 1. Load model
 	models, err := s.reader.Read(filename)
 	if err != nil {
 		return err
 	}
 
+	// 2. Optimize model
 	var optimizedModel data.OptimizedModel
 
 	// TODO: support several model processing
@@ -89,11 +91,16 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 
 	optimizedModel.SaveDebugSTL("test.stl")
 
+	// 3. Slice model into layers
 	layers, err := s.slicer.Slice(optimizedModel)
 	if err != nil {
 		return err
 	}
 
+	// 4. Modify the layers
+	// e.g. classify them,
+	// generate the parts which should be filled in,
+	// generate perimeter paths
 	for _, m := range s.modifiers {
 		for layerNr, _ := range layers {
 			layers, err = m.Modify(layerNr, layers)
@@ -103,6 +110,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 		}
 	}
 
+	// generate gcode from the layers
 	gcode := s.generator.Generate(layers)
 
 	err = s.writer.Write(gcode, outFilename)

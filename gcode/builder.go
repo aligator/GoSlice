@@ -2,7 +2,6 @@ package gcode
 
 import (
 	"GoSlice/data"
-	"GoSlice/util"
 	"bytes"
 	"fmt"
 	"math"
@@ -11,9 +10,9 @@ import (
 type gcodeBuilder struct {
 	buf *bytes.Buffer
 
-	extrusionAmount                       util.Millimeter
-	extrusionPerMM                        util.Millimeter
-	currentPosition                       util.MicroVec3
+	extrusionAmount                       data.Millimeter
+	extrusionPerMM                        data.Millimeter
+	currentPosition                       data.MicroVec3
 	moveSpeed, extrudeSpeed, currentSpeed int
 }
 
@@ -21,23 +20,23 @@ func newGCodeBuilder(buf *bytes.Buffer) *gcodeBuilder {
 	g := &gcodeBuilder{
 		moveSpeed:       150,
 		extrudeSpeed:    50,
-		currentPosition: util.NewMicroVec3(0, 0, 0),
+		currentPosition: data.NewMicroVec3(0, 0, 0),
 	}
 
 	g.buf = buf
 	return g
 }
 
-func (g *gcodeBuilder) setExtrusion(layerThickness, lineWidth, filamentDiameter util.Micrometer) {
-	filamentArea := util.Millimeter(math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0))
+func (g *gcodeBuilder) setExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
+	filamentArea := data.Millimeter(math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0))
 	g.extrusionPerMM = layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea
 }
 
-func (g *gcodeBuilder) setMoveSpeed(moveSpeed util.Millimeter) {
+func (g *gcodeBuilder) setMoveSpeed(moveSpeed data.Millimeter) {
 	g.moveSpeed = int(moveSpeed)
 }
 
-func (g *gcodeBuilder) setExtrudeSpeed(extrudeSpeed util.Millimeter) {
+func (g *gcodeBuilder) setExtrudeSpeed(extrudeSpeed data.Millimeter) {
 	g.extrudeSpeed = int(extrudeSpeed)
 }
 
@@ -53,7 +52,7 @@ func (g *gcodeBuilder) addComment(comment string, args ...interface{}) {
 	g.buf.WriteString(comment)
 }
 
-func (g *gcodeBuilder) addMove(p util.MicroVec3, extrusion util.Millimeter) {
+func (g *gcodeBuilder) addMove(p data.MicroVec3, extrusion data.Millimeter) {
 	var speed int
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
@@ -82,37 +81,37 @@ func (g *gcodeBuilder) addMove(p util.MicroVec3, extrusion util.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *gcodeBuilder) addPolygon(polygon data.Path, z util.Micrometer) {
+func (g *gcodeBuilder) addPolygon(polygon data.Path, z data.Micrometer) {
 	if len(polygon) == 0 {
 		g.addComment("ignore Too small polygon")
 		return
 	}
 	for i, p := range polygon {
 		if i == 0 {
-			g.addMove(util.NewMicroVec3(
+			g.addMove(data.NewMicroVec3(
 				polygon[0].X(),
 				polygon[0].Y(),
 				z), 0.0)
 			continue
 		}
 
-		point := util.NewMicroPoint(p.X(), p.Y())
+		point := data.NewMicroPoint(p.X(), p.Y())
 
-		prevPoint := util.NewMicroPoint(polygon[i-1].X(), polygon[i-1].Y())
+		prevPoint := data.NewMicroPoint(polygon[i-1].X(), polygon[i-1].Y())
 
 		g.addMove(
-			util.NewMicroVec3(p.X(), p.Y(), z),
+			data.NewMicroVec3(p.X(), p.Y(), z),
 			point.Sub(prevPoint).SizeMM()*g.extrusionPerMM,
 		)
 	}
 
-	point0 := util.NewMicroPoint(polygon[0].X(), polygon[0].Y())
+	point0 := data.NewMicroPoint(polygon[0].X(), polygon[0].Y())
 
 	last := len(polygon) - 1
-	pointLast := util.NewMicroPoint(polygon[last].X(), polygon[last].Y())
+	pointLast := data.NewMicroPoint(polygon[last].X(), polygon[last].Y())
 
 	g.addMove(
-		util.NewMicroVec3(polygon[0].X(), polygon[0].Y(), z),
+		data.NewMicroVec3(polygon[0].X(), polygon[0].Y(), z),
 		point0.Sub(pointLast).SizeMM()*g.extrusionPerMM,
 	)
 }

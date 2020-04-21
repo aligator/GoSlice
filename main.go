@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GoSlice/util"
+	"GoSlice/data"
 	"fmt"
 	clipper "github.com/ctessum/go.clipper"
 	"os"
@@ -24,7 +24,7 @@ func main() {
 	}
 
 	p := NewGoSlice(
-		Center(util.NewMicroVec3(util.Millimeter(100).ToMicrometer(), util.Millimeter(100).ToMicrometer(), 0)),
+		Center(data.NewMicroVec3(data.Millimeter(100).ToMicrometer(), data.Millimeter(100).ToMicrometer(), 0)),
 		InsetCount(3))
 	err := p.Process(args[0], args[0]+".gcode")
 

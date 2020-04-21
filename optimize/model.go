@@ -2,14 +2,13 @@ package optimize
 
 import (
 	"GoSlice/data"
-	"GoSlice/util"
 	"github.com/hschendel/stl"
 )
 
 type optimizedModel struct {
 	points    []point
 	faces     []optimizedFace
-	modelSize util.MicroVec3
+	modelSize data.MicroVec3
 }
 
 func (o optimizedModel) FaceCount() int {
@@ -24,15 +23,15 @@ func (o optimizedModel) OptimizedFace(index int) data.OptimizedFace {
 	return o.faces[index]
 }
 
-func (o optimizedModel) Size() util.MicroVec3 {
+func (o optimizedModel) Size() data.MicroVec3 {
 	return o.modelSize
 }
 
-func (o optimizedModel) Min() util.MicroVec3 {
+func (o optimizedModel) Min() data.MicroVec3 {
 	panic("implement me")
 }
 
-func (o optimizedModel) Max() util.MicroVec3 {
+func (o optimizedModel) Max() data.MicroVec3 {
 	panic("implement me")
 }
 
