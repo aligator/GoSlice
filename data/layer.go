@@ -176,6 +176,7 @@ func (p Paths) Size() (util.MicroPoint, util.MicroPoint) {
 type LayerPart interface {
 	Outline() Path
 	Holes() Paths
+	Type() string
 }
 
 type Layer interface {
@@ -184,4 +185,42 @@ type Layer interface {
 
 type PartitionedLayer interface {
 	LayerParts() []LayerPart
+}
+
+type UnknownLayerPart struct {
+	outline Path
+	holes   Paths
+}
+
+func NewUnknownLayerPart(outline Path, holes Paths) LayerPart {
+	return UnknownLayerPart{
+		outline: outline,
+		holes:   holes,
+	}
+}
+
+func (l UnknownLayerPart) Outline() Path {
+	return l.outline
+}
+
+func (l UnknownLayerPart) Holes() Paths {
+	return l.holes
+}
+
+func (l UnknownLayerPart) Type() string {
+	return "unknown"
+}
+
+type partitionedLayer struct {
+	parts []LayerPart
+}
+
+func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
+	return partitionedLayer{
+		parts: parts,
+	}
+}
+
+func (p partitionedLayer) LayerParts() []LayerPart {
+	return p.parts
 }

@@ -15,7 +15,7 @@ type ModelSlicer interface {
 }
 
 type LayerModifier interface {
-	Modify(layer data.PartitionedLayer) (data.PartitionedLayer, error)
+	Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error)
 }
 
 type GCodeGenerator interface {

@@ -4,6 +4,7 @@ import (
 	"GoSlice/data"
 	"GoSlice/gcode"
 	"GoSlice/handle"
+	"GoSlice/modify"
 	"GoSlice/optimize"
 	"GoSlice/slice"
 	"GoSlice/stl"
@@ -57,7 +58,9 @@ func NewGoSlice(o ...option) *GoSlice {
 		reader:    stl.Reader(),
 		optimizer: optimize.NewOptimizer(&options),
 		slicer:    slice.NewSlicer(&options),
-		modifiers: nil,
+		modifiers: []handle.LayerModifier{
+			modify.NewPartTypeModifier(&options),
+		},
 		generator: gcode.NewGenerator(&options),
 		writer:    write.Writer(),
 	}
@@ -92,8 +95,8 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 	}
 
 	for _, m := range s.modifiers {
-		for i, layer := range layers {
-			layers[i], err = m.Modify(layer)
+		for layerNr, _ := range layers {
+			layers, err = m.Modify(layerNr, layers)
 			if err != nil {
 				return err
 			}

@@ -29,27 +29,6 @@ func NewClip() Clip {
 	return clipperClip{}
 }
 
-type layerPart struct {
-	outline data.Path
-	holes   data.Paths
-}
-
-func (l layerPart) Outline() data.Path {
-	return l.outline
-}
-
-func (l layerPart) Holes() data.Paths {
-	return l.holes
-}
-
-type partitionedLayer struct {
-	parts []data.LayerPart
-}
-
-func (p partitionedLayer) LayerParts() []data.LayerPart {
-	return p.parts
-}
-
 func clipperPoint(p util.MicroPoint) *clipper.IntPoint {
 	return &clipper.IntPoint{
 		X: clipper.CInt(p.X()),
@@ -126,7 +105,7 @@ func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bo
 		polyList = append(polyList, path)
 	}
 
-	layer := partitionedLayer{}
+	var layerParts []data.LayerPart
 
 	clip := clipper.NewClipper(clipper.IoNone)
 	clip.AddPaths(polyList, clipper.PtSubject, true)
@@ -148,20 +127,19 @@ func (c clipperClip) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bo
 		polysForNextRound = nil
 
 		for _, p := range thisRound {
+			var holes data.Paths
 
-			part := layerPart{
-				outline: microPath(p.Contour()),
-			}
 			for _, child := range p.Childs() {
-				part.holes = append(part.holes, microPath(child.Contour()))
+				holes = append(holes, microPath(child.Contour()))
 				for _, c := range child.Childs() {
 					polysForNextRound = append(polysForNextRound, c)
 				}
 			}
-			layer.parts = append(layer.parts, &part)
+
+			layerParts = append(layerParts, data.NewUnknownLayerPart(microPath(p.Contour()), holes))
 		}
 	}
-	return layer, true
+	return data.NewPartitionedLayer(layerParts), true
 }
 
 func (c clipperClip) InsetLayer(layer data.PartitionedLayer, offset util.Micrometer, insetCount int) [][][]data.Paths {

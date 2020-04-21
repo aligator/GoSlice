@@ -93,30 +93,33 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 			// bottom layers
 			func(layerNr int, layers []data.PartitionedLayer, meta []LayerMetadata, options *data.Options) LayerMetadata {
 				var bottomLayerInfill []data.Paths
-				if layerNr == 0 {
-					perimeters, ok := meta[layerNr].Elements["perimeter"].([3][]GCodePaths)
-					if !ok {
-						fmt.Println("wrong type for perimeter elements")
-						return meta[layerNr]
-					}
 
-					innerPaths := perimeters[2]
-					if len(innerPaths) == 0 {
-						innerPaths = perimeters[1]
-					}
-					if len(innerPaths) == 0 {
-						innerPaths = perimeters[0]
-					}
-
-					c := clip.NewClip()
-
-					for _, paths := range innerPaths {
-						infill := c.Fill(paths.paths, options.Printer.ExtrusionWidth, options.Print.InfillOverlapPercent)
-						if infill != nil {
-							bottomLayerInfill = append(bottomLayerInfill, infill)
-						}
-					}
+				perimeters, ok := meta[layerNr].Elements["perimeter"].([3][]GCodePaths)
+				if !ok {
+					fmt.Println("wrong type for perimeter elements")
+					return meta[layerNr]
 				}
+
+				c := clip.NewClip()
+
+				for partNr, part := range layers[layerNr].LayerParts() {
+					if part.Type() != "bottom" {
+						continue
+					}
+
+					innerPaths := perimeters[2][partNr]
+					if len(innerPaths.paths) == 0 {
+						innerPaths = perimeters[1][partNr]
+					}
+					if len(innerPaths.paths) == 0 {
+						innerPaths = perimeters[0][partNr]
+					}
+
+					infill := c.Fill(innerPaths.paths, options.Printer.ExtrusionWidth, options.Print.InfillOverlapPercent)
+					// do not filter nil, so that the part num is still correct
+					bottomLayerInfill = append(bottomLayerInfill, infill)
+				}
+
 				meta[layerNr].Elements["bottomLayer"] = bottomLayerInfill
 				return meta[layerNr]
 			},
