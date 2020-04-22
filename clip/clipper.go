@@ -135,6 +135,10 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 		polyList = append(polyList, path)
 	}
 
+	if len(polyList) == 0 {
+		return data.NewPartitionedLayer([]data.LayerPart{}), true
+	}
+
 	var layerParts []data.LayerPart
 
 	clip := clipper.NewClipper(clipper.IoNone)
