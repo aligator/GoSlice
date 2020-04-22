@@ -1,11 +1,9 @@
 package gcode
 
 import (
-	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handle"
 	"bytes"
-	"fmt"
 )
 
 type GCodePaths struct {
@@ -17,14 +15,12 @@ type LayerMetadata struct {
 	Elements map[string]interface{}
 }
 
-type GeneratorStep func(layerNr int, layers []data.PartitionedLayer, meta []LayerMetadata, options *data.Options) LayerMetadata
-type RenderStep func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z data.Micrometer, options *data.Options)
+type RenderStep func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
 
 type generator struct {
 	options   *data.Options
 	gcode     string
 	builder   *gcodeBuilder
-	steps     []GeneratorStep
 	renderers []RenderStep
 }
 
@@ -34,161 +30,76 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 
 	return &generator{
 		options: options,
-		steps: []GeneratorStep{
-			// perimeters TODO: move to modifiers as the perimeters are already needed by other modifiers
-			func(layerNr int, layers []data.PartitionedLayer, meta []LayerMetadata, options *data.Options) LayerMetadata {
-				// perimeters per object
-				innerPerimeters := []GCodePaths{}
-				outerPerimeters := []GCodePaths{}
-				middlePerimeters := []GCodePaths{}
-
-				// generate perimeters
-				c := clip.NewClipper()
-				insetParts := c.InsetLayer(layers[layerNr], options.Printer.ExtrusionWidth, options.Print.InsetCount)
-
-				// iterate over all generated perimeters
-				for _, part := range insetParts {
-					for _, wall := range part {
-						for insetNum, wallInset := range wall {
-							var speed data.Millimeter
-							// set the speed based on the current perimeter
-							if insetNum == 0 {
-								if layerNr > 0 {
-									speed = options.Print.OuterPerimeterSpeed
-								}
-
-								outerPerimeters = append(outerPerimeters, GCodePaths{
-									paths: wallInset,
-									Speed: speed,
-								})
-								continue
-							} else {
-								if layerNr > 0 {
-									speed = options.Print.LayerSpeed
-								}
-							}
-
-							if insetNum > 0 && insetNum < len(wall)-1 {
-								middlePerimeters = append(middlePerimeters, GCodePaths{
-									paths: wallInset,
-									Speed: speed,
-								})
-							} else {
-								innerPerimeters = append(innerPerimeters, GCodePaths{
-									paths: wallInset,
-									Speed: speed,
-								})
-							}
-						}
-					}
-				}
-
-				meta[layerNr].Elements["perimeter"] = [3][]GCodePaths{
-					outerPerimeters,
-					middlePerimeters,
-					innerPerimeters,
-				}
-
-				return meta[layerNr]
-			},
-
-			// bottom layers TODO: generate all infills based on the classifying made by the modifiers
-			func(layerNr int, layers []data.PartitionedLayer, meta []LayerMetadata, options *data.Options) LayerMetadata {
-				var bottomLayerInfill []data.Paths
-
-				perimeters, ok := meta[layerNr].Elements["perimeter"].([3][]GCodePaths)
-				if !ok {
-					fmt.Println("wrong type for perimeter elements")
-					return meta[layerNr]
-				}
-
-				c := clip.NewClipper()
-
-				for partNr, part := range layers[layerNr].LayerParts() {
-					if part.Type() != "bottom" {
-						continue
-					}
-
-					innerPaths := perimeters[2][partNr]
-					if len(innerPaths.paths) == 0 {
-						innerPaths = perimeters[1][partNr]
-					}
-					if len(innerPaths.paths) == 0 {
-						innerPaths = perimeters[0][partNr]
-					}
-
-					infill := c.Fill(innerPaths.paths, options.Printer.ExtrusionWidth, options.Print.InfillOverlapPercent)
-					// do not filter nil, so that the part num is still correct
-					bottomLayerInfill = append(bottomLayerInfill, infill)
-				}
-
-				meta[layerNr].Elements["bottomLayer"] = bottomLayerInfill
-				return meta[layerNr]
-			},
-		},
 		renderers: []RenderStep{
 			// pre layer
-			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z data.Micrometer, options *data.Options) {
+			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 				builder.addComment("LAYER:%v", layerNr)
 				if layerNr == 0 {
-					builder.setExtrudeSpeed(options.Print.IntialLayerSpeed)
+					// force the InitialLayerSpeed for first layer
+					builder.setExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
 				} else {
+					builder.disableExtrudeSpeedOverride()
 					builder.setExtrudeSpeed(options.Print.LayerSpeed)
 				}
 			},
 
 			// fan control
-			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z data.Micrometer, options *data.Options) {
+			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 				if layerNr == 2 {
 					builder.addCommand("M106 ; enable fan")
 				}
 			},
 
 			// perimeters
-			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z data.Micrometer, options *data.Options) {
-				p, ok := meta[layerNr].Elements["perimeter"].([3][]GCodePaths)
-				if !ok {
-					fmt.Println("wrong type for perimeter elements")
-					return
-				}
+			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+				for _, part := range layers[layerNr].LayerParts() {
+					perimeters, ok := part.Attributes()["perimeters"].([][]data.Paths)
 
-				for i, perimeter := range p {
-					if i == 0 {
-						builder.addComment("TYPE:WALL-OUTER")
-					} else {
-						builder.addComment("TYPE:WALL-INNER")
+					if !ok {
+						continue
 					}
 
-					for _, paths := range perimeter {
-						for _, path := range paths.paths {
-							builder.setExtrudeSpeed(paths.Speed)
-							builder.addPolygon(path, z)
+					// perimeters contains them as [wallNr][insetNr]data.Paths
+					for _, wall := range perimeters {
+						for insetNr, insets := range wall {
+							// set the speed based on outer or inner layer
+							if insetNr == 0 {
+								builder.addComment("TYPE:WALL-OUTER")
+								builder.setExtrudeSpeed(options.Print.OuterPerimeterSpeed)
+							} else {
+								builder.addComment("TYPE:WALL-INNER")
+								builder.setExtrudeSpeed(options.Print.LayerSpeed)
+							}
+
+							for _, inset := range insets {
+								builder.addPolygon(inset, z)
+							}
 						}
 					}
 				}
 			},
-
-			// bottom layer TODO: bottom and top layers
-			func(builder *gcodeBuilder, layerNr int, meta []LayerMetadata, z data.Micrometer, options *data.Options) {
-				if meta[layerNr].Elements["bottomLayer"] == nil {
-					return
-				}
-
-				layer, ok := meta[layerNr].Elements["bottomLayer"].([]data.Paths)
-				if !ok {
-					fmt.Println("wrong type for bottomLayer elements")
-					return
-				}
-				builder.addComment("bottomLayer")
-
-				for _, paths := range layer {
-					for _, path := range paths {
-						builder.addPolygon(path, z)
+			/*
+				// bottom layer TODO: bottom and top layers
+				func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+					if meta[layerNr].Elements["bottomLayer"] == nil {
+						return
 					}
 
-				}
-			},
+					layer, ok := meta[layerNr].Elements["bottomLayer"].([]data.Paths)
+					if !ok {
+						fmt.Println("wrong type for bottomLayer elements")
+						return
+					}
+					builder.addComment("bottomLayer")
 
+					for _, paths := range layer {
+						for _, path := range paths {
+							builder.addPolygon(path, z)
+						}
+
+					}
+				},
+			*/
 			// TODO: infill, support, bridges,...
 		},
 	}
@@ -209,25 +120,12 @@ func (g *generator) init() {
 }
 
 func (g *generator) Generate(layers []data.PartitionedLayer) string {
-	meta := []LayerMetadata{}
-
-	for _, step := range g.steps {
-		for layerNr := range layers {
-			if len(meta) <= layerNr {
-				meta = append(meta, LayerMetadata{
-					Elements: map[string]interface{}{},
-				})
-			}
-			meta[layerNr] = step(layerNr, layers, meta, g.options)
-		}
-	}
-
 	g.init()
 
 	for layerNr := range layers {
 		for _, renderer := range g.renderers {
 			z := g.options.Print.InitialLayerThickness + data.Micrometer(layerNr)*g.options.Print.LayerThickness
-			renderer(g.builder, layerNr, meta, z, g.options)
+			renderer(g.builder, layerNr, layers, z, g.options)
 		}
 	}
 

@@ -11,11 +11,19 @@ type partTypeModifier struct {
 
 type typedLayerPart struct {
 	data.LayerPart
-	typ string
+	typ        string
+	attributes map[string]interface{}
 }
 
 func (l typedLayerPart) Type() string {
+	if l.typ == "" {
+		return l.LayerPart.Type()
+	}
 	return l.typ
+}
+
+func (l typedLayerPart) Attributes() map[string]interface{} {
+	return l.attributes
 }
 
 // NewPartTypeModifier checks for each part which type it is. (e.g. bottom, top, hanging, etc.)

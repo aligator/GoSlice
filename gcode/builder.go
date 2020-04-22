@@ -10,10 +10,10 @@ import (
 type gcodeBuilder struct {
 	buf *bytes.Buffer
 
-	extrusionAmount                       data.Millimeter
-	extrusionPerMM                        data.Millimeter
-	currentPosition                       data.MicroVec3
-	moveSpeed, extrudeSpeed, currentSpeed int
+	extrusionAmount                                             data.Millimeter
+	extrusionPerMM                                              data.Millimeter
+	currentPosition                                             data.MicroVec3
+	moveSpeed, extrudeSpeed, currentSpeed, extrudeSpeedOverride int
 }
 
 func newGCodeBuilder(buf *bytes.Buffer) *gcodeBuilder {
@@ -40,6 +40,14 @@ func (g *gcodeBuilder) setExtrudeSpeed(extrudeSpeed data.Millimeter) {
 	g.extrudeSpeed = int(extrudeSpeed)
 }
 
+func (g *gcodeBuilder) setExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
+	g.extrudeSpeedOverride = int(extrudeSpeed)
+}
+
+func (g *gcodeBuilder) disableExtrudeSpeedOverride() {
+	g.extrudeSpeedOverride = -1
+}
+
 func (g *gcodeBuilder) addCommand(command string, args ...interface{}) {
 	command = command + "\n"
 	command = fmt.Sprintf(command, args...)
@@ -56,7 +64,12 @@ func (g *gcodeBuilder) addMove(p data.MicroVec3, extrusion data.Millimeter) {
 	var speed int
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
-		speed = g.extrudeSpeed
+
+		if g.extrudeSpeedOverride == -1 {
+			speed = g.extrudeSpeed
+		} else {
+			speed = g.extrudeSpeedOverride
+		}
 	} else {
 		g.buf.WriteString("G0")
 		speed = g.moveSpeed

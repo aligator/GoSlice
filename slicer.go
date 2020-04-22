@@ -58,6 +58,7 @@ func NewGoSlice(o ...option) *GoSlice {
 		optimizer: optimize.NewOptimizer(&options),
 		slicer:    slice.NewSlicer(&options),
 		modifiers: []handle.LayerModifier{
+			modify.NewPerimeterModifier(&options),
 			modify.NewPartTypeModifier(&options),
 		},
 		generator: gcode.NewGenerator(&options),

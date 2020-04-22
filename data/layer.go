@@ -193,6 +193,13 @@ type LayerPart interface {
 	// Type() should just return:
 	//  "unknown"
 	Type() string
+
+	// Attributes can be any additional data, referenced by a key.
+	// Note that you have to know what type the attribute has to
+	// use proper type assertion.
+	//
+	// If no attributes exist, it should return nil.
+	Attributes() map[string]interface{}
 }
 
 // Layer represents one layer which can consist of several polygons.
@@ -236,6 +243,10 @@ func (l UnknownLayerPart) Holes() Paths {
 // Type returns always "unknown" in this implementation.
 func (l UnknownLayerPart) Type() string {
 	return "unknown"
+}
+
+func (l UnknownLayerPart) Attributes() map[string]interface{} {
+	return nil
 }
 
 type partitionedLayer struct {
