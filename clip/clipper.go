@@ -144,7 +144,7 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 		return nil, false
 	}
 
-	polysForNextRound := []*clipper.PolyNode{}
+	var polysForNextRound []*clipper.PolyNode
 
 	for _, c := range resultPolys.Childs() {
 		polysForNextRound = append(polysForNextRound, c)
@@ -160,12 +160,14 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 			var holes data.Paths
 
 			for _, child := range p.Childs() {
+				// TODO: simplyfy, yes / no ??
 				holes = append(holes, microPath(child.Contour(), false))
 				for _, c := range child.Childs() {
 					polysForNextRound = append(polysForNextRound, c)
 				}
 			}
 
+			// TODO: simplyfy, yes / no ??
 			layerParts = append(layerParts, data.NewUnknownLayerPart(microPath(p.Contour(), false), holes))
 		}
 	}

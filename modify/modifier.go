@@ -2,17 +2,66 @@ package modify
 
 import (
 	"GoSlice/data"
-	"GoSlice/handle"
 )
 
-type partTypeModifier struct {
-	options *data.Options
+type typedLayer struct {
+	data.PartitionedLayer
+	typ        string
+	attributes map[string]interface{}
+}
+
+// returns a new simple PartitionedLayer which just contains several LayerParts.
+func newTypedLayer(layer data.PartitionedLayer, typ ...string) typedLayer {
+	attributes := layer.Attributes()
+	if attributes == nil {
+		attributes = map[string]interface{}{}
+	}
+
+	newType := ""
+	if len(typ) > 0 {
+		newType = typ[0]
+	}
+
+	return typedLayer{
+		PartitionedLayer: layer,
+		attributes:       attributes,
+		typ:              newType,
+	}
+}
+
+func (l typedLayer) Type() string {
+	if l.typ == "" {
+		return l.PartitionedLayer.Type()
+	}
+	return l.typ
+}
+
+func (l typedLayer) Attributes() map[string]interface{} {
+	return l.attributes
 }
 
 type typedLayerPart struct {
 	data.LayerPart
 	typ        string
 	attributes map[string]interface{}
+}
+
+func newTypedLayerPart(layerPart data.LayerPart, typ ...string) typedLayerPart {
+	attributes := layerPart.Attributes()
+	if attributes == nil {
+		attributes = map[string]interface{}{}
+	}
+
+	newType := ""
+	if len(typ) > 0 {
+		newType = typ[0]
+	}
+
+	return typedLayerPart{
+		LayerPart:  layerPart,
+		attributes: attributes,
+		typ:        newType,
+	}
 }
 
 func (l typedLayerPart) Type() string {
@@ -24,29 +73,4 @@ func (l typedLayerPart) Type() string {
 
 func (l typedLayerPart) Attributes() map[string]interface{} {
 	return l.attributes
-}
-
-// NewPartTypeModifier checks for each part which type it is. (e.g. bottom, top, hanging, etc.)
-func NewPartTypeModifier(options *data.Options) handle.LayerModifier {
-	return &partTypeModifier{
-		options: options,
-	}
-}
-
-func (m partTypeModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
-	// for the first layer set everything to bottom
-	if layerNr == 0 {
-		var layerParts []data.LayerPart
-
-		for _, part := range layers[layerNr].LayerParts() {
-			layerParts = append(layerParts, typedLayerPart{
-				LayerPart: data.NewUnknownLayerPart(part.Outline(), part.Holes()),
-				typ:       "bottom",
-			})
-		}
-
-		layers[layerNr] = data.NewPartitionedLayer(layerParts)
-	}
-
-	return layers, nil
 }

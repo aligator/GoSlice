@@ -59,7 +59,7 @@ func NewGoSlice(o ...option) *GoSlice {
 		slicer:    slice.NewSlicer(&options),
 		modifiers: []handle.LayerModifier{
 			modify.NewPerimeterModifier(&options),
-			modify.NewPartTypeModifier(&options),
+			modify.NewInfillModifier(&options),
 		},
 		generator: gcode.NewGenerator(&options),
 		writer:    write.Writer(),

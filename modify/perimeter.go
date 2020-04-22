@@ -24,22 +24,34 @@ func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) (
 	c := clip.NewClipper()
 	insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount)
 
-	var modifiedLayerParts []data.LayerPart
+	var innerPerimeters []data.Paths
+	var outerPerimeters []data.Paths
+	var middlePerimeters []data.Paths
 
-	for partNr, part := range insetParts {
-		attributes := layers[layerNr].LayerParts()[partNr].Attributes()
-		if attributes == nil {
-			attributes = map[string]interface{}{}
+	// iterate over all generated perimeters
+	for _, part := range insetParts {
+		for _, wall := range part {
+			for insetNum, wallInset := range wall {
+				if insetNum == 0 {
+					outerPerimeters = append(outerPerimeters, wallInset)
+				} else if insetNum > 0 && insetNum < len(wall)-1 {
+					middlePerimeters = append(middlePerimeters, wallInset)
+				} else {
+					innerPerimeters = append(innerPerimeters, wallInset)
+				}
+			}
 		}
-		attributes["perimeters"] = part
-
-		modifiedLayerParts = append(modifiedLayerParts, typedLayerPart{
-			LayerPart:  layers[layerNr].LayerParts()[partNr],
-			attributes: attributes,
-		})
 	}
 
-	layers[layerNr] = data.NewPartitionedLayer(modifiedLayerParts)
+	newLayer := newTypedLayer(layers[layerNr])
+
+	newLayer.attributes["perimeters"] = [3][]data.Paths{
+		outerPerimeters,
+		middlePerimeters,
+		innerPerimeters,
+	}
+
+	layers[layerNr] = newLayer
 
 	return layers, nil
 }

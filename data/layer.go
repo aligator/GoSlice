@@ -198,7 +198,8 @@ type LayerPart interface {
 	// Note that you have to know what type the attribute has to
 	// use proper type assertion.
 	//
-	// If no attributes exist, it should return nil.
+	// If the implementation does not support attributes, it should return nil.
+	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
 	Attributes() map[string]interface{}
 }
 
@@ -213,6 +214,20 @@ type Layer interface {
 // polygons in the form of LayerParts.
 type PartitionedLayer interface {
 	LayerParts() []LayerPart
+
+	// Type classifies the layer.
+	// If the type is irrelevant or not known,
+	// Type() should just return:
+	//  "unknown"
+	Type() string
+
+	// Attributes can be any additional data, referenced by a key.
+	// Note that you have to know what type the attribute has to
+	// use proper type assertion.
+	//
+	// If the implementation does not support attributes, it should return nil.
+	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
+	Attributes() map[string]interface{}
 }
 
 // UnknownLayerPart is the simplest implementation of LayerPart.
@@ -262,4 +277,12 @@ func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
 
 func (p partitionedLayer) LayerParts() []LayerPart {
 	return p.parts
+}
+
+func (p partitionedLayer) Type() string {
+	return "unknown"
+}
+
+func (p partitionedLayer) Attributes() map[string]interface{} {
+	return nil
 }

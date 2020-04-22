@@ -3,7 +3,7 @@ package data
 
 import "math"
 
-// type.go holds the basic type definition.
+// infill.go holds the basic type definition.
 // The types behind them may change in the
 // future to more precise / larger ones.
 
