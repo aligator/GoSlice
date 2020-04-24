@@ -1,0 +1,4 @@
+github.com/aligator/go.clipper v0.0.0-20200424185851-fc8a51077d44 h1:5nsfJ11G3udJ3c9UE8XAqQgIsS/hDcttx1aACpcvwkI=
+github.com/aligator/go.clipper v0.0.0-20200424185851-fc8a51077d44/go.mod h1:Fwf1mwr8bsQcByXvpURfbGDrJz6TnVop0RJMkXK22UA=
+github.com/hschendel/stl v1.0.3 h1:2HjK2cA8LDpR2GZvRM+I0SDI89nMi+Evneco5x8Yj3A=
+github.com/hschendel/stl v1.0.3/go.mod h1:rYBYytkIZDP9mM6MY2sX6GN8upQ/6lVgvGJ3JSrKXMY=

@@ -4,6 +4,9 @@ import (
 	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handle"
+	"errors"
+	"fmt"
+	"strconv"
 )
 
 type infillModifier struct {
@@ -18,33 +21,59 @@ func NewInfillModifier(options *data.Options) handle.LayerModifier {
 }
 
 func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
-	// for the first layer set everything to bottom
-	if layerNr == 0 {
-		perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
-		if !ok {
-			return layers, nil
-		}
-		// perimeters contains them as [part][insetNr][insetParts]
+	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
+	if !ok {
+		return layers, nil
+	}
+	// perimeters contains them as [part][insetNr][insetParts]
 
-		c := clip.NewClipper()
+	c := clip.NewClipper()
+	var infill []data.Paths
 
-		var infill []data.Paths
-
-		for _, part := range perimeters {
-			// for the last (most inner) inset of each part
-			for _, insetPart := range part[len(part)-1] {
+	// calculate the bottom parts for each inner perimeter part
+	for partNr, part := range perimeters {
+		// for the last (most inner) inset of each part
+		for insertPart, insetPart := range part[len(part)-1] {
+			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
+			if layerNr == 0 {
+				// for the first layer infill everything
 				infill = append(infill, c.Fill(insetPart, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent))
+				continue
+			}
+
+			perimetersBelow, ok := layers[layerNr-1].Attributes()["perimeters"].([][][]data.LayerPart)
+			if !ok {
+				return nil, errors.New("wrong type for attribute perimeters")
+			}
+
+			var toRemove []data.LayerPart
+
+			// remove each part below from the current part
+			for _, partBelow := range perimetersBelow {
+				// for the last (most inner) inset of each part
+				for _, insetPartBelow := range partBelow[len(partBelow)-1] {
+					toRemove = append(toRemove, insetPartBelow)
+				}
+			}
+
+			fmt.Println("calculate difference")
+			toInfill, ok := c.Difference(insetPart, toRemove)
+			if !ok {
+				return nil, errors.New("error while calculating difference with previous layer for detecting bottom parts")
+			}
+
+			for _, fill := range toInfill {
+				infill = append(infill, c.Fill(fill, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent))
 			}
 		}
-
-		newLayer := newTypedLayer(layers[layerNr])
-
-		if len(infill) > 0 {
-			newLayer.attributes["bottom"] = infill
-		}
-
-		layers[layerNr] = newLayer
 	}
+
+	newLayer := newTypedLayer(layers[layerNr])
+	if len(infill) > 0 {
+		newLayer.attributes["bottom"] = infill
+	}
+
+	layers[layerNr] = newLayer
 
 	return layers, nil
 }
