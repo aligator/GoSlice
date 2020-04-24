@@ -137,9 +137,9 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 	return newPath
 }
 
-// Size calculates the bounding box of the Path
+// Bounds calculates the bounding box of the Path
 // The returned points are the min-X-Y-Point and the max-X-Y-Point.
-func (p Path) Size() (MicroPoint, MicroPoint) {
+func (p Path) Bounds() (MicroPoint, MicroPoint) {
 	if len(p) == 0 {
 		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
 	}
@@ -179,9 +179,9 @@ func (p Path) Size() (MicroPoint, MicroPoint) {
 // Paths represents a group of Paths.
 type Paths []Path
 
-// Size calculates the bounding box of all Paths
+// Bounds calculates the bounding box of all Paths
 // The returned points are the min-X-Y-Point and the max-X-Y-Point.
-func (p Paths) Size() (MicroPoint, MicroPoint) {
+func (p Paths) Bounds() (MicroPoint, MicroPoint) {
 	if len(p) == 0 {
 		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
 	}

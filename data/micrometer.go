@@ -47,12 +47,12 @@ type MicroVec3 interface {
 
 	// Size2 returns the length of the vector^2.
 	//
-	// Use this whenever possible as it may be faster than Size().
+	// Use this whenever possible as it may be faster than Bounds().
 	Size2() Micrometer
 
 	// Size2 returns the length of the vector.
 	//
-	// Use Size2() this whenever possible as it may be faster than Size().
+	// Use Size2() this whenever possible as it may be faster than Bounds().
 	Size() Micrometer
 
 	Normalized() MicroVec3
@@ -217,12 +217,12 @@ type MicroPoint interface {
 
 	// Size2 returns the length of the vector^2.
 	//
-	// Use this whenever possible as it may be faster than Size().
+	// Use this whenever possible as it may be faster than Bounds().
 	Size2() Micrometer
 
 	// Size2 returns the length of the vector.
 	//
-	// Use Size2() this whenever possible as it may be faster than Size().
+	// Use Size2() this whenever possible as it may be faster than Bounds().
 	Size() Micrometer
 
 	// SizeMM returns the length of the vector in mm.

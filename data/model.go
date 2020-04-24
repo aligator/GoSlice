@@ -32,7 +32,7 @@ type OptimizedFace interface {
 type OptimizedModel interface {
 	Model
 
-	// Size returns the amount of faces.
+	// Bounds returns the amount of faces.
 	Size() MicroVec3
 
 	OptimizedFace(index int) OptimizedFace

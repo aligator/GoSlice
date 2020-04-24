@@ -226,7 +226,7 @@ func (c *clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inse
 }
 
 func (c *clipperClipper) Fill(paths data.LayerPart, lineWidth data.Micrometer, overlapPercentage int) data.Paths {
-	min, max := paths.Outline().Size()
+	min, max := paths.Outline().Bounds()
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
 	result := c.getLinearFill(cPath, cHoles, min, max, lineWidth, overlapPercentage)

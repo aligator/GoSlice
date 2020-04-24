@@ -50,8 +50,17 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 
 			// remove each part below from the current part
 			for _, partBelow := range perimetersBelow {
-				// for the last (most inner) inset of each part
-				for _, insetPartBelow := range partBelow[len(partBelow)-1] {
+				// use the 2nd last perimeters of the below parts to get some overlap.
+				// if the partBelow has only one perimeter, use it
+				var perimeter []data.LayerPart
+				if len(partBelow) == 1 {
+					// Todo: 3DBenchy + 1 / 2 Perimeter-settings need improvement
+					perimeter = partBelow[0]
+				} else {
+					perimeter = partBelow[len(partBelow)-2]
+				}
+
+				for _, insetPartBelow := range perimeter {
 					toRemove = append(toRemove, insetPartBelow)
 				}
 			}
