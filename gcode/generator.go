@@ -1,7 +1,6 @@
 package gcode
 
 import (
-	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handle"
 	"bytes"
@@ -53,40 +52,23 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 
 			// perimeters
 			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				perimeters, ok := layers[layerNr].Attributes()["perimeters"].([3][]data.Paths)
+				perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
 				if !ok {
 					return
 				}
 
-				var perimeterPaths [][][3]data.Paths
-
-				// reorder the perimeters to [wallNr][insetNr][typeNr]data.Paths
-				for typeNum, _ := range perimeters {
-					for wallNr, wall := range perimeters[typeNum] {
-						if len(perimeterPaths) <= wallNr {
-							perimeterPaths = append(perimeterPaths, [][3]data.Paths{})
+				// perimeters contains them as [part][insetNr][insetParts]
+				for _, part := range perimeters {
+					for insetNr := range part {
+						// print the outer perimeter as last perimeter
+						if insetNr >= len(part)-1 {
+							insetNr = 0
+						} else {
+							insetNr++
 						}
 
-						for insetNr, inset := range wall {
-							if len(perimeterPaths[wallNr]) <= insetNr {
-								perimeterPaths[wallNr] = append(perimeterPaths[wallNr], [3]data.Paths{})
-							}
-
-							if len(perimeterPaths[wallNr][insetNr]) <= typeNum {
-								perimeterPaths[wallNr][insetNr][typeNum] = append(perimeterPaths[wallNr][insetNr][typeNum], data.Path{})
-							}
-
-							perimeterPaths[wallNr][insetNr][typeNum] = append(perimeterPaths[wallNr][insetNr][typeNum], inset)
-						}
-					}
-				}
-
-				// perimeters contains them as [wallNr][insetNr][typeNr]data.Paths
-				for _, wall := range perimeterPaths {
-					for insetNr, insets := range wall {
-						for typeNr, inset := range insets {
-							// set the speed based on outer or inner layer
-							if typeNr == 0 || insetNr == len(insets)-1 {
+						for _, insetParts := range part[insetNr] {
+							if insetNr == 0 {
 								builder.addComment("TYPE:WALL-OUTER")
 								builder.setExtrudeSpeed(options.Print.OuterPerimeterSpeed)
 							} else {
@@ -94,9 +76,11 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 								builder.setExtrudeSpeed(options.Print.LayerSpeed)
 							}
 
-							for _, path := range inset {
-								builder.addPolygon(path, z)
+							for _, hole := range insetParts.Holes() {
+								builder.addPolygon(hole, z)
 							}
+
+							builder.addPolygon(insetParts.Outline(), z)
 						}
 					}
 				}
@@ -109,15 +93,10 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 					return
 				}
 
-				c := clip.NewClipper()
-
-				for _, paths := range bottom {
-					infill := c.Fill(paths, options.Printer.ExtrusionWidth, options.Print.InfillOverlapPercent)
-					if infill != nil {
-						builder.addComment("bottomLayer")
-						for _, path := range infill {
-							builder.addPolygon(path, z)
-						}
+				for _, path := range bottom {
+					builder.addComment("TYPE:INFILL-BOTTOM")
+					for _, path := range path {
+						builder.addPolygon(path, z)
 					}
 				}
 			},

@@ -3,7 +3,7 @@ package main
 import (
 	"GoSlice/data"
 	"fmt"
-	clipper "github.com/ctessum/go.clipper"
+	clipper "github.com/aligator/go.clipper"
 	"os"
 )
 

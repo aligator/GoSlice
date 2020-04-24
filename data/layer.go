@@ -137,6 +137,45 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 	return newPath
 }
 
+// Size calculates the bounding box of the Path
+// The returned points are the min-X-Y-Point and the max-X-Y-Point.
+func (p Path) Size() (MicroPoint, MicroPoint) {
+	if len(p) == 0 {
+		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
+	}
+
+	minX := MaxMicrometer
+	minY := MaxMicrometer
+
+	maxX := MinMicrometer
+	maxY := MinMicrometer
+
+	// return 0, 0, 0, 0 if everything is empty
+	any := false
+	for _, point := range p {
+		any = true
+		if point.X() < minX {
+			minX = point.X()
+		}
+		if point.X() > maxX {
+			maxX = point.X()
+		}
+
+		if point.Y() < minY {
+			minY = point.Y()
+		}
+		if point.Y() > maxY {
+			maxY = point.Y()
+		}
+	}
+
+	if !any {
+		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
+	}
+
+	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)
+}
+
 // Paths represents a group of Paths.
 type Paths []Path
 
