@@ -49,15 +49,18 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			var toRemove []data.LayerPart
 
 			// remove each part below from the current part
-			for _, partBelow := range perimetersBelow {
+			// for _, partBelow := range perimetersBelow {
+			// TODO: verify if it is always enough to check only the one layer with the partNr
+			if len(perimetersBelow)-1 >= partNr {
+
 				// use the 2nd last perimeters of the below parts to get some overlap.
 				// if the partBelow has only one perimeter, use it
 				var perimeter []data.LayerPart
-				if len(partBelow) == 1 {
+				if len(perimetersBelow[partNr]) == 1 {
 					// Todo: 3DBenchy + 1 / 2 Perimeter-settings need improvement
-					perimeter = partBelow[0]
+					perimeter = perimetersBelow[partNr][0]
 				} else {
-					perimeter = partBelow[len(partBelow)-2]
+					perimeter = perimetersBelow[partNr][len(perimetersBelow[partNr])-2]
 				}
 
 				for _, insetPartBelow := range perimeter {
