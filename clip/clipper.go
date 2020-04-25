@@ -8,6 +8,18 @@ import (
 	clipper "github.com/aligator/go.clipper"
 )
 
+type Pattern interface {
+	getPaths() clipper.Paths
+}
+
+type pattern struct {
+	paths clipper.Paths
+}
+
+func (p pattern) getPaths() clipper.Paths {
+	return p.paths
+}
+
 // Clipper is an interface that provides methods needed by GoSlice to clip polygons.
 type Clipper interface {
 	// GenerateLayerParts partitions the whole layer into several partition parts.
@@ -37,7 +49,9 @@ type Clipper interface {
 	// But it can also be smaller or greater than that if needed.
 	// The generated infill will overlap the paths by the percentage of this param.
 	// LineWidth is used for both, the calculation of the overlap and the calculation between the lines.
-	Fill(paths data.LayerPart, lineWidth data.Micrometer, overlapPercentage int) data.Paths
+	Fill(paths data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths
+
+	LinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern
 
 	Difference(part data.LayerPart, toRemove []data.LayerPart) (parts []data.LayerPart, ok bool)
 }
@@ -225,51 +239,54 @@ func (c *clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inse
 	return insets
 }
 
-func (c *clipperClipper) Fill(paths data.LayerPart, lineWidth data.Micrometer, overlapPercentage int) data.Paths {
-	min, max := paths.Outline().Bounds()
+func (c *clipperClipper) Fill(paths data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths {
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
-	result := c.getLinearFill(cPath, cHoles, min, max, lineWidth, overlapPercentage)
+	result := c.getInfill(pattern, cPath, cHoles, lineWidth, overlapPercentage)
 
 	return microPaths(result, false)
 }
 
-// getLinearFill provides a infill which uses simple parallel lines
-func (c *clipperClipper) getLinearFill(outline clipper.Path, holes clipper.Paths, minScanlines data.MicroPoint, maxScanlines data.MicroPoint, lineWidth data.Micrometer, overlapPercentage int) clipper.Paths {
-	var result clipper.Paths
-
-	overlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
-
+func (c clipperClipper) LinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {
 	lines := clipper.Paths{}
 	numLine := 0
 	// generate the lines
-	for x := minScanlines.X(); x <= maxScanlines.X(); x += lineWidth {
+	for x := min.X(); x <= max.X(); x += lineWidth {
 		// switch line direction based on even / odd
 		if numLine%2 == 1 {
 			lines = append(lines, clipper.Path{
 				&clipper.IntPoint{
 					X: clipper.CInt(x),
-					Y: clipper.CInt(maxScanlines.Y()),
+					Y: clipper.CInt(max.Y()),
 				},
 				&clipper.IntPoint{
 					X: clipper.CInt(x),
-					Y: clipper.CInt(minScanlines.Y()),
+					Y: clipper.CInt(min.Y()),
 				},
 			})
 		} else {
 			lines = append(lines, clipper.Path{
 				&clipper.IntPoint{
 					X: clipper.CInt(x),
-					Y: clipper.CInt(minScanlines.Y()),
+					Y: clipper.CInt(min.Y()),
 				},
 				&clipper.IntPoint{
 					X: clipper.CInt(x),
-					Y: clipper.CInt(maxScanlines.Y()),
+					Y: clipper.CInt(max.Y()),
 				},
 			})
 		}
 		numLine++
 	}
+
+	return pattern{lines}
+}
+
+// getInfill provides a infill which uses simple parallel lines
+func (c *clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes clipper.Paths, lineWidth data.Micrometer, overlapPercentage int) clipper.Paths {
+	var result clipper.Paths
+
+	overlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
 
 	// clip the paths with the lines using intersection
 	inset := clipper.Paths{outline}
@@ -287,7 +304,7 @@ func (c *clipperClipper) getLinearFill(outline clipper.Path, holes clipper.Paths
 	// clip the lines by the resulting inset
 	cl.AddPaths(inset, clipper.PtClip, true)
 	cl.AddPaths(holes, clipper.PtClip, true)
-	cl.AddPaths(lines, clipper.PtSubject, false)
+	cl.AddPaths(pattern.getPaths(), clipper.PtSubject, false)
 
 	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 	if !ok {

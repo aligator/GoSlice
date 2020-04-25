@@ -267,6 +267,8 @@ type PartitionedLayer interface {
 	// If the implementation does not support attributes, it should return nil.
 	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
 	Attributes() map[string]interface{}
+
+	Bounds() (MicroPoint, MicroPoint)
 }
 
 // UnknownLayerPart is the simplest implementation of LayerPart.
@@ -307,7 +309,7 @@ type partitionedLayer struct {
 	parts []LayerPart
 }
 
-// returns a new simple PartitionedLayer which just contains several LayerParts.
+// NewPartitionedLayer returns a new simple PartitionedLayer which just contains several LayerParts.
 func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
 	return partitionedLayer{
 		parts: parts,
@@ -324,4 +326,13 @@ func (p partitionedLayer) Type() string {
 
 func (p partitionedLayer) Attributes() map[string]interface{} {
 	return nil
+}
+
+func (p partitionedLayer) Bounds() (MicroPoint, MicroPoint) {
+	paths := Paths{}
+	for _, p := range p.LayerParts() {
+		paths = append(paths, p.Outline())
+	}
+
+	return paths.Bounds()
 }

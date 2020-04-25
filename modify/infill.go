@@ -30,6 +30,9 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	c := clip.NewClipper()
 	var infill []data.Paths
 
+	min, max := layers[layerNr].Bounds()
+	pattern := c.LinearPattern(min, max, m.options.Printer.ExtrusionWidth)
+
 	// calculate the bottom parts for each inner perimeter part
 	for partNr, part := range perimeters {
 		// for the last (most inner) inset of each part
@@ -37,7 +40,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
 			if layerNr == 0 {
 				// for the first layer infill everything
-				infill = append(infill, c.Fill(insetPart, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent))
+				infill = append(infill, c.Fill(insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
 				continue
 			}
 
@@ -75,7 +78,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			for _, fill := range toInfill {
-				infill = append(infill, c.Fill(fill, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent))
+				infill = append(infill, c.Fill(fill, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
 			}
 		}
 	}
