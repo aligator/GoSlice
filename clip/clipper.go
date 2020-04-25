@@ -135,7 +135,7 @@ func microPaths(p clipper.Paths, simplify bool) data.Paths {
 	return result
 }
 
-func (c *clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bool) {
+func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer, bool) {
 	polyList := clipper.Paths{}
 	// convert all polygons to clipper polygons
 	for _, layerPolygon := range l.Polygons() {
@@ -177,7 +177,7 @@ func (c *clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer
 	return data.NewPartitionedLayer(c.polyTreeToLayerParts(resultPolys)), true
 }
 
-func (c *clipperClipper) polyTreeToLayerParts(tree *clipper.PolyTree) []data.LayerPart {
+func (c clipperClipper) polyTreeToLayerParts(tree *clipper.PolyTree) []data.LayerPart {
 	var layerParts []data.LayerPart
 
 	var polysForNextRound []*clipper.PolyNode
@@ -211,7 +211,7 @@ func (c *clipperClipper) polyTreeToLayerParts(tree *clipper.PolyTree) []data.Lay
 	return layerParts
 }
 
-func (c *clipperClipper) InsetLayer(layer []data.LayerPart, offset data.Micrometer, insetCount int) [][][]data.LayerPart {
+func (c clipperClipper) InsetLayer(layer []data.LayerPart, offset data.Micrometer, insetCount int) [][][]data.LayerPart {
 	var result [][][]data.LayerPart
 	for _, part := range layer {
 		result = append(result, c.Inset(part, offset, insetCount))
@@ -220,7 +220,7 @@ func (c *clipperClipper) InsetLayer(layer []data.LayerPart, offset data.Micromet
 	return result
 }
 
-func (c *clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, insetCount int) [][]data.LayerPart {
+func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, insetCount int) [][]data.LayerPart {
 	var insets [][]data.LayerPart
 
 	co := clipper.NewClipperOffset()
@@ -239,7 +239,7 @@ func (c *clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inse
 	return insets
 }
 
-func (c *clipperClipper) Fill(paths data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths {
+func (c clipperClipper) Fill(paths data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths {
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
 	result := c.getInfill(pattern, cPath, cHoles, lineWidth, overlapPercentage)
@@ -283,7 +283,7 @@ func (c clipperClipper) LinearPattern(min data.MicroPoint, max data.MicroPoint, 
 }
 
 // getInfill provides a infill which uses simple parallel lines
-func (c *clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes clipper.Paths, lineWidth data.Micrometer, overlapPercentage int) clipper.Paths {
+func (c clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes clipper.Paths, lineWidth data.Micrometer, overlapPercentage int) clipper.Paths {
 	var result clipper.Paths
 
 	overlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
