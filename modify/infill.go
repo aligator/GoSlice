@@ -44,29 +44,11 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				continue
 			}
 
-			perimetersBelow, ok := layers[layerNr-1].Attributes()["perimeters"].([][][]data.LayerPart)
-			if !ok {
-				return nil, errors.New("wrong type for attribute perimeters")
-			}
-
 			var toRemove []data.LayerPart
 
-			// remove each part below from the current part
-			// for _, partBelow := range perimetersBelow { TODO: verify if it is always enough to check only the one layer with the partNr
-			if len(perimetersBelow)-1 >= partNr {
-				// Use the 2nd last perimeters of the below parts this prevents small infills at the edges if the below layer is slightly smaller.
-				// For parts with only one perimeter this does not work... No idea how to fix this, yet.
-				// Todo: 3DBenchy with 1 Perimeter-settings need improvement
-				var perimeter []data.LayerPart
-				if len(perimetersBelow[partNr]) == 1 {
-					perimeter = perimetersBelow[partNr][0]
-				} else {
-					perimeter = perimetersBelow[partNr][len(perimetersBelow[partNr])-2]
-				}
-
-				for _, insetPartBelow := range perimeter {
-					toRemove = append(toRemove, insetPartBelow)
-				}
+			if len(layers[layerNr-1].LayerParts())-1 >= partNr {
+				below := layers[layerNr-1].LayerParts()[partNr]
+				toRemove = []data.LayerPart{below}
 			}
 
 			fmt.Println("calculate difference")
