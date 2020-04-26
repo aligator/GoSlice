@@ -6,6 +6,7 @@ import (
 	"GoSlice/data"
 	"fmt"
 	clipper "github.com/aligator/go.clipper"
+	"os"
 )
 
 type Pattern interface {
@@ -49,7 +50,7 @@ type Clipper interface {
 	// But it can also be smaller or greater than that if needed.
 	// The generated infill will overlap the paths by the percentage of this param.
 	// LineWidth is used for both, the calculation of the overlap and the calculation between the lines.
-	Fill(paths data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths
+	Fill(paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths
 
 	LinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern
 
@@ -57,17 +58,11 @@ type Clipper interface {
 }
 
 // clipperClipper implements Clipper using the external clipper library.
-type clipperClipper struct {
-	cl *clipper.Clipper
-	co *clipper.ClipperOffset
-}
+type clipperClipper struct{}
 
 // NewClipper returns a new instance of a polygon Clipper.
 func NewClipper() Clipper {
-	return &clipperClipper{
-		cl: clipper.NewClipper(clipper.IoNone),
-		co: clipper.NewClipperOffset(),
-	}
+	return &clipperClipper{}
 }
 
 // clipperPoint converts the GoSlice point representation to the
@@ -239,12 +234,69 @@ func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inset
 	return insets
 }
 
-func (c clipperClipper) Fill(paths data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths {
+func (c clipperClipper) Fill(paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths {
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
-	result := c.getInfill(pattern, cPath, cHoles, lineWidth, overlapPercentage)
 
-	return microPaths(result, false)
+	insideOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage+200)) / 100.0
+	perimeterOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
+
+	result := c.getInfill(pattern, cPath, cHoles, lineWidth, insideOverlap)
+
+	if outline == nil {
+		outline = paths
+	}
+
+	cl := clipper.NewClipper(clipper.IoNone)
+
+	// generate the exset for the overlap (only if needed)
+	if perimeterOverlap != 0 {
+		co := clipper.NewClipperOffset()
+		co.AddPath(clipperPath(outline.Outline()), clipper.JtSquare, clipper.EtClosedPolygon)
+		co.AddPaths(clipperPaths(outline.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
+		co.MiterLimit = 2
+		maxOutline := co.Execute(float64(-perimeterOverlap))
+		cl.AddPaths(maxOutline, clipper.PtClip, true)
+	} else {
+		cl.AddPath(clipperPath(outline.Outline()), clipper.PtClip, true)
+		cl.AddPaths(clipperPaths(outline.Holes()), clipper.PtClip, true)
+	}
+
+	cl.AddPaths(result, clipper.PtSubject, false)
+
+	res, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+	if !ok {
+		return nil
+	}
+
+	var resultInfill data.Paths
+	parts := c.polyTreeToLayerParts(res)
+	for _, part := range parts {
+		resultInfill = append(resultInfill, part.Outline())
+
+		for _, path := range part.Holes() {
+			resultInfill = append(resultInfill, path)
+		}
+	}
+	return resultInfill
+}
+
+func (c clipperClipper) dump(paths clipper.Paths, filename string) {
+	buf, err := os.OpenFile(filename, os.O_CREATE, 0)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	buf.WriteString("<!DOCTYPE html><html><body>\n")
+	buf.WriteString("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"width: 150px; height:150px\">\n")
+	/*for _, path := range paths {
+
+
+		for _, point := range path {
+
+		}
+	}*/
+	buf.WriteString("</svg>\n")
 }
 
 func (c clipperClipper) LinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {
@@ -283,10 +335,8 @@ func (c clipperClipper) LinearPattern(min data.MicroPoint, max data.MicroPoint, 
 }
 
 // getInfill provides a infill which uses simple parallel lines
-func (c clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes clipper.Paths, lineWidth data.Micrometer, overlapPercentage int) clipper.Paths {
+func (c clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes clipper.Paths, lineWidth data.Micrometer, overlap float32) clipper.Paths {
 	var result clipper.Paths
-
-	overlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
 
 	// clip the paths with the lines using intersection
 	inset := clipper.Paths{outline}
@@ -294,8 +344,8 @@ func (c clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes c
 	co := clipper.NewClipperOffset()
 	cl := clipper.NewClipper(clipper.IoNone)
 
-	// generate the inset for the overlap (only if needed)
-	if overlapPercentage != 0 {
+	// generate the exset for the overlap (only if needed)
+	if overlap != 0 {
 		co.AddPaths(inset, clipper.JtSquare, clipper.EtClosedPolygon)
 		co.MiterLimit = 2
 		inset = co.Execute(float64(-overlap))

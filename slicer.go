@@ -33,7 +33,7 @@ func NewGoSlice(o ...option) *GoSlice {
 			InitialLayerThickness: 200,
 			LayerThickness:        200,
 			InsetCount:            2,
-			InfillOverlapPercent:  30,
+			InfillOverlapPercent:  50,
 		},
 		Filament: data.FilamentOptions{
 			FilamentDiameter: data.Millimeter(1.75).ToMicrometer(),

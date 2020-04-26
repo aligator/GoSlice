@@ -40,7 +40,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
 			if layerNr == 0 {
 				// for the first layer infill everything
-				infill = append(infill, c.Fill(insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
+				infill = append(infill, c.Fill(insetPart, nil, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
 				continue
 			}
 
@@ -60,7 +60,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				// if the partBelow has only one perimeter, use it
 				var perimeter []data.LayerPart
 				if len(perimetersBelow[partNr]) == 1 {
-					// Todo: 3DBenchy + 1 / 2 Perimeter-settings need improvement
+					// Todo: 3DBenchy with 1 Perimeter-settings need improvement
 					perimeter = perimetersBelow[partNr][0]
 				} else {
 					perimeter = perimetersBelow[partNr][len(perimetersBelow[partNr])-2]
@@ -78,7 +78,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			for _, fill := range toInfill {
-				infill = append(infill, c.Fill(fill, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
+				infill = append(infill, c.Fill(fill, insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
 			}
 		}
 	}
