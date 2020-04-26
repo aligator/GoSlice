@@ -28,7 +28,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	// perimeters contains them as [part][insetNr][insetParts]
 
 	c := clip.NewClipper()
-	var infill []data.Paths
+	var bottomInfill []data.Paths
 
 	min, max := layers[layerNr].Bounds()
 	pattern := c.LinearPattern(min, max, m.options.Printer.ExtrusionWidth)
@@ -39,8 +39,8 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 		for insertPart, insetPart := range part[len(part)-1] {
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
 			if layerNr == 0 {
-				// for the first layer infill everything
-				infill = append(infill, c.Fill(insetPart, nil, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
+				// for the first layer bottomInfill everything
+				bottomInfill = append(bottomInfill, c.Fill(insetPart, nil, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
 				continue
 			}
 
@@ -52,15 +52,13 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			var toRemove []data.LayerPart
 
 			// remove each part below from the current part
-			// for _, partBelow := range perimetersBelow {
-			// TODO: verify if it is always enough to check only the one layer with the partNr
+			// for _, partBelow := range perimetersBelow { TODO: verify if it is always enough to check only the one layer with the partNr
 			if len(perimetersBelow)-1 >= partNr {
-
-				// use the 2nd last perimeters of the below parts to get some overlap.
-				// if the partBelow has only one perimeter, use it
+				// Use the 2nd last perimeters of the below parts this prevents small infills at the edges if the below layer is slightly smaller.
+				// For parts with only one perimeter this does not work... No idea how to fix this, yet.
+				// Todo: 3DBenchy with 1 Perimeter-settings need improvement
 				var perimeter []data.LayerPart
 				if len(perimetersBelow[partNr]) == 1 {
-					// Todo: 3DBenchy with 1 Perimeter-settings need improvement
 					perimeter = perimetersBelow[partNr][0]
 				} else {
 					perimeter = perimetersBelow[partNr][len(perimetersBelow[partNr])-2]
@@ -78,14 +76,14 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			for _, fill := range toInfill {
-				infill = append(infill, c.Fill(fill, insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
+				bottomInfill = append(bottomInfill, c.Fill(fill, insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
 			}
 		}
 	}
 
 	newLayer := newTypedLayer(layers[layerNr])
-	if len(infill) > 0 {
-		newLayer.attributes["bottom"] = infill
+	if len(bottomInfill) > 0 {
+		newLayer.attributes["bottom"] = bottomInfill
 	}
 
 	layers[layerNr] = newLayer
