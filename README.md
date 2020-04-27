@@ -1,3 +1,5 @@
+![sliced Gopher](https://github.com/aligator/GoSlice/raw/master/logo.png "sliced Goper")
+
 # GoSlice
 
 This is a very experimental slicer for 3d printing.
