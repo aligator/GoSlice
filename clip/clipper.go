@@ -6,7 +6,6 @@ import (
 	"GoSlice/data"
 	"fmt"
 	clipper "github.com/aligator/go.clipper"
-	"os"
 )
 
 type Pattern interface {
@@ -238,7 +237,11 @@ func (c clipperClipper) Fill(paths data.LayerPart, outline data.LayerPart, lineW
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
 
+	// The inside overlap is for parts which are smaller than the outline.
+	// These parts are overlapped a bit more to avoid linos which are printed only in the air.
 	insideOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage+200)) / 100.0
+
+	// The perimeter overlap is the overlap into the outline.
 	perimeterOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
 
 	result := c.getInfill(pattern, cPath, cHoles, lineWidth, insideOverlap)
@@ -279,24 +282,6 @@ func (c clipperClipper) Fill(paths data.LayerPart, outline data.LayerPart, lineW
 		}
 	}
 	return resultInfill
-}
-
-func (c clipperClipper) dump(paths clipper.Paths, filename string) {
-	buf, err := os.OpenFile(filename, os.O_CREATE, 0)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	buf.WriteString("<!DOCTYPE html><html><body>\n")
-	buf.WriteString("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"width: 150px; height:150px\">\n")
-	/*for _, path := range paths {
-
-
-		for _, point := range path {
-
-		}
-	}*/
-	buf.WriteString("</svg>\n")
 }
 
 func (c clipperClipper) LinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {

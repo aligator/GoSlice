@@ -44,11 +44,22 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				continue
 			}
 
+			// For the other layers detect the bottom parts by calculating the difference between the layer below
+			// and the current most inner perimeter.
 			var toRemove []data.LayerPart
 
-			if len(layers[layerNr-1].LayerParts())-1 >= partNr {
-				below := layers[layerNr-1].LayerParts()[partNr]
-				toRemove = []data.LayerPart{below}
+			if len(layers[layerNr-1].LayerParts())-1 < partNr {
+				continue
+			}
+
+			// exset the below parts to fix generating very small infills for oblique walls (e.g. the sides of the 3DBenchy model)
+			below := layers[layerNr-1].LayerParts()[partNr]
+			belowBigger := c.Inset(below, -m.options.Printer.ExtrusionWidth, 1)
+
+			for _, parts := range belowBigger {
+				for _, layerPart := range parts {
+					toRemove = append(toRemove, layerPart)
+				}
 			}
 
 			fmt.Println("calculate difference")
