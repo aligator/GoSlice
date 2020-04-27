@@ -227,6 +227,10 @@ type LayerPart interface {
 	Outline() Path
 	Holes() Paths
 
+	// Depth returns how deep it is located inside the polygon tree where this part was derived from
+	// If it is unknown, just return -1.
+	Depth() int
+
 	// Type classifies the part.
 	// If the type is irrelevant or not known,
 	// Type() should just return:
@@ -269,6 +273,9 @@ type PartitionedLayer interface {
 	Attributes() map[string]interface{}
 
 	Bounds() (MicroPoint, MicroPoint)
+
+	// The maximum depth a layer part can have in this layer. (Derived from an orginal tree structure.)
+	MaxDepth() int
 }
 
 // UnknownLayerPart is the simplest implementation of LayerPart.
@@ -278,13 +285,16 @@ type PartitionedLayer interface {
 type UnknownLayerPart struct {
 	outline Path
 	holes   Paths
+	depth   int
 }
 
 // NewUnknownLayerPart returns a new, simple LayerPart with the type "unknown".
-func NewUnknownLayerPart(outline Path, holes Paths) LayerPart {
+// If the depth is unknown just pass -1.
+func NewUnknownLayerPart(outline Path, holes Paths, depth int) LayerPart {
 	return UnknownLayerPart{
 		outline: outline,
 		holes:   holes,
+		depth:   depth,
 	}
 }
 
@@ -305,14 +315,20 @@ func (l UnknownLayerPart) Attributes() map[string]interface{} {
 	return nil
 }
 
+func (l UnknownLayerPart) Depth() int {
+	return l.depth
+}
+
 type partitionedLayer struct {
-	parts []LayerPart
+	parts    []LayerPart
+	maxDepth int
 }
 
 // NewPartitionedLayer returns a new simple PartitionedLayer which just contains several LayerParts.
-func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
+func NewPartitionedLayer(parts []LayerPart, maxDepth int) PartitionedLayer {
 	return partitionedLayer{
-		parts: parts,
+		parts:    parts,
+		maxDepth: maxDepth,
 	}
 }
 
@@ -335,4 +351,8 @@ func (p partitionedLayer) Bounds() (MicroPoint, MicroPoint) {
 	}
 
 	return paths.Bounds()
+}
+
+func (p partitionedLayer) MaxDepth() int {
+	return p.maxDepth
 }
