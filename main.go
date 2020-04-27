@@ -25,7 +25,7 @@ func main() {
 
 	p := NewGoSlice(
 		Center(data.NewMicroVec3(data.Millimeter(100).ToMicrometer(), data.Millimeter(100).ToMicrometer(), 0)),
-		InsetCount(1))
+		InsetCount(2))
 	err := p.Process(args[0], args[0]+".gcode")
 
 	if err != nil {
