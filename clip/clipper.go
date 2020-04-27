@@ -49,7 +49,7 @@ type Clipper interface {
 	// But it can also be smaller or greater than that if needed.
 	// The generated infill will overlap the paths by the percentage of this param.
 	// LineWidth is used for both, the calculation of the overlap and the calculation between the lines.
-	Fill(paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths
+	Fill(paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int, additionalInternalOverlap int) data.Paths
 
 	LinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern
 
@@ -239,13 +239,13 @@ func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inset
 	return insets
 }
 
-func (c clipperClipper) Fill(paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int) data.Paths {
+func (c clipperClipper) Fill(paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, pattern Pattern, overlapPercentage int, additionalInternalOverlap int) data.Paths {
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
 
 	// The inside overlap is for parts which are smaller than the outline.
 	// These parts are overlapped a bit more to avoid linos which are printed only in the air.
-	insideOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage+200)) / 100.0
+	insideOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage+additionalInternalOverlap)) / 100.0
 
 	// The perimeter overlap is the overlap into the outline.
 	perimeterOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0

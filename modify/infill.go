@@ -20,6 +20,9 @@ func NewInfillModifier(options *data.Options) handle.LayerModifier {
 	}
 }
 
+// internalInfillOverlap is a magic number needed to compensate the extra inset done for each part which is needed for oblique walls.
+const internalInfillOverlap = 2
+
 func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
 	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
 	if !ok {
@@ -40,7 +43,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
 			if layerNr == 0 {
 				// for the first layer bottomInfill everything
-				bottomInfill = append(bottomInfill, c.Fill(insetPart, nil, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
+				bottomInfill = append(bottomInfill, c.Fill(insetPart, nil, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent, internalInfillOverlap*100))
 				continue
 			}
 
@@ -52,15 +55,13 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				continue
 			}
 
-			// exset the below parts to fix generating very small infills for oblique walls (e.g. the sides of the 3DBenchy model)
+			// exset/inset the below parts to fix generating very small infills for oblique walls (e.g. the sides of the 3DBenchy model)
 			for _, belowPart := range layers[layerNr-1].LayerParts() {
-				// -inset = exset
-
 				multiplier := -1
 				if belowPart.Depth() > 0 {
 					multiplier = 1
 				}
-				belowBigger := c.Inset(belowPart, data.Micrometer(multiplier)*m.options.Printer.ExtrusionWidth*2, 1)
+				belowBigger := c.Inset(belowPart, data.Micrometer(multiplier)*m.options.Printer.ExtrusionWidth*data.Micrometer(internalInfillOverlap), 1)
 
 				for _, parts := range belowBigger {
 					for _, layerPart := range parts {
@@ -76,7 +77,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			for _, fill := range toInfill {
-				bottomInfill = append(bottomInfill, c.Fill(fill, insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent))
+				bottomInfill = append(bottomInfill, c.Fill(fill, insetPart, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent, internalInfillOverlap*100))
 			}
 		}
 	}
