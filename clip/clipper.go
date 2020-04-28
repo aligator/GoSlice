@@ -330,20 +330,25 @@ func (c clipperClipper) getInfill(pattern Pattern, outline clipper.Path, holes c
 	var result clipper.Paths
 
 	// clip the paths with the lines using intersection
-	inset := clipper.Paths{outline}
+	exset := clipper.Paths{outline}
 
 	co := clipper.NewClipperOffset()
 	cl := clipper.NewClipper(clipper.IoNone)
 
 	// generate the exset for the overlap (only if needed)
 	if overlap != 0 {
-		co.AddPaths(inset, clipper.JtSquare, clipper.EtClosedPolygon)
+		co.AddPaths(exset, clipper.JtSquare, clipper.EtClosedPolygon)
 		co.MiterLimit = 2
-		inset = co.Execute(float64(-overlap))
+		exset = co.Execute(float64(-overlap))
+
+		co.Clear()
+		co.AddPaths(holes, clipper.JtSquare, clipper.EtClosedPolygon)
+		co.MiterLimit = 2
+		holes = co.Execute(float64(overlap))
 	}
 
 	// clip the lines by the resulting inset
-	cl.AddPaths(inset, clipper.PtClip, true)
+	cl.AddPaths(exset, clipper.PtClip, true)
 	cl.AddPaths(holes, clipper.PtClip, true)
 	cl.AddPaths(pattern.getPaths(), clipper.PtSubject, false)
 
