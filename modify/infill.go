@@ -55,21 +55,8 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				continue
 			}
 
-			// exset/inset the below parts to fix generating very small infills for oblique walls (e.g. the sides of the 3DBenchy model)
 			for _, belowPart := range layers[layerNr-1].LayerParts() {
-				multiplier := -1
-				// exset the outer parts, inset all other parts
-				// TODO: maybe inset only the most inner parts?
-				if belowPart.Depth() > 0 {
-					multiplier = 1
-				}
-				belowBigger := c.Inset(belowPart, data.Micrometer(multiplier)*m.options.Printer.ExtrusionWidth, 1)
-
-				for _, parts := range belowBigger {
-					for _, layerPart := range parts {
-						toClipBelow = append(toClipBelow, layerPart)
-					}
-				}
+				toClipBelow = append(toClipBelow, belowPart)
 			}
 
 			fmt.Println("calculate difference")
