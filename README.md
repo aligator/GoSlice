@@ -21,7 +21,7 @@ go run /path/to/stl/file.stl
 * ~~refactor and Go-ify the code~~ (done, for now...)
 * ~~perimeters, with configurable outer perimeter speed~~
 * ~~bottom layer~~ (only one layer and not perfect but it works)
-* top layer
+* ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
 * simple infill
 * options as parameters / config file (using cobra / viper)
 * add function / interface / struct documentations
