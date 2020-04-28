@@ -1,4 +1,4 @@
-![sliced Gopher](https://github.com/aligator/GoSlice/raw/master/logo.png "sliced Goper")
+<img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/logo.png">
 
 # GoSlice
 
@@ -27,3 +27,9 @@ go run /path/to/stl/file.stl
 * add function / interface / struct documentations
 * add tests
 * lots of other things...
+
+
+## Credits
+* CuraEngine for the great first commit, which was a very good starting point for research.
+* https://www.thingiverse.com/thing:3413597 for the great Gopher model used as logo. (Original Gopher designed by [Renee French CC BY 3.0](http://reneefrench.blogspot.com/))
+* Go for the great language.
