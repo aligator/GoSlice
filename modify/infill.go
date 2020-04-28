@@ -51,10 +51,6 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			// and the current most inner perimeter.
 			var toClipBelow []data.LayerPart
 
-			if len(layers[layerNr-1].LayerParts())-1 < partNr {
-				continue
-			}
-
 			for _, belowPart := range layers[layerNr-1].LayerParts() {
 				toClipBelow = append(toClipBelow, belowPart)
 			}
