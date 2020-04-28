@@ -86,7 +86,7 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 				}
 			},
 
-			// bottom layer TODO: bottom and top layers
+			// bottom and top layers
 			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 				bottom, ok := layers[layerNr].Attributes()["bottom"].([]data.Paths)
 				if !ok {
@@ -95,6 +95,19 @@ func NewGenerator(options *data.Options) handle.GCodeGenerator {
 
 				for _, path := range bottom {
 					builder.addComment("TYPE:INFILL-BOTTOM")
+					for _, path := range path {
+						builder.addPolygon(path, z)
+					}
+				}
+			},
+			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+				top, ok := layers[layerNr].Attributes()["top"].([]data.Paths)
+				if !ok {
+					return
+				}
+
+				for _, path := range top {
+					builder.addComment("TYPE:INFILL-TOP")
 					for _, path := range path {
 						builder.addPolygon(path, z)
 					}
