@@ -15,8 +15,7 @@ type infillModifier struct {
 }
 
 func (m *infillModifier) Init(model data.OptimizedModel) {
-	c := clip.NewClipper()
-	m.pattern = c.LinearPattern(model.Min().PointXY(), model.Max().PointXY(), m.options.Printer.ExtrusionWidth)
+	m.pattern = clip.NewLinearPattern(model.Min().PointXY(), model.Max().PointXY(), m.options.Printer.ExtrusionWidth)
 }
 
 // NewInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
@@ -82,11 +81,9 @@ func (m *infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]
 // It calculates the difference of the layer with layerNr and the given part.
 // Then it fills the result by using the given pattern.
 func (m *infillModifier) genTopBottomInfill(part data.LayerPart, layerNr int, layers []data.PartitionedLayer, pattern clip.Pattern) (result []data.Paths, err error) {
-	c := clip.NewClipper()
-
 	// for the first or last layer infill everything
 	if layerNr == -1 || layerNr == len(layers) {
-		result = append(result, c.Fill(part, nil, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent, internalInfillOverlap))
+		result = append(result, m.pattern.Fill(layerNr, part, nil, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent, internalInfillOverlap))
 		return result, nil
 	}
 
@@ -98,13 +95,15 @@ func (m *infillModifier) genTopBottomInfill(part data.LayerPart, layerNr int, la
 		toClip = append(toClip, otherPart)
 	}
 
+	c := clip.NewClipper()
+
 	toInfill, ok := c.Difference(part, toClip)
 	if !ok {
 		return nil, errors.New("error while calculating difference for detecting bottom/top parts")
 	}
 
 	for _, fill := range toInfill {
-		result = append(result, c.Fill(fill, part, m.options.Printer.ExtrusionWidth, pattern, m.options.Print.InfillOverlapPercent, internalInfillOverlap))
+		result = append(result, m.pattern.Fill(layerNr, fill, part, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent, internalInfillOverlap))
 	}
 
 	return result, nil
