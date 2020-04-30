@@ -11,6 +11,12 @@ import (
 
 type infillModifier struct {
 	options *data.Options
+	pattern clip.Pattern
+}
+
+func (m *infillModifier) Init(model data.OptimizedModel) {
+	c := clip.NewClipper()
+	m.pattern = c.LinearPattern(model.Min().PointXY(), model.Max().PointXY(), m.options.Printer.ExtrusionWidth)
 }
 
 // NewInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
@@ -23,7 +29,7 @@ func NewInfillModifier(options *data.Options) handle.LayerModifier {
 // internalInfillOverlap is a magic number needed to compensate the extra inset done for each part which is needed for oblique walls.
 const internalInfillOverlap = 200
 
-func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
+func (m *infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
 	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
 	if !ok {
 		return layers, nil
@@ -33,17 +39,13 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	var bottomInfill []data.Paths
 	var topInfill []data.Paths
 
-	min, max := layers[layerNr].Bounds()
-	c := clip.NewClipper()
-	pattern := c.LinearPattern(min, max, m.options.Printer.ExtrusionWidth)
-
 	// calculate the bottom parts for each inner perimeter part
 	for partNr, part := range perimeters {
 		// for the last (most inner) inset of each part
 		for insertPart, insetPart := range part[len(part)-1] {
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
 
-			infill, err := m.genTopBottomInfill(insetPart, layerNr-1, layers, pattern)
+			infill, err := m.genTopBottomInfill(insetPart, layerNr-1, layers, m.pattern)
 			if err != nil {
 				return nil, err
 			}
@@ -52,7 +54,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 
 			}
 
-			infill, err = m.genTopBottomInfill(insetPart, layerNr+1, layers, pattern)
+			infill, err = m.genTopBottomInfill(insetPart, layerNr+1, layers, m.pattern)
 			if err != nil {
 				return nil, err
 			}
@@ -79,7 +81,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 // genInfill returns the infill for the top or bottom parts.
 // It calculates the difference of the layer with layerNr and the given part.
 // Then it fills the result by using the given pattern.
-func (m infillModifier) genTopBottomInfill(part data.LayerPart, layerNr int, layers []data.PartitionedLayer, pattern clip.Pattern) (result []data.Paths, err error) {
+func (m *infillModifier) genTopBottomInfill(part data.LayerPart, layerNr int, layers []data.PartitionedLayer, pattern clip.Pattern) (result []data.Paths, err error) {
 	c := clip.NewClipper()
 
 	// for the first or last layer infill everything

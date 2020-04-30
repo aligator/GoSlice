@@ -19,6 +19,9 @@ type MicroVec3 interface {
 	SetY(y Micrometer)
 	SetZ(z Micrometer)
 
+	// PointXY returns a new point only with the x and y coordinates of the vector.
+	PointXY() MicroPoint
+
 	// Add returns a new vector which is the sum of the vectors. (this + vec)
 	//
 	// By convention it should never mutate the instance and instead return a new copy.
@@ -104,6 +107,13 @@ func (v *microVec3) SetY(y Micrometer) {
 
 func (v *microVec3) SetZ(z Micrometer) {
 	v.z = z
+}
+
+func (v *microVec3) PointXY() MicroPoint {
+	return &microPoint{
+		x: v.x,
+		y: v.y,
+	}
 }
 
 func (v *microVec3) Add(vec MicroVec3) MicroVec3 {

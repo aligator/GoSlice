@@ -15,6 +15,7 @@ type ModelSlicer interface {
 }
 
 type LayerModifier interface {
+	Init(m data.OptimizedModel)
 	Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error)
 }
 

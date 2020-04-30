@@ -28,11 +28,47 @@ func (o optimizedModel) Size() data.MicroVec3 {
 }
 
 func (o optimizedModel) Min() data.MicroVec3 {
-	panic("implement me")
+	ret := o.faces[0].Points()[0].Copy()
+
+	for _, face := range o.faces {
+		for _, vertice := range face.Points() {
+			if ret.X() > vertice.X() {
+				ret.SetX(vertice.X())
+			}
+
+			if ret.Y() > vertice.Y() {
+				ret.SetY(vertice.Y())
+			}
+
+			if ret.Z() > vertice.Z() {
+				ret.SetZ(vertice.Z())
+			}
+		}
+	}
+
+	return ret
 }
 
 func (o optimizedModel) Max() data.MicroVec3 {
-	panic("implement me")
+	ret := o.faces[0].Points()[0].Copy()
+
+	for _, face := range o.faces {
+		for _, vertice := range face.Points() {
+			if ret.X() < vertice.X() {
+				ret.SetX(vertice.X())
+			}
+
+			if ret.Y() < vertice.Y() {
+				ret.SetY(vertice.Y())
+			}
+
+			if ret.Z() < vertice.Z() {
+				ret.SetZ(vertice.Z())
+			}
+		}
+	}
+
+	return ret
 }
 
 func (o optimizedModel) getFaceIdxWithPoints(idx0, idx1, notFaceIdx int) int {

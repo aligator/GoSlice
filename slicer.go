@@ -103,6 +103,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 	// generate the parts which should be filled in,
 	// generate perimeter paths
 	for _, m := range s.modifiers {
+		m.Init(optimizedModel)
 		for layerNr, _ := range layers {
 			layers, err = m.Modify(layerNr, layers)
 			if err != nil {

@@ -19,6 +19,8 @@ func NewPerimeterModifier(options *data.Options) handle.LayerModifier {
 	}
 }
 
+func (m perimeterModifier) Init(model data.OptimizedModel) {}
+
 func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
 	// generate perimeters
 	c := clip.NewClipper()
