@@ -22,7 +22,7 @@ go run /path/to/stl/file.stl
 * ~~perimeters, with configurable outer perimeter speed~~
 * ~~bottom layer~~ (only one layer and not perfect but it works)
 * ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
-* simple infill
+* ~~simple infill~~ (very simple)
 * options as parameters / config file (using cobra / viper)
 * add function / interface / struct documentations
 * add tests
