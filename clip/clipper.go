@@ -123,28 +123,7 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 	polyList := clipper.Paths{}
 	// convert all polygons to clipper polygons
 	for _, layerPolygon := range l.Polygons() {
-		var path = clipper.Path{}
-
-		prev := 0
-		// convert all points of this polygons
-		for j, layerPoint := range layerPolygon {
-			// ignore first as the next check would fail otherwise
-			if j == 0 {
-				path = append(path, clipperPoint(layerPolygon[0]))
-				continue
-			}
-
-			// filter too near points
-			// check this always with the previous point
-			if layerPoint.Sub(layerPolygon[prev]).ShorterThanOrEqual(100) {
-				continue
-			}
-
-			path = append(path, clipperPoint(layerPoint))
-			prev = j
-		}
-
-		polyList = append(polyList, path)
+		polyList = append(polyList, clipperPath(layerPolygon.Simplify(-1, -1)))
 	}
 
 	if len(polyList) == 0 {
