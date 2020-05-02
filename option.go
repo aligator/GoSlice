@@ -106,3 +106,10 @@ func InfillOverlapPercent(percent int) option {
 		s.o.Print.InfillOverlapPercent = percent
 	}
 }
+
+// InfillPercent says how much infill should be generated
+func InfillPercent(percent int) option {
+	return func(s *GoSlice) {
+		s.o.Print.InfillPercent = percent
+	}
+}

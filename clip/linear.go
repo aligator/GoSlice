@@ -8,7 +8,8 @@ import (
 )
 
 type linear struct {
-	paths clipper.Paths
+	paths  clipper.Paths
+	paths2 clipper.Paths
 }
 
 // verticalLinesByX assumes that each LayerPart contains only a vertical line, specified by two points.
@@ -28,13 +29,13 @@ func (a verticalLinesByX) Swap(i, j int) {
 }
 
 func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {
-	lines := clipper.Paths{}
+	verticalLines := clipper.Paths{}
 	numLine := 0
-	// generate the lines
+	// generate the verticalLines
 	for x := min.X(); x <= max.X(); x += lineWidth {
 		// switch line direction based on even / odd
 		if numLine%2 == 1 {
-			lines = append(lines, clipper.Path{
+			verticalLines = append(verticalLines, clipper.Path{
 				&clipper.IntPoint{
 					X: clipper.CInt(x),
 					Y: clipper.CInt(max.Y()),
@@ -45,7 +46,7 @@ func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.M
 				},
 			})
 		} else {
-			lines = append(lines, clipper.Path{
+			verticalLines = append(verticalLines, clipper.Path{
 				&clipper.IntPoint{
 					X: clipper.CInt(x),
 					Y: clipper.CInt(min.Y()),
@@ -59,10 +60,41 @@ func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.M
 		numLine++
 	}
 
-	return linear{lines}
+	horizontalLines := clipper.Paths{}
+	numLine = 0
+	// generate the verticalLines
+	for y := min.Y(); y <= max.Y(); y += lineWidth {
+		// switch line direction based on even / odd
+		if numLine%2 == 1 {
+			horizontalLines = append(horizontalLines, clipper.Path{
+				&clipper.IntPoint{
+					X: clipper.CInt(max.X()),
+					Y: clipper.CInt(y),
+				},
+				&clipper.IntPoint{
+					X: clipper.CInt(min.X()),
+					Y: clipper.CInt(y),
+				},
+			})
+		} else {
+			horizontalLines = append(horizontalLines, clipper.Path{
+				&clipper.IntPoint{
+					X: clipper.CInt(min.X()),
+					Y: clipper.CInt(y),
+				},
+				&clipper.IntPoint{
+					X: clipper.CInt(max.X()),
+					Y: clipper.CInt(y),
+				},
+			})
+		}
+		numLine++
+	}
+
+	return linear{paths: verticalLines, paths2: horizontalLines}
 }
 
-func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, overlapPercentage int, additionalInternalOverlap int) data.Paths {
+func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, overlapPercentage int, additionalInternalOverlap int) (data.Paths, data.LayerPart) {
 	cPath := clipperPath(paths.Outline())
 	cHoles := clipperPaths(paths.Holes())
 
@@ -74,7 +106,7 @@ func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, 
 	perimeterOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
 
 	// generate infill with the full inside overlap
-	var infillPaths = p.getInfill(cPath, cHoles, insideOverlap)
+	var infillPaths = p.getInfill(layerNr, cPath, cHoles, insideOverlap)
 
 	// then clip the infillPaths by the outline, so that the big overlap from the inside is cut at the outline
 	if outline == nil {
@@ -83,7 +115,7 @@ func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, 
 
 	cl := clipper.NewClipper(clipper.IoNone)
 
-	var finalOutline clipper.Paths
+	var finalOutline clipper.Path
 	var finalHoles clipper.Paths
 
 	// generate the exset for the overlap (only if needed)
@@ -93,25 +125,30 @@ func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, 
 		co.AddPaths(clipperPaths(outline.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
 		co.MiterLimit = 2
 		maxOutline := co.Execute(float64(-perimeterOverlap))
-		finalOutline = maxOutline
+		if len(maxOutline) > 0 {
+			finalOutline = maxOutline[0]
+		}
+		if len(maxOutline) > 1 {
+			finalHoles = maxOutline[1:]
+		}
 	} else {
-		finalOutline = []clipper.Path{clipperPath(outline.Outline())}
+		finalOutline = clipperPath(outline.Outline())
 		finalHoles = clipperPaths(outline.Holes())
 	}
 
-	cl.AddPaths(finalOutline, clipper.PtClip, true)
+	cl.AddPath(finalOutline, clipper.PtClip, true)
 	cl.AddPaths(finalHoles, clipper.PtClip, true)
 	cl.AddPaths(infillPaths, clipper.PtSubject, false)
 
 	res, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 	if !ok {
-		return nil
+		return nil, nil
 	}
 
 	var resultInfill data.Paths
 	parts, _ := polyTreeToLayerParts(res)
 	if len(parts) == 0 {
-		return resultInfill
+		return resultInfill, data.NewUnknownLayerPart(microPath(finalOutline, false), microPaths(finalHoles, false), -1)
 	}
 
 	sort.Sort(verticalLinesByX(parts))
@@ -126,11 +163,11 @@ func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, 
 			panic("the holes should be empty")
 		}
 	}
-	return resultInfill
+	return resultInfill, data.NewUnknownLayerPart(microPath(finalOutline, false), microPaths(finalHoles, false), -1)
 }
 
 // getInfill fills a polygon (with holes)
-func (p linear) getInfill(outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
+func (p linear) getInfill(layerNr int, outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
 	var result clipper.Paths
 
 	// clip the paths with the lines using intersection
@@ -154,7 +191,12 @@ func (p linear) getInfill(outline clipper.Path, holes clipper.Paths, overlap flo
 	// clip the lines by the resulting inset
 	cl.AddPaths(exset, clipper.PtClip, true)
 	cl.AddPaths(holes, clipper.PtClip, true)
-	cl.AddPaths(p.paths, clipper.PtSubject, false)
+
+	if layerNr%2 == 0 {
+		cl.AddPaths(p.paths, clipper.PtSubject, false)
+	} else {
+		cl.AddPaths(p.paths2, clipper.PtSubject, false)
+	}
 
 	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 	if !ok {

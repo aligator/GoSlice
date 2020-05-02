@@ -14,7 +14,8 @@ type Pattern interface {
 	// The generated infill will overlap the paths by the percentage of this param.
 	// The additionalInternalOverlap is added to the overlap before the resulting infill is  clipped by the outline.
 	// LineWidth is used for both, the calculation of the overlap and the calculation between the lines.
-	Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, overlapPercentage int, additionalInternalOverlap int) data.Paths
+	// It returns the final infill pattern and also a layer part which describes the finally infilled area.
+	Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, overlapPercentage int, additionalInternalOverlap int) (data.Paths, data.LayerPart)
 }
 
 // Clipper is an interface that provides methods needed by GoSlice to clip polygons.
@@ -42,6 +43,7 @@ type Clipper interface {
 	Inset(part data.LayerPart, offset data.Micrometer, insetCount int) [][]data.LayerPart
 
 	Difference(part data.LayerPart, toRemove []data.LayerPart) (parts []data.LayerPart, ok bool)
+	Intersection(part data.LayerPart, toIntersect []data.LayerPart) (parts []data.LayerPart, ok bool)
 }
 
 // clipperClipper implements Clipper using the external clipper library.
@@ -238,6 +240,25 @@ func (c clipperClipper) Difference(part data.LayerPart, toRemove []data.LayerPar
 	}
 
 	tree, ok := cl.Execute2(clipper.CtDifference, clipper.PftEvenOdd, clipper.PftEvenOdd)
+
+	if !ok {
+		return nil, ok
+	}
+	treeParts, _ := polyTreeToLayerParts(tree)
+	return treeParts, ok
+}
+
+func (c clipperClipper) Intersection(part data.LayerPart, toIntersect []data.LayerPart) (parts []data.LayerPart, ok bool) {
+	cl := clipper.NewClipper(clipper.IoNone)
+	cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
+	cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
+
+	for _, intersect := range toIntersect {
+		cl.AddPath(clipperPath(intersect.Outline()), clipper.PtClip, true)
+		cl.AddPaths(clipperPaths(intersect.Holes()), clipper.PtClip, true)
+	}
+
+	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 
 	if !ok {
 		return nil, ok

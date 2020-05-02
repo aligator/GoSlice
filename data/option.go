@@ -12,6 +12,7 @@ type PrintOptions struct {
 	InsetCount            int
 
 	InfillOverlapPercent int
+	InfillPercent        int
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
