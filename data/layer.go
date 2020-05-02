@@ -36,8 +36,8 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		smallestLineSegmentSquared = 100
 	}
 
-	if smallestLineSegmentSquared == -1 {
-		smallestLineSegmentSquared = 25
+	if allowedErrorDistanceSquared == -1 {
+		allowedErrorDistanceSquared = 25
 	}
 
 	if len(p) <= 2 {
