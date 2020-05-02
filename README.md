@@ -26,6 +26,8 @@ go run /path/to/stl/file.stl
 * options as parameters / config file (using cobra / viper)
 * add function / interface / struct documentations
 * add tests
+* Brim
+* Skirt
 * lots of other things...
 
 
