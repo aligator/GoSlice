@@ -4,10 +4,27 @@ import (
 	"GoSlice/data"
 	"fmt"
 	clipper "github.com/aligator/go.clipper"
+	"sort"
 )
 
 type linear struct {
 	paths clipper.Paths
+}
+
+// verticalLinesByX assumes that each LayerPart contains only a vertical line, specified by two points.
+// It can sort them by the x value.
+type verticalLinesByX []data.LayerPart
+
+func (a verticalLinesByX) Len() int {
+	return len(a)
+}
+
+func (a verticalLinesByX) Less(i, j int) bool {
+	return a[i].Outline()[0].X() < a[j].Outline()[0].X()
+}
+
+func (a verticalLinesByX) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
 }
 
 func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {
@@ -57,14 +74,17 @@ func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, 
 	perimeterOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
 
 	// generate infill with the full inside overlap
-	var result = p.getInfill(cPath, cHoles, insideOverlap)
+	var infillPaths = p.getInfill(cPath, cHoles, insideOverlap)
 
-	// then clip the result by the outline, so that the big overlap from the inside is cut at the outline
+	// then clip the infillPaths by the outline, so that the big overlap from the inside is cut at the outline
 	if outline == nil {
 		outline = paths
 	}
 
 	cl := clipper.NewClipper(clipper.IoNone)
+
+	var finalOutline clipper.Paths
+	var finalHoles clipper.Paths
 
 	// generate the exset for the overlap (only if needed)
 	if perimeterOverlap != 0 {
@@ -73,35 +93,37 @@ func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, 
 		co.AddPaths(clipperPaths(outline.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
 		co.MiterLimit = 2
 		maxOutline := co.Execute(float64(-perimeterOverlap))
-		cl.AddPaths(maxOutline, clipper.PtClip, true)
+		finalOutline = maxOutline
 	} else {
-		cl.AddPath(clipperPath(outline.Outline()), clipper.PtClip, true)
-		cl.AddPaths(clipperPaths(outline.Holes()), clipper.PtClip, true)
+		finalOutline = []clipper.Path{clipperPath(outline.Outline())}
+		finalHoles = clipperPaths(outline.Holes())
 	}
 
-	cl.AddPaths(result, clipper.PtSubject, false)
+	cl.AddPaths(finalOutline, clipper.PtClip, true)
+	cl.AddPaths(finalHoles, clipper.PtClip, true)
+	cl.AddPaths(infillPaths, clipper.PtSubject, false)
 
 	res, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 	if !ok {
 		return nil
 	}
 
-	// TODO: finish infill by connecting the individual line-ends:
-	// For this the upper and lower points have to be offset by the line width/2.
-	//   _    _
-	// |  | |  |
-	// |  | |  |
-	// |  | |  |
-	// |  |_|  |
-
-	// convert result to data.Paths
 	var resultInfill data.Paths
 	parts, _ := polyTreeToLayerParts(res)
+	if len(parts) == 0 {
+		return resultInfill
+	}
+
+	sort.Sort(verticalLinesByX(parts))
+
+	// convert infillPaths to data.Paths
 	for _, part := range parts {
 		resultInfill = append(resultInfill, part.Outline())
 
-		for _, path := range part.Holes() {
-			resultInfill = append(resultInfill, path)
+		// Holes can be ignored, as there will always be only lines
+		// assert that
+		if len(part.Holes()) > 0 {
+			panic("the holes should be empty")
 		}
 	}
 	return resultInfill
