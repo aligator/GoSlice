@@ -114,6 +114,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 	}
 
 	// generate gcode from the layers
+	s.generator.Init(optimizedModel)
 	gcode := s.generator.Generate(layers)
 
 	err = s.writer.Write(gcode, outFilename)

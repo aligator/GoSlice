@@ -23,13 +23,13 @@ go run /path/to/stl/file.stl
 * ~~bottom layer~~ (only one layer and not perfect but it works)
 * ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
 * ~~simple infill~~ (very simple)
-* options as parameters / config file (using cobra / viper)
+* options as parameters / config file (maybe by using cobra / viper)
 * add function / interface / struct documentations
 * add tests
-* Brim
-* Skirt
+* brim
+* skirt
+* retraction
 * lots of other things...
-
 
 ## Credits
 * CuraEngine for the great first commit, which was a very good starting point for research.

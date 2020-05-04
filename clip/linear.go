@@ -4,7 +4,6 @@ import (
 	"GoSlice/data"
 	"fmt"
 	clipper "github.com/aligator/go.clipper"
-	"sort"
 )
 
 type linear struct {
@@ -94,76 +93,9 @@ func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.M
 	return linear{paths: verticalLines, paths2: horizontalLines}
 }
 
-func (p linear) Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, overlapPercentage int, additionalInternalOverlap int) (data.Paths, data.LayerPart) {
-	cPath := clipperPath(paths.Outline())
-	cHoles := clipperPaths(paths.Holes())
-
-	// The inside overlap is for parts which are smaller than the outline.
-	// These parts are overlapped a bit more to avoid linos which are printed only in the air.
-	insideOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage+additionalInternalOverlap)) / 100.0
-
-	// The perimeter overlap is the overlap into the outline.
-	perimeterOverlap := float32(lineWidth) * (100.0 - float32(overlapPercentage)) / 100.0
-
-	// generate infill with the full inside overlap
-	var infillPaths = p.getInfill(layerNr, cPath, cHoles, insideOverlap)
-
-	// then clip the infillPaths by the outline, so that the big overlap from the inside is cut at the outline
-	if outline == nil {
-		outline = paths
-	}
-
-	cl := clipper.NewClipper(clipper.IoNone)
-
-	var finalOutline clipper.Path
-	var finalHoles clipper.Paths
-
-	// generate the exset for the overlap (only if needed)
-	if perimeterOverlap != 0 {
-		co := clipper.NewClipperOffset()
-		co.AddPath(clipperPath(outline.Outline()), clipper.JtSquare, clipper.EtClosedPolygon)
-		co.AddPaths(clipperPaths(outline.Holes()), clipper.JtSquare, clipper.EtClosedPolygon)
-		co.MiterLimit = 2
-		maxOutline := co.Execute(float64(-perimeterOverlap))
-		if len(maxOutline) > 0 {
-			finalOutline = maxOutline[0]
-		}
-		if len(maxOutline) > 1 {
-			finalHoles = maxOutline[1:]
-		}
-	} else {
-		finalOutline = clipperPath(outline.Outline())
-		finalHoles = clipperPaths(outline.Holes())
-	}
-
-	cl.AddPath(finalOutline, clipper.PtClip, true)
-	cl.AddPaths(finalHoles, clipper.PtClip, true)
-	cl.AddPaths(infillPaths, clipper.PtSubject, false)
-
-	res, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
-	if !ok {
-		return nil, nil
-	}
-
-	var resultInfill data.Paths
-	parts, _ := polyTreeToLayerParts(res)
-	if len(parts) == 0 {
-		return resultInfill, data.NewUnknownLayerPart(microPath(finalOutline, false), microPaths(finalHoles, false), -1)
-	}
-
-	sort.Sort(verticalLinesByX(parts))
-
-	// convert infillPaths to data.Paths
-	for _, part := range parts {
-		resultInfill = append(resultInfill, part.Outline())
-
-		// Holes can be ignored, as there will always be only lines
-		// assert that
-		if len(part.Holes()) > 0 {
-			panic("the holes should be empty")
-		}
-	}
-	return resultInfill, data.NewUnknownLayerPart(microPath(finalOutline, false), microPaths(finalHoles, false), -1)
+func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
+	resultInfill := p.getInfill(layerNr, clipperPath(part.Outline()), clipperPaths(part.Holes()), 0)
+	return microPaths(resultInfill, false)
 }
 
 // getInfill fills a polygon (with holes)

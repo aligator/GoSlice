@@ -8,14 +8,9 @@ import (
 )
 
 type Pattern interface {
-	// Fill fills the given paths.
-	// The parameter overlapPercentage should normally be a value between 0 and 100.
-	// But it can also be smaller or greater than that if needed.
-	// The generated infill will overlap the paths by the percentage of this param.
-	// The additionalInternalOverlap is added to the overlap before the resulting infill is  clipped by the outline.
-	// LineWidth is used for both, the calculation of the overlap and the calculation between the lines.
-	// It returns the final infill pattern and also a layer part which describes the finally infilled area.
-	Fill(layerNr int, paths data.LayerPart, outline data.LayerPart, lineWidth data.Micrometer, overlapPercentage int, additionalInternalOverlap int) (data.Paths, data.LayerPart)
+	// Fill fills the given part.
+	// It returns the final infill pattern.
+	Fill(layerNr int, part data.LayerPart) data.Paths
 }
 
 // Clipper is an interface that provides methods needed by GoSlice to clip polygons.
@@ -42,8 +37,8 @@ type Clipper interface {
 	// The array for a part may be empty.
 	Inset(part data.LayerPart, offset data.Micrometer, insetCount int) [][]data.LayerPart
 
-	Difference(part data.LayerPart, toRemove []data.LayerPart) (parts []data.LayerPart, ok bool)
-	Intersection(part data.LayerPart, toIntersect []data.LayerPart) (parts []data.LayerPart, ok bool)
+	Difference(parts []data.LayerPart, toRemove []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
+	Intersection(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
 }
 
 // clipperClipper implements Clipper using the external clipper library.
@@ -208,10 +203,13 @@ func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inset
 	return insets
 }
 
-func (c clipperClipper) Difference(part data.LayerPart, toRemove []data.LayerPart) (parts []data.LayerPart, ok bool) {
+func (c clipperClipper) Difference(parts []data.LayerPart, toRemove []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
 	cl := clipper.NewClipper(clipper.IoNone)
-	cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
-	cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
+
+	for _, part := range parts {
+		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
+		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
+	}
 
 	for _, remove := range toRemove {
 		cl.AddPath(clipperPath(remove.Outline()), clipper.PtClip, true)
@@ -223,14 +221,16 @@ func (c clipperClipper) Difference(part data.LayerPart, toRemove []data.LayerPar
 	if !ok {
 		return nil, ok
 	}
-	treeParts, _ := polyTreeToLayerParts(tree)
-	return treeParts, ok
+	clippedParts, _ = polyTreeToLayerParts(tree)
+	return clippedParts, ok
 }
 
-func (c clipperClipper) Intersection(part data.LayerPart, toIntersect []data.LayerPart) (parts []data.LayerPart, ok bool) {
+func (c clipperClipper) Intersection(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
 	cl := clipper.NewClipper(clipper.IoNone)
-	cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
-	cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
+	for _, part := range parts {
+		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
+		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
+	}
 
 	for _, intersect := range toIntersect {
 		cl.AddPath(clipperPath(intersect.Outline()), clipper.PtClip, true)
@@ -242,6 +242,6 @@ func (c clipperClipper) Intersection(part data.LayerPart, toIntersect []data.Lay
 	if !ok {
 		return nil, ok
 	}
-	treeParts, _ := polyTreeToLayerParts(tree)
-	return treeParts, ok
+	clippedParts, _ = polyTreeToLayerParts(tree)
+	return clippedParts, ok
 }

@@ -1,6 +1,7 @@
 package gcode
 
 import (
+	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handle"
 	"bytes"
@@ -18,120 +19,146 @@ type LayerMetadata struct {
 type RenderStep func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
 
 type generator struct {
-	options   *data.Options
-	gcode     string
-	builder   *gcodeBuilder
+	options *data.Options
+	gcode   string
+	builder *gcodeBuilder
+
+	topBottomInfill clip.Pattern
+	internalInfill  clip.Pattern
+
 	renderers []RenderStep
 }
 
+func (g *generator) Init(model data.OptimizedModel) {
+	g.topBottomInfill = clip.NewLinearPattern(model.Min().PointXY(), model.Max().PointXY(), g.options.Printer.ExtrusionWidth)
+
+	// TODO: the calculation of the percentage is currently very basic and may not be correct.
+	// It needs improvement.
+
+	if g.options.Print.InfillPercent != 0 {
+		mm10 := data.Millimeter(10).ToMicrometer()
+		linesPer10mmFor100Percent := mm10 / g.options.Printer.ExtrusionWidth
+		linesPerArea10x10ForInfillPercent := float64(linesPer10mmFor100Percent) * float64(g.options.Print.InfillPercent) / 100.0
+
+		lineWidth := data.Micrometer(float64(mm10) / linesPerArea10x10ForInfillPercent)
+
+		g.internalInfill = clip.NewLinearPattern(model.Min().PointXY(), model.Max().PointXY(), lineWidth)
+	}
+}
+
 func NewGenerator(options *data.Options) handle.GCodeGenerator {
+	g := &generator{
+		options: options,
+	}
+
 	// The following steps and renderers are the builtin ones.
 	// Later it will be possible to add custom ones to extend the functionality.
 
-	return &generator{
-		options: options,
-		renderers: []RenderStep{
-			// pre layer
-			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				builder.addComment("LAYER:%v", layerNr)
-				if layerNr == 0 {
-					// force the InitialLayerSpeed for first layer
-					builder.setExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
-				} else {
-					builder.disableExtrudeSpeedOverride()
-					builder.setExtrudeSpeed(options.Print.LayerSpeed)
-				}
-			},
-
-			// fan control
-			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				if layerNr == 2 {
-					builder.addCommand("M106 ; enable fan")
-				}
-			},
-
-			// perimeters
-			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
-				if !ok {
-					return
-				}
-
-				// perimeters contains them as [part][insetNr][insetParts]
-				for _, part := range perimeters {
-					for insetNr := range part {
-						// print the outer perimeter as last perimeter
-						if insetNr >= len(part)-1 {
-							insetNr = 0
-						} else {
-							insetNr++
-						}
-
-						for _, insetParts := range part[insetNr] {
-							if insetNr == 0 {
-								builder.addComment("TYPE:WALL-OUTER")
-								builder.setExtrudeSpeed(options.Print.OuterPerimeterSpeed)
-							} else {
-								builder.addComment("TYPE:WALL-INNER")
-								builder.setExtrudeSpeed(options.Print.LayerSpeed)
-							}
-
-							for _, hole := range insetParts.Holes() {
-								builder.addPolygon(hole, z)
-							}
-
-							builder.addPolygon(insetParts.Outline(), z)
-						}
-					}
-				}
-			},
-
-			// bottom and top layers
-			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				bottom, ok := layers[layerNr].Attributes()["bottom"].([]data.Paths)
-				if !ok {
-					return
-				}
-
-				for _, path := range bottom {
-					builder.addComment("TYPE:FILL")
-					builder.addComment("BOTTOM-FILL")
-					for _, path := range path {
-						builder.addPolygon(path, z)
-					}
-				}
-			},
-			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				top, ok := layers[layerNr].Attributes()["top"].([]data.Paths)
-				if !ok {
-					return
-				}
-
-				for _, path := range top {
-					builder.addComment("TYPE:FILL")
-					builder.addComment("TOP-FILL")
-					for _, path := range path {
-						builder.addPolygon(path, z)
-					}
-				}
-			},
-			func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-				infill, ok := layers[layerNr].Attributes()["infill"].([]data.Paths)
-				if !ok {
-					return
-				}
-
-				for _, path := range infill {
-					builder.addComment("TYPE:FILL")
-					builder.addComment("INTERNAL-FILL")
-					for _, path := range path {
-						builder.addPolygon(path, z)
-					}
-				}
-			},
-			// TODO: infill, support, bridges,...
+	renderers := []RenderStep{
+		// pre layer
+		func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+			builder.addComment("LAYER:%v", layerNr)
+			if layerNr == 0 {
+				// force the InitialLayerSpeed for first layer
+				builder.setExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
+			} else {
+				builder.disableExtrudeSpeedOverride()
+				builder.setExtrudeSpeed(options.Print.LayerSpeed)
+			}
 		},
+
+		// fan control
+		func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+			if layerNr == 2 {
+				builder.addCommand("M106 ; enable fan")
+			}
+		},
+
+		// perimeters
+		func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+			perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
+			if !ok {
+				return
+			}
+
+			// perimeters contains them as [part][insetNr][insetParts]
+			for _, part := range perimeters {
+				for insetNr := range part {
+					// print the outer perimeter as last perimeter
+					if insetNr >= len(part)-1 {
+						insetNr = 0
+					} else {
+						insetNr++
+					}
+
+					for _, insetParts := range part[insetNr] {
+						if insetNr == 0 {
+							builder.addComment("TYPE:WALL-OUTER")
+							builder.setExtrudeSpeed(options.Print.OuterPerimeterSpeed)
+						} else {
+							builder.addComment("TYPE:WALL-INNER")
+							builder.setExtrudeSpeed(options.Print.LayerSpeed)
+						}
+
+						for _, hole := range insetParts.Holes() {
+							builder.addPolygon(hole, z)
+						}
+
+						builder.addPolygon(insetParts.Outline(), z)
+					}
+				}
+			}
+		},
+
+		// bottom and top layers
+		func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+			bottom, ok := layers[layerNr].Attributes()["bottom"].([]data.LayerPart)
+			if !ok {
+				return
+			}
+
+			for _, part := range bottom {
+				builder.addComment("TYPE:FILL")
+				builder.addComment("BOTTOM-FILL")
+				for _, path := range g.topBottomInfill.Fill(layerNr, part) {
+					builder.addPolygon(path, z)
+				}
+			}
+		},
+		func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+			top, ok := layers[layerNr].Attributes()["top"].([]data.LayerPart)
+			if !ok {
+				return
+			}
+
+			for _, part := range top {
+				builder.addComment("TYPE:FILL")
+				builder.addComment("TOP-FILL")
+				for _, path := range g.topBottomInfill.Fill(layerNr, part) {
+					builder.addPolygon(path, z)
+				}
+			}
+		},
+		func(builder *gcodeBuilder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+			infill, ok := layers[layerNr].Attributes()["infill"].([]data.LayerPart)
+			if !ok {
+				return
+			}
+
+			for _, part := range infill {
+				builder.addComment("TYPE:FILL")
+				builder.addComment("INTERNAL-FILL")
+				for _, path := range g.internalInfill.Fill(layerNr, part) {
+					builder.addPolygon(path, z)
+				}
+			}
+		},
+		// TODO: infill, support, bridges,...
 	}
+
+	g.renderers = renderers
+
+	return g
 }
 
 func (g *generator) init() {

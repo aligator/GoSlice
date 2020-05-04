@@ -20,6 +20,7 @@ type LayerModifier interface {
 }
 
 type GCodeGenerator interface {
+	Init(m data.OptimizedModel)
 	Generate(layer []data.PartitionedLayer) string
 }
 

@@ -10,27 +10,10 @@ import (
 )
 
 type infillModifier struct {
-	options         *data.Options
-	pattern         clip.Pattern
-	internalPattern clip.Pattern
+	options *data.Options
 }
 
-func (m *infillModifier) Init(model data.OptimizedModel) {
-	m.pattern = clip.NewLinearPattern(model.Min().PointXY(), model.Max().PointXY(), m.options.Printer.ExtrusionWidth)
-
-	// TODO: the calculation of the percentage is currently very basic and may not be correct.
-	// It needs improvement.
-
-	if m.options.Print.InfillPercent != 0 {
-		mm10 := data.Millimeter(10).ToMicrometer()
-		linesPer10mmFor100Percent := mm10 / m.options.Printer.ExtrusionWidth
-		linesPerArea10x10ForInfillPercent := float64(linesPer10mmFor100Percent) * float64(m.options.Print.InfillPercent) / 100.0
-
-		lineWidth := data.Micrometer(float64(mm10) / linesPerArea10x10ForInfillPercent)
-
-		m.internalPattern = clip.NewLinearPattern(model.Min().PointXY(), model.Max().PointXY(), lineWidth)
-	}
-}
+func (m infillModifier) Init(model data.OptimizedModel) {}
 
 // NewInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
 func NewInfillModifier(options *data.Options) handle.LayerModifier {
@@ -40,18 +23,18 @@ func NewInfillModifier(options *data.Options) handle.LayerModifier {
 }
 
 // internalInfillOverlap is a magic number needed to compensate the extra inset done for each part which is needed for oblique walls.
-const internalInfillOverlap = 200
+const internalInfillOverlap = 400
 
-func (m *infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
+func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
 	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
 	if !ok {
 		return layers, nil
 	}
 	// perimeters contains them as [part][insetNr][insetParts]
 
-	var bottomInfill []data.Paths
-	var topInfill []data.Paths
-	var internalInfill []data.Paths
+	var bottomInfill []data.LayerPart
+	var topInfill []data.LayerPart
+	var internalInfill []data.LayerPart
 
 	// calculate the bottom parts for each inner perimeter part
 	for partNr, part := range perimeters {
@@ -59,35 +42,86 @@ func (m *infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]
 		for insertPart, insetPart := range part[len(part)-1] {
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
 
-			infill, bottomInfillParts, err := m.genTopBottomInfill(insetPart, layerNr-1, layers)
+			var bottomInfillParts, topInfillParts []data.LayerPart
+			var err error
+
+			// 1. Calculate the area which needs full infill for top and bottom layerS
+			if layerNr == 0 {
+				// Just fill the bottom layer.
+				bottomInfillParts = []data.LayerPart{insetPart}
+			} else if layerNr == len(layers)-1 {
+				// Just fill the top layer.
+				topInfillParts = []data.LayerPart{insetPart}
+			} else {
+				// Subtract the below / above layer to get the parts which need infill.
+				bottomInfillParts, err = m.partDifference(insetPart, layers[layerNr-1])
+				if err != nil {
+					return nil, err
+				}
+
+				topInfillParts, err = m.partDifference(insetPart, layers[layerNr+1])
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			// 2. Calculate the overlapping perimeter.
+			maxOverlapBorder, err := m.overlapPerimeter(insetPart, m.options.Print.InfillOverlapPercent)
 			if err != nil {
 				return nil, err
 			}
-			for _, paths := range infill {
-				bottomInfill = append(bottomInfill, paths)
 
+			// 3. Exset the area which needs infill to generate the internal overlap of top and bottom layer.
+			var internalOverlappingBottomParts, internalOverlappingTopParts []data.LayerPart
+			for _, bottomPart := range bottomInfillParts {
+				overlappingParts, err := m.overlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap)
+				if err != nil {
+					return nil, err
+				}
+
+				internalOverlappingBottomParts = append(internalOverlappingBottomParts, overlappingParts...)
 			}
 
-			infill, topInfillParts, err := m.genTopBottomInfill(insetPart, layerNr+1, layers)
-			if err != nil {
-				return nil, err
+			for _, topPart := range topInfillParts {
+				overlappingParts, err := m.overlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap)
+				if err != nil {
+					return nil, err
+				}
+
+				internalOverlappingTopParts = append(internalOverlappingTopParts, overlappingParts...)
 			}
-			for _, paths := range infill {
-				bottomInfill = append(bottomInfill, paths)
+
+			// 4. Clip the resulting areas by the maxOverlapBorder.
+			c := clip.NewClipper()
+			for _, part := range internalOverlappingBottomParts {
+				clippedParts, ok := c.Intersection([]data.LayerPart{part}, maxOverlapBorder)
+				if !ok {
+					return nil, errors.New("error while intersecting infill areas by the max overlap border")
+				}
+
+				bottomInfill = append(bottomInfill, clippedParts...)
 			}
+			for _, part := range internalOverlappingTopParts {
+				clippedParts, ok := c.Intersection([]data.LayerPart{part}, maxOverlapBorder)
+				if !ok {
+					return nil, errors.New("error while intersecting infill areas by the max overlap border")
+				}
+
+				topInfill = append(topInfill, clippedParts...)
+			}
+
+			// 5. Calculate the difference between the maxOverlapBorder and the final top/bottom infills
+			//    to get the internal infill areas.
 
 			// if no infill, just ignore the generation
-			if m.internalPattern == nil {
+			if m.options.Print.InfillPercent == 0 {
 				continue
 			}
-			// add the parts from top and bottom as ignore-parts, to avoid intersections of top/bottom infill and the internal infill
-			// TODO: this extra-clipping seems to have a bad performance
-			infill, _, err = m.genInternalInfill(insetPart, layerNr, layers, append(topInfillParts, bottomInfillParts...)...)
-			if err != nil {
-				return nil, err
-			}
-			for _, paths := range infill {
-				internalInfill = append(internalInfill, paths)
+
+			if parts, ok := c.Difference(maxOverlapBorder, bottomInfill); !ok {
+				return nil, errors.New("error while caclulating the difference between the max overlap border and the bottom infill")
+			} else {
+				internalInfill = append(internalInfill, parts...)
 			}
 		}
 	}
@@ -108,75 +142,31 @@ func (m *infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]
 	return layers, nil
 }
 
-// genInfill returns the infill for the top or bottom parts.
-// It calculates the difference of the layer with layerNr and the given part.
-// Then it fills the result by using the given pattern.
-func (m *infillModifier) genTopBottomInfill(part data.LayerPart, layerNr int, layers []data.PartitionedLayer) (result []data.Paths, resultParts []data.LayerPart, err error) {
-	// for the first or last layer infill everything
-	if layerNr == -1 || layerNr == len(layers) {
-		infill, resultPart := m.pattern.Fill(layerNr, part, nil, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent, internalInfillOverlap)
-
-		result = append(result, infill)
-		resultParts = append(resultParts, resultPart)
-		return result, resultParts, nil
-	}
-
-	// For the other layers detect the infill parts by calculating the difference between the current most inner perimeter and the given layer.
-	// (based on the given layerNr)
+func (m infillModifier) partDifference(part data.LayerPart, layerToRemove data.PartitionedLayer) ([]data.LayerPart, error) {
 	var toClip []data.LayerPart
 
-	for _, otherPart := range layers[layerNr].LayerParts() {
+	for _, otherPart := range layerToRemove.LayerParts() {
 		toClip = append(toClip, otherPart)
 	}
 
 	c := clip.NewClipper()
 
-	toInfill, ok := c.Difference(part, toClip)
+	diff, ok := c.Difference([]data.LayerPart{part}, toClip)
 	if !ok {
-		return nil, nil, errors.New("error while calculating difference for detecting bottom/top parts")
+		return nil, errors.New("error while calculating difference of a part and a layer")
 	}
 
-	for _, fill := range toInfill {
-		infill, resultPart := m.pattern.Fill(layerNr, fill, part, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent, internalInfillOverlap)
-		result = append(result, infill)
-		resultParts = append(resultParts, resultPart)
-	}
-
-	return result, resultParts, nil
+	return diff, nil
 }
 
-func (m *infillModifier) genInternalInfill(part data.LayerPart, layerNr int, layers []data.PartitionedLayer, partsToIgnore ...data.LayerPart) (result []data.Paths, resultParts []data.LayerPart, err error) {
-	// for the first or last layer do nothing
-	if layerNr == 0 || layerNr == len(layers)-1 {
-		return []data.Paths{}, []data.LayerPart{}, nil
+func (m infillModifier) overlapPerimeter(part data.LayerPart, overlapPercent int) ([]data.LayerPart, error) {
+	perimeterOverlap := data.Micrometer(float32(m.options.Printer.ExtrusionWidth) * (100.0 - float32(overlapPercent)) / 100.0)
+
+	if perimeterOverlap != 0 {
+		c := clip.NewClipper()
+		// as we use only one inset, just return index 0
+		return c.Inset(part, perimeterOverlap, 1)[0], nil
+	} else {
+		return []data.LayerPart{part}, nil
 	}
-
-	// For the other layers detect the infill parts by calculating the intersection between the current most inner perimeter and the layers above and below.
-	var toClip []data.LayerPart
-
-	for _, otherPart := range layers[layerNr-1].LayerParts() {
-		toClip = append(toClip, otherPart)
-	}
-
-	c := clip.NewClipper()
-
-	toFillWithoutIgnoredParts, ok := c.Difference(part, partsToIgnore)
-	if !ok {
-		return nil, nil, errors.New("error while clipping the ignored parts from the parts to infill")
-	}
-
-	for _, part := range toFillWithoutIgnoredParts {
-		toInfill, ok := c.Intersection(part, toClip)
-		if !ok {
-			return nil, nil, errors.New("error while calculating intersection for detecting internal parts")
-		}
-
-		for _, fill := range toInfill {
-			infill, resultPart := m.internalPattern.Fill(layerNr, fill, part, m.options.Printer.ExtrusionWidth, m.options.Print.InfillOverlapPercent, 0)
-			result = append(result, infill)
-			resultParts = append(resultParts, resultPart)
-		}
-	}
-
-	return result, resultParts, nil
 }
