@@ -12,17 +12,6 @@ type Renderer interface {
 	Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
 }
 
-type GCodePaths struct {
-	paths data.Paths
-	Speed data.Millimeter
-}
-
-type LayerMetadata struct {
-	Elements map[string]interface{}
-}
-
-type RenderStep func(builder *builder.GCode, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
-
 type generator struct {
 	options *data.Options
 	gcode   string
@@ -92,7 +81,7 @@ func (g *generator) Generate(layers []data.PartitionedLayer) string {
 
 func (g *generator) finish() string {
 	g.builder.SetExtrusion(g.options.Print.LayerThickness, g.options.Printer.ExtrusionWidth, g.options.Filament.FilamentDiameter)
-	g.builder.AddCommand("M107 ; enable fan")
+	g.builder.AddCommand("M107 ; disable fan")
 
 	return g.builder.Buffer().String()
 }
