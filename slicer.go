@@ -85,14 +85,13 @@ func NewGoSlice(o ...option) *GoSlice {
 			gcode.WithRenderer(&renderer.Infill{
 				PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
 					// TODO: the calculation of the percentage is currently very basic and may not be correct.
-					// It needs improvement.
 
 					if options.Print.InfillPercent != 0 {
 						mm10 := data.Millimeter(10).ToMicrometer()
 						linesPer10mmFor100Percent := mm10 / options.Printer.ExtrusionWidth
-						linesPerArea10x10ForInfillPercent := float64(linesPer10mmFor100Percent) * float64(options.Print.InfillPercent) / 100.0
+						linesPer10mmForInfillPercent := float64(linesPer10mmFor100Percent) * float64(options.Print.InfillPercent) / 100.0
 
-						lineWidth := data.Micrometer(float64(mm10) / linesPerArea10x10ForInfillPercent)
+						lineWidth := data.Micrometer(float64(mm10) / linesPer10mmForInfillPercent)
 
 						return clip.NewLinearPattern(min, max, lineWidth)
 					}
@@ -153,7 +152,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 		}
 	}
 
-	// generate gcode from the layers
+	// 5. generate gcode from the layers
 	s.generator.Init(optimizedModel)
 	gcode := s.generator.Generate(layers)
 
