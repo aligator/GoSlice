@@ -1,8 +1,10 @@
 package main
 
 import (
+	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/gcode"
+	"GoSlice/gcode/renderer"
 	"GoSlice/handle"
 	"GoSlice/modify"
 	"GoSlice/optimize"
@@ -53,6 +55,10 @@ func NewGoSlice(o ...option) *GoSlice {
 		FinishPolygonSnapDistance: 1000,
 	}
 
+	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
+		return clip.NewLinearPattern(min, max, options.Printer.ExtrusionWidth)
+	}
+
 	s := &GoSlice{
 		o:         &options,
 		reader:    stl.Reader(),
@@ -62,8 +68,42 @@ func NewGoSlice(o ...option) *GoSlice {
 			modify.NewPerimeterModifier(&options),
 			modify.NewInfillModifier(&options),
 		},
-		generator: gcode.NewGenerator(&options),
-		writer:    write.Writer(),
+		generator: gcode.NewGenerator(
+			&options,
+			gcode.WithRenderer(renderer.PreLayer{}),
+			gcode.WithRenderer(renderer.Perimeter{}),
+			gcode.WithRenderer(&renderer.Infill{
+				PatternSetup: topBottomPatternFactory,
+				AttrName:     "bottom",
+				Comments:     []string{"TYPE:FILL", "BOTTOM-FILL"},
+			}),
+			gcode.WithRenderer(&renderer.Infill{
+				PatternSetup: topBottomPatternFactory,
+				AttrName:     "top",
+				Comments:     []string{"TYPE:FILL", "TOP-FILL"},
+			}),
+			gcode.WithRenderer(&renderer.Infill{
+				PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
+					// TODO: the calculation of the percentage is currently very basic and may not be correct.
+					// It needs improvement.
+
+					if options.Print.InfillPercent != 0 {
+						mm10 := data.Millimeter(10).ToMicrometer()
+						linesPer10mmFor100Percent := mm10 / options.Printer.ExtrusionWidth
+						linesPerArea10x10ForInfillPercent := float64(linesPer10mmFor100Percent) * float64(options.Print.InfillPercent) / 100.0
+
+						lineWidth := data.Micrometer(float64(mm10) / linesPerArea10x10ForInfillPercent)
+
+						return clip.NewLinearPattern(min, max, lineWidth)
+					}
+
+					return nil
+				},
+				AttrName: "infill",
+				Comments: []string{"TYPE:FILL", "INTERNAL-FILL"},
+			}),
+		),
+		writer: write.Writer(),
 	}
 
 	s.With(o...)
@@ -105,7 +145,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 	// generate perimeter paths
 	for _, m := range s.modifiers {
 		m.Init(optimizedModel)
-		for layerNr, _ := range layers {
+		for layerNr := range layers {
 			layers, err = m.Modify(layerNr, layers)
 			if err != nil {
 				return err

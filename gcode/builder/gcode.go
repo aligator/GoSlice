@@ -1,4 +1,4 @@
-package gcode
+package builder
 
 import (
 	"GoSlice/data"
@@ -7,7 +7,21 @@ import (
 	"math"
 )
 
-type gcodeBuilder struct {
+type Builder interface {
+	Buffer() *bytes.Buffer
+
+	SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer)
+	SetMoveSpeed(moveSpeed data.Millimeter)
+	SetExtrudeSpeed(extrudeSpeed data.Millimeter)
+	SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter)
+	DisableExtrudeSpeedOverride()
+	AddCommand(command string, args ...interface{})
+	AddComment(comment string, args ...interface{})
+	AddMove(p data.MicroVec3, extrusion data.Millimeter)
+	AddPolygon(polygon data.Path, z data.Micrometer)
+}
+
+type GCode struct {
 	buf *bytes.Buffer
 
 	extrusionAmount                                             data.Millimeter
@@ -16,8 +30,8 @@ type gcodeBuilder struct {
 	moveSpeed, extrudeSpeed, currentSpeed, extrudeSpeedOverride int
 }
 
-func newGCodeBuilder(buf *bytes.Buffer) *gcodeBuilder {
-	g := &gcodeBuilder{
+func NewGCodeBuilder(buf *bytes.Buffer) Builder {
+	g := &GCode{
 		moveSpeed:       150,
 		extrudeSpeed:    50,
 		currentPosition: data.NewMicroVec3(0, 0, 0),
@@ -27,40 +41,44 @@ func newGCodeBuilder(buf *bytes.Buffer) *gcodeBuilder {
 	return g
 }
 
-func (g *gcodeBuilder) setExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
+func (g *GCode) Buffer() *bytes.Buffer {
+	return g.buf
+}
+
+func (g *GCode) SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
 	filamentArea := data.Millimeter(math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0))
 	g.extrusionPerMM = layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea
 }
 
-func (g *gcodeBuilder) setMoveSpeed(moveSpeed data.Millimeter) {
+func (g *GCode) SetMoveSpeed(moveSpeed data.Millimeter) {
 	g.moveSpeed = int(moveSpeed)
 }
 
-func (g *gcodeBuilder) setExtrudeSpeed(extrudeSpeed data.Millimeter) {
+func (g *GCode) SetExtrudeSpeed(extrudeSpeed data.Millimeter) {
 	g.extrudeSpeed = int(extrudeSpeed)
 }
 
-func (g *gcodeBuilder) setExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
+func (g *GCode) SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
 	g.extrudeSpeedOverride = int(extrudeSpeed)
 }
 
-func (g *gcodeBuilder) disableExtrudeSpeedOverride() {
+func (g *GCode) DisableExtrudeSpeedOverride() {
 	g.extrudeSpeedOverride = -1
 }
 
-func (g *gcodeBuilder) addCommand(command string, args ...interface{}) {
+func (g *GCode) AddCommand(command string, args ...interface{}) {
 	command = command + "\n"
 	command = fmt.Sprintf(command, args...)
 	g.buf.WriteString(command)
 }
 
-func (g *gcodeBuilder) addComment(comment string, args ...interface{}) {
+func (g *GCode) AddComment(comment string, args ...interface{}) {
 	comment = ";" + comment + "\n"
 	comment = fmt.Sprintf(comment, args...)
 	g.buf.WriteString(comment)
 }
 
-func (g *gcodeBuilder) addMove(p data.MicroVec3, extrusion data.Millimeter) {
+func (g *GCode) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	var speed int
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
@@ -94,14 +112,14 @@ func (g *gcodeBuilder) addMove(p data.MicroVec3, extrusion data.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *gcodeBuilder) addPolygon(polygon data.Path, z data.Micrometer) {
+func (g *GCode) AddPolygon(polygon data.Path, z data.Micrometer) {
 	if len(polygon) == 0 {
-		g.addComment("ignore Too small polygon")
+		g.AddComment("ignore Too small polygon")
 		return
 	}
 	for i, p := range polygon {
 		if i == 0 {
-			g.addMove(data.NewMicroVec3(
+			g.AddMove(data.NewMicroVec3(
 				polygon[0].X(),
 				polygon[0].Y(),
 				z), 0.0)
@@ -112,7 +130,7 @@ func (g *gcodeBuilder) addPolygon(polygon data.Path, z data.Micrometer) {
 
 		prevPoint := data.NewMicroPoint(polygon[i-1].X(), polygon[i-1].Y())
 
-		g.addMove(
+		g.AddMove(
 			data.NewMicroVec3(p.X(), p.Y(), z),
 			point.Sub(prevPoint).SizeMM()*g.extrusionPerMM,
 		)
@@ -123,7 +141,7 @@ func (g *gcodeBuilder) addPolygon(polygon data.Path, z data.Micrometer) {
 	last := len(polygon) - 1
 	pointLast := data.NewMicroPoint(polygon[last].X(), polygon[last].Y())
 
-	g.addMove(
+	g.AddMove(
 		data.NewMicroVec3(polygon[0].X(), polygon[0].Y(), z),
 		point0.Sub(pointLast).SizeMM()*g.extrusionPerMM,
 	)
