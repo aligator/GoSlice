@@ -118,8 +118,13 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				continue
 			}
 
+			// calculating the difference would fail if both are nil so just ignore this
+			if maxOverlapBorder == nil && bottomInfill == nil {
+				continue
+			}
+
 			if parts, ok := c.Difference(maxOverlapBorder, bottomInfill); !ok {
-				return nil, errors.New("error while caclulating the difference between the max overlap border and the bottom infill")
+				return nil, errors.New("error while calculating the difference between the max overlap border and the bottom infill")
 			} else {
 				internalInfill = append(internalInfill, parts...)
 			}
