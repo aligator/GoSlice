@@ -12,7 +12,7 @@ https://github.com/Ultimaker/CuraEngine/tree/80dc349e2014eaa9450086c007118e10bda
 Most of the work after "first gcode result" is done from scratch.
 
 ## Run
-go run /path/to/stl/file.stl
+go run . /path/to/stl/file.stl
 
 ## ToDo
 * ~~read stl~~ (initially done by using external lib github.com/hschendel/stl)
