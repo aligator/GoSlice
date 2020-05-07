@@ -12,7 +12,15 @@ https://github.com/Ultimaker/CuraEngine/tree/80dc349e2014eaa9450086c007118e10bda
 Most of the work after "first gcode result" is done from scratch.
 
 ## Run
-go run . /path/to/stl/file.stl
+Minimal usage:
+```
+go run . --file /path/to/stl/file.stl
+```
+
+To get help for all possible flags take a look at /data/option.go or just run:
+```
+go run . --help
+```
 
 ## ToDo
 * ~~read stl~~ (initially done by using external lib github.com/hschendel/stl)
@@ -37,3 +45,4 @@ go run . /path/to/stl/file.stl
 * CuraEngine for the great first commit, which was a very good starting point for research.
 * https://www.thingiverse.com/thing:3413597 for the great Gopher model used as logo. (Original Gopher designed by [Renee French CC BY 3.0](http://reneefrench.blogspot.com/))
 * Go for the great language.
+* All libs GoSlice uses. (just see go.mod)
