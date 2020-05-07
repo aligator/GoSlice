@@ -45,4 +45,4 @@ go run . --help
 * CuraEngine for the great first commit, which was a very good starting point for research.
 * https://www.thingiverse.com/thing:3413597 for the great Gopher model used as logo. (Original Gopher designed by [Renee French CC BY 3.0](http://reneefrench.blogspot.com/))
 * Go for the great language.
-* All libs GoSlice uses. (just see go.mod)
+* All libs GoSlice uses. (just take a look at go.mod)
