@@ -25,37 +25,6 @@ type GoSlice struct {
 	writer    handle.GCodeWriter
 }
 
-func DefaultOptions() data.Options {
-	return data.Options{
-		Print: data.PrintOptions{
-			IntialLayerSpeed:    30,
-			LayerSpeed:          60,
-			OuterPerimeterSpeed: 40,
-
-			InitialLayerThickness: 200,
-			LayerThickness:        200,
-			InsetCount:            2,
-			InfillOverlapPercent:  50,
-			InfillPercent:         20,
-		},
-		Filament: data.FilamentOptions{
-			FilamentDiameter: data.Millimeter(1.75).ToMicrometer(),
-		},
-		Printer: data.PrinterOptions{
-			ExtrusionWidth: 400,
-			Center: data.NewMicroVec3(
-				data.Millimeter(100).ToMicrometer(),
-				data.Millimeter(100).ToMicrometer(),
-				0,
-			),
-		},
-
-		MeldDistance:              30,
-		JoinPolygonSnapDistance:   100,
-		FinishPolygonSnapDistance: 1000,
-	}
-}
-
 func NewGoSlice(options data.Options) *GoSlice {
 	s := &GoSlice{
 		options: &options,
@@ -112,11 +81,11 @@ func NewGoSlice(options data.Options) *GoSlice {
 	return s
 }
 
-func (s *GoSlice) Process(filename string, outFilename string) error {
+func (s *GoSlice) Process() error {
 	startTime := time.Now()
 
 	// 1. Load model
-	models, err := s.reader.Read(filename)
+	models, err := s.reader.Read(s.options.InputFilePath)
 	if err != nil {
 		return err
 	}
@@ -158,7 +127,7 @@ func (s *GoSlice) Process(filename string, outFilename string) error {
 	s.generator.Init(optimizedModel)
 	gcode := s.generator.Generate(layers)
 
-	err = s.writer.Write(gcode, outFilename)
+	err = s.writer.Write(gcode, s.options.InputFilePath+".gcode")
 
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 

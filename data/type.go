@@ -1,7 +1,9 @@
 // Package data holds basic data structures and interfaces used by GoSlice.
 package data
 
-import "math"
+import (
+	"math"
+)
 
 // infill.go holds the basic type definition.
 // The types behind them may change in the

@@ -63,6 +63,13 @@ type MicroVec3 interface {
 
 	// Copy returns a completely new copy of the vector.
 	Copy() MicroVec3
+
+	// String implements the value interface needed for the options.
+	String() string
+	// Set implements the value interface needed for the options.
+	Set(s string) error
+	// Type implements the value interface needed for the options.
+	Type() string
 }
 
 // microVec implements MicroVec3
