@@ -80,7 +80,7 @@ func (m model) Max() data.MicroVec3 {
 
 type reader struct{}
 
-func Reader() handle.ModelReader {
+func Reader(options *data.Options) handle.ModelReader {
 	return &reader{}
 }
 

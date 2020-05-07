@@ -23,12 +23,14 @@ go run /path/to/stl/file.stl
 * ~~bottom layer~~ (only one layer and not perfect but it works)
 * ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
 * ~~simple infill~~ (very simple)
-* options as parameters / config file (maybe by using cobra / viper)
+* options as parameters
 * add function / interface / struct documentations
 * add tests
 * brim
 * skirt
 * retraction
+* grow top and bottom layer into model
+* rotate infill pattern
 * lots of other things...
 
 ## Credits
