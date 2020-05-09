@@ -2,7 +2,7 @@ package optimize
 
 import (
 	"GoSlice/data"
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"fmt"
 )
 
@@ -10,7 +10,7 @@ type optimizer struct {
 	options *data.Options
 }
 
-func NewOptimizer(options *data.Options) handle.ModelOptimizer {
+func NewOptimizer(options *data.Options) handler.ModelOptimizer {
 	return &optimizer{
 		options: options,
 	}

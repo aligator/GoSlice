@@ -4,7 +4,7 @@ package gcode
 import (
 	"GoSlice/data"
 	"GoSlice/gcode/builder"
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"bytes"
 )
 
@@ -49,7 +49,7 @@ func WithRenderer(r Renderer) option {
 }
 
 // NewGenerator returns a new GCode generator which can be customized by adding several renderers using WithRenderer().
-func NewGenerator(options *data.Options, generatorOptions ...option) handle.GCodeGenerator {
+func NewGenerator(options *data.Options, generatorOptions ...option) handler.GCodeGenerator {
 	g := &generator{
 		options: options,
 	}

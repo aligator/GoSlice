@@ -3,7 +3,7 @@ package modify
 import (
 	"GoSlice/clip"
 	"GoSlice/data"
-	"GoSlice/handle"
+	"GoSlice/handler"
 )
 
 type perimeterModifier struct {
@@ -13,7 +13,7 @@ type perimeterModifier struct {
 // NewPerimeterModifier creates a modifier which calculates all perimeters
 //
 // The perimeters are saved as attribute in the LayerPart.
-func NewPerimeterModifier(options *data.Options) handle.LayerModifier {
+func NewPerimeterModifier(options *data.Options) handler.LayerModifier {
 	return &perimeterModifier{
 		options: options,
 	}

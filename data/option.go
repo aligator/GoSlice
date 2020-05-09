@@ -87,6 +87,9 @@ type PrintOptions struct {
 	// OuterPerimeterSpeed is the speed only for outer perimeters.
 	OuterPerimeterSpeed Millimeter
 
+	// MoveSpeed is the speed for all non printing moves.
+	MoveSpeed Millimeter
+
 	// InitialLayerThickness is the layer thickness for the first layer.
 	InitialLayerThickness Micrometer
 
@@ -147,6 +150,7 @@ func DefaultOptions() Options {
 			IntialLayerSpeed:    30,
 			LayerSpeed:          60,
 			OuterPerimeterSpeed: 40,
+			MoveSpeed:           150,
 
 			InitialLayerThickness: 200,
 			LayerThickness:        200,
@@ -187,6 +191,7 @@ func ParseFlags() Options {
 	flag.Var(&options.Print.IntialLayerSpeed, "initial-layer-speed", "The speed only for the first layer in mm per second.")
 	flag.Var(&options.Print.LayerSpeed, "layer-speed", "The speed for all but the first layer in mm per second.")
 	flag.Var(&options.Print.OuterPerimeterSpeed, "outer-perimeter-speed", "The speed only for outer perimeters.")
+	flag.Var(&options.Print.MoveSpeed, "move-speed", "The speed for all non printing moves.")
 	flag.Var(&options.Print.InitialLayerThickness, "initial-layer-thickness", "The layer thickness for the first layer.")
 	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The layer thickness for the first layer.")

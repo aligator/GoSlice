@@ -2,10 +2,11 @@ package stl
 
 import (
 	"GoSlice/data"
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"errors"
-	"github.com/hschendel/stl"
 	"strings"
+
+	"github.com/hschendel/stl"
 )
 
 type face struct {
@@ -80,7 +81,7 @@ func (m model) Max() data.MicroVec3 {
 
 type reader struct{}
 
-func Reader(options *data.Options) handle.ModelReader {
+func Reader(options *data.Options) handler.ModelReader {
 	return &reader{}
 }
 

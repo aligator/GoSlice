@@ -1,3 +1,5 @@
+// This file provides a renderer for perimeters.
+
 package renderer
 
 import (
@@ -5,6 +7,7 @@ import (
 	"GoSlice/gcode/builder"
 )
 
+// Perimeter is a renderer which generates the gcode for the attribute "perimeters".
 type Perimeter struct{}
 
 func (p Perimeter) Init(model data.OptimizedModel) {}

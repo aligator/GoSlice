@@ -1,3 +1,5 @@
+// This file provides a renderer for filling parts.
+
 package renderer
 
 import (
@@ -6,10 +8,17 @@ import (
 	"GoSlice/gcode/builder"
 )
 
+// Infill is a renderer which can fill parts which are defined by a layer part attribute of a specific name.
+// The attribute has to be of type []data.LayerPart.
 type Infill struct {
+	// PatternSetup is called once on init and sets a specific pattern this infill renderer should use.
 	PatternSetup func(min data.MicroPoint, max data.MicroPoint) clip.Pattern
-	AttrName     string
-	Comments     []string
+
+	// AttrName is the name of the attribute containing the []data.LayerPart's to fill.
+	AttrName string
+
+	// Comments is a list of comments to be added before each infill.
+	Comments []string
 
 	pattern clip.Pattern
 }

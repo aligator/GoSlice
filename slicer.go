@@ -5,7 +5,7 @@ import (
 	"GoSlice/data"
 	"GoSlice/gcode"
 	"GoSlice/gcode/renderer"
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"GoSlice/modify"
 	"GoSlice/optimize"
 	"GoSlice/slice"
@@ -17,12 +17,12 @@ import (
 
 type GoSlice struct {
 	options   *data.Options
-	reader    handle.ModelReader
-	optimizer handle.ModelOptimizer
-	slicer    handle.ModelSlicer
-	modifiers []handle.LayerModifier
-	generator handle.GCodeGenerator
-	writer    handle.GCodeWriter
+	reader    handler.ModelReader
+	optimizer handler.ModelOptimizer
+	slicer    handler.ModelSlicer
+	modifiers []handler.LayerModifier
+	generator handler.GCodeGenerator
+	writer    handler.GCodeWriter
 }
 
 func NewGoSlice(options data.Options) *GoSlice {
@@ -30,7 +30,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		options: &options,
 	}
 
-	// create handlers
+	// create handlerrs
 	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
 		return clip.NewLinearPattern(min, max, options.Printer.ExtrusionWidth)
 	}
@@ -38,7 +38,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 	s.reader = stl.Reader(&options)
 	s.optimizer = optimize.NewOptimizer(&options)
 	s.slicer = slice.NewSlicer(&options)
-	s.modifiers = []handle.LayerModifier{
+	s.modifiers = []handler.LayerModifier{
 		modify.NewPerimeterModifier(&options),
 		modify.NewInfillModifier(&options),
 	}

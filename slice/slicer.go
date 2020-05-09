@@ -2,7 +2,7 @@ package slice
 
 import (
 	"GoSlice/data"
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"errors"
 	"fmt"
 )
@@ -11,7 +11,7 @@ type slicer struct {
 	options *data.Options
 }
 
-func NewSlicer(options *data.Options) handle.ModelSlicer {
+func NewSlicer(options *data.Options) handler.ModelSlicer {
 	return &slicer{options: options}
 }
 

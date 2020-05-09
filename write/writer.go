@@ -1,14 +1,14 @@
 package write
 
 import (
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"fmt"
 	"os"
 )
 
 type writer struct{}
 
-func Writer() handle.GCodeWriter {
+func Writer() handler.GCodeWriter {
 	return &writer{}
 }
 

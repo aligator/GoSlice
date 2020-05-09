@@ -3,7 +3,7 @@ package modify
 import (
 	"GoSlice/clip"
 	"GoSlice/data"
-	"GoSlice/handle"
+	"GoSlice/handler"
 	"errors"
 	"fmt"
 	"strconv"
@@ -16,13 +16,13 @@ type infillModifier struct {
 func (m infillModifier) Init(model data.OptimizedModel) {}
 
 // NewInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
-func NewInfillModifier(options *data.Options) handle.LayerModifier {
+func NewInfillModifier(options *data.Options) handler.LayerModifier {
 	return &infillModifier{
 		options: options,
 	}
 }
 
-// internalInfillOverlap is a magic number needed to compensate the extra inset done for each part which is needed for oblique walls.
+// internalInfillOverlap is added to the normal overlap to allow the infill to grow into the model.
 const internalInfillOverlap = 400
 
 func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
