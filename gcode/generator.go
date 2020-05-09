@@ -55,15 +55,6 @@ func NewGenerator(options *data.Options, generatorOptions ...option) handle.GCod
 func (g *generator) init() {
 	var b []byte
 	g.builder = builder.NewGCodeBuilder(bytes.NewBuffer(b))
-
-	g.builder.AddComment("Generated with GoSlice")
-	g.builder.AddComment("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
-	g.builder.AddComment("G92 E0 ; reset extrusion distance")
-	g.builder.AddComment("G1 X200 E20 F600 ; prime nozzle")
-	g.builder.AddComment("G1 Z5 F5000 ; lift nozzle")
-	g.builder.AddComment("G92 E0 ; reset extrusion distance")
-
-	g.builder.SetExtrusion(g.options.Print.InitialLayerThickness, g.options.Printer.ExtrusionWidth, g.options.Filament.FilamentDiameter)
 }
 
 func (g *generator) Generate(layers []data.PartitionedLayer) string {
@@ -75,13 +66,6 @@ func (g *generator) Generate(layers []data.PartitionedLayer) string {
 			renderer.Render(g.builder, layerNr, layers, z, g.options)
 		}
 	}
-
-	return g.finish()
-}
-
-func (g *generator) finish() string {
-	g.builder.SetExtrusion(g.options.Print.LayerThickness, g.options.Printer.ExtrusionWidth, g.options.Filament.FilamentDiameter)
-	g.builder.AddCommand("M107 ; disable fan")
 
 	return g.builder.Buffer().String()
 }

@@ -75,6 +75,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 			AttrName: "infill",
 			Comments: []string{"TYPE:FILL", "INTERNAL-FILL"},
 		}),
+		gcode.WithRenderer(renderer.PostLayer{}),
 	)
 	s.writer = write.Writer()
 
