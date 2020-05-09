@@ -1,4 +1,5 @@
-// Package data holds basic data structures and interfaces used by GoSlice.
+// This file provides some basic helper functions for 2d vector calculations.
+
 package data
 
 // PointsDistance calculates the distance between 2 points

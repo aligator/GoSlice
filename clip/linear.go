@@ -1,32 +1,23 @@
+// This file implements a basic linear pattern infill.
+
 package clip
 
 import (
 	"GoSlice/data"
 	"fmt"
+
 	clipper "github.com/aligator/go.clipper"
 )
 
+// linear provides an infill which consists of simple parallel lines.
+// The direction of the lines is switching for each layer by 90°..
 type linear struct {
-	paths  clipper.Paths
-	paths2 clipper.Paths
+	verticalPaths   clipper.Paths
+	horizontalPaths clipper.Paths
 }
 
-// verticalLinesByX assumes that each LayerPart contains only a vertical line, specified by two points.
-// It can sort them by the x value.
-type verticalLinesByX []data.LayerPart
-
-func (a verticalLinesByX) Len() int {
-	return len(a)
-}
-
-func (a verticalLinesByX) Less(i, j int) bool {
-	return a[i].Outline()[0].X() < a[j].Outline()[0].X()
-}
-
-func (a verticalLinesByX) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
+// NewLinearPattern provides a simple linear infill pattern consisting of simple parallel lines.
+// The direction of the lines is switching for each layer by 90°.
 func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {
 	verticalLines := clipper.Paths{}
 	numLine := 0
@@ -90,9 +81,10 @@ func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.M
 		numLine++
 	}
 
-	return linear{paths: verticalLines, paths2: horizontalLines}
+	return linear{verticalPaths: verticalLines, horizontalPaths: horizontalLines}
 }
 
+// Fill implements the Pattern interface by using simple linear lines as infill.
 func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
 	resultInfill := p.getInfill(layerNr, clipperPath(part.Outline()), clipperPaths(part.Holes()), 0)
 	return microPaths(resultInfill, false)
@@ -108,7 +100,7 @@ func (p linear) getInfill(layerNr int, outline clipper.Path, holes clipper.Paths
 	co := clipper.NewClipperOffset()
 	cl := clipper.NewClipper(clipper.IoNone)
 
-	// generate the exset for the overlap (only if needed)
+	// generate the ex-set for the overlap (only if needed)
 	if overlap != 0 {
 		co.AddPaths(exset, clipper.JtSquare, clipper.EtClosedPolygon)
 		co.MiterLimit = 2
@@ -120,14 +112,14 @@ func (p linear) getInfill(layerNr int, outline clipper.Path, holes clipper.Paths
 		holes = co.Execute(float64(overlap))
 	}
 
-	// clip the lines by the resulting inset
+	// clip the lines by the outline and holes
 	cl.AddPaths(exset, clipper.PtClip, true)
 	cl.AddPaths(holes, clipper.PtClip, true)
 
 	if layerNr%2 == 0 {
-		cl.AddPaths(p.paths, clipper.PtSubject, false)
+		cl.AddPaths(p.verticalPaths, clipper.PtSubject, false)
 	} else {
-		cl.AddPaths(p.paths2, clipper.PtSubject, false)
+		cl.AddPaths(p.horizontalPaths, clipper.PtSubject, false)
 	}
 
 	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)

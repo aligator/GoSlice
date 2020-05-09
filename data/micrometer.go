@@ -1,4 +1,6 @@
-// Package data holds basic data structures and interfaces used by GoSlice.
+// This file provides some types which consist of several Micrometer values.
+// These types can represent points or vectors.
+
 package data
 
 import (
@@ -50,15 +52,18 @@ type MicroVec3 interface {
 
 	// Size2 returns the length of the vector^2.
 	//
-	// Use this whenever possible as it may be faster than Bounds().
+	// Use this whenever possible as it may be faster than Size().
 	Size2() Micrometer
 
 	// Size2 returns the length of the vector.
 	//
-	// Use Size2() this whenever possible as it may be faster than Bounds().
+	// Use Size2() this whenever possible as it may be faster than Size().
 	Size() Micrometer
 
+	// Normalized returns the normalized MicroVec3.
 	Normalized() MicroVec3
+
+	// Cross can crossmultiply the vector with another one.
 	Cross(p2 MicroVec3) MicroVec3
 
 	// Copy returns a completely new copy of the vector.
@@ -77,6 +82,7 @@ type microVec3 struct {
 	x, y, z Micrometer
 }
 
+// NewMicroVec3 returns a new vector in 3D space which is in a 1 micrometer sized grid.
 func NewMicroVec3(x Micrometer, y Micrometer, z Micrometer) MicroVec3 {
 	return &microVec3{
 		x: x,
@@ -199,8 +205,7 @@ func (v *microVec3) Copy() MicroVec3 {
 }
 
 // MicroPoint represents a point in 2d space
-// which is in a Micrometer-grid.
-// A value of 1 represents 0.001 mm.
+// which is in a 1 micrometer sized grid.
 type MicroPoint interface {
 	X() Micrometer
 	Y() Micrometer
@@ -234,12 +239,12 @@ type MicroPoint interface {
 
 	// Size2 returns the length of the vector^2.
 	//
-	// Use this whenever possible as it may be faster than Bounds().
+	// Use this whenever possible as it may be faster than Size().
 	Size2() Micrometer
 
 	// Size2 returns the length of the vector.
 	//
-	// Use Size2() this whenever possible as it may be faster than Bounds().
+	// Use Size2() whenever possible as it may be faster than Size().
 	Size() Micrometer
 
 	// SizeMM returns the length of the vector in mm.

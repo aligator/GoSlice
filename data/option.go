@@ -1,11 +1,13 @@
-// Package data holds basic data structures and interfaces used by GoSlice.
+// This file provides all options of GoSlice.
+
 package data
 
 import (
 	"errors"
-	flag "github.com/spf13/pflag"
 	"strconv"
 	"strings"
+
+	flag "github.com/spf13/pflag"
 )
 
 // implement the Value interface for all types which can occur in the options
@@ -170,6 +172,8 @@ func DefaultOptions() Options {
 	}
 }
 
+// ParseFlags parses the command line flags.
+// It returns the default options but sets all passed options.
 func ParseFlags() Options {
 	options := DefaultOptions()
 

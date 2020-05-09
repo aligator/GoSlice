@@ -1,7 +1,6 @@
-// Package data holds basic data structures and interfaces used by GoSlice.
-package data
+// This file provides types to represent a whole 3d model in the different slicing steps.
 
-// model.go holds types used for 3d model representation.
+package data
 
 // Face represents a triangle face which is defined by three vectors.
 type Face interface {

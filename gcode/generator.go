@@ -1,3 +1,4 @@
+// Package gcode provides a generator for GCode files.
 package gcode
 
 import (
@@ -7,8 +8,14 @@ import (
 	"bytes"
 )
 
+// Renderer can be used to add GCodes based on the current layer and layer data.
+// Several renderers can be provided to the generator.
 type Renderer interface {
+	// Init is called once at the beginning and can be used to set up the renderer.
+	// For example the infill patterns can be instanciated int this method.
 	Init(model data.OptimizedModel)
+
+	// Render is called for each layer and the provided builder can be used to add gcode.
 	Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
 }
 
@@ -34,12 +41,14 @@ func (s *generator) With(o ...option) {
 	}
 }
 
+// WithRenderer adds a renderer to the generator.
 func WithRenderer(r Renderer) option {
 	return func(s *generator) {
 		s.renderers = append(s.renderers, r)
 	}
 }
 
+// NewGenerator returns a new GCode generator which can be customized by adding several renderers using WithRenderer().
 func NewGenerator(options *data.Options, generatorOptions ...option) handle.GCodeGenerator {
 	g := &generator{
 		options: options,
@@ -57,6 +66,8 @@ func (g *generator) init() {
 	g.builder = builder.NewGCodeBuilder(bytes.NewBuffer(b))
 }
 
+// Generate generates the GCode by using the renderers added to the generator.
+// The final GCode is just returned.
 func (g *generator) Generate(layers []data.PartitionedLayer) string {
 	g.init()
 

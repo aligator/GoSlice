@@ -1,10 +1,9 @@
-// Package data holds basic data structures and interfaces used by GoSlice.
+// This file provides some types which are needed to represent layers in the different slicing steps.
+
 package data
 
-// layer.go holds types which are needed for 2d layer representation
-
 // Path is a simple list of points.
-// It can be used to represent polygons or just lines.
+// It can be used to represent polygons (if they are closed) or just lines.
 type Path []MicroPoint
 
 // IsAlmostFinished returns true if the path represents an almost closed polygon.
@@ -21,9 +20,9 @@ func (p Path) IsAlmostFinished(distance Micrometer) bool {
 // Removes verts which detour from a direct line from the previous and next vert by a too small amount.
 //
 // Criteria:
-// 1. Never remove a vertex if either of the connceted segments is larger than \p smallest_line_segment
+// 1. Never remove a vertex if either of the connected segments is larger than \p smallest_line_segment
 // 2. Never remove a vertex if the distance between that vertex and the final resulting polygon would be higher than \p allowed_error_distance
-// 3. Simplify uses a heuristic and doesn't neccesarily remove all removable vertices under the above criteria.
+// 3. Simplify uses a heuristic and doesn't necessarily remove all removable vertices under the above criteria.
 // 4. But simplify may never violate these criteria.
 // 5. Unless the segments or the distance is smaller than the rounding error of 5 micron
 //
@@ -242,12 +241,13 @@ type LayerPart interface {
 	// use proper type assertion.
 	//
 	// If the implementation does not support attributes, it should return nil.
-	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
+	// If the implementation supports attributes but doesn't have any, it should return an empty map.
 	Attributes() map[string]interface{}
 }
 
 // Layer represents one layer which can consist of several polygons.
 // These polygons can consist of several paths, with some of them just representing holes.
+// Holes have to be clockwise and outlines counter clockwise.
 type Layer interface {
 	Polygons() Paths
 }
@@ -274,7 +274,8 @@ type PartitionedLayer interface {
 
 	Bounds() (MicroPoint, MicroPoint)
 
-	// The maximum depth a layer part can have in this layer. (Derived from an orginal tree structure.)
+	// The maximum depth a layer part can have in this layer. (Derived from an original tree structure.)
+	// If it is -1 the depth is unknown.
 	MaxDepth() int
 }
 

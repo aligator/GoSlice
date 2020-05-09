@@ -5,11 +5,10 @@ import (
 	"math"
 )
 
-// infill.go holds the basic type definition.
-// The types behind them may change in the
-// future to more precise / larger ones.
-
 // Millimeter represents a value in mm
+// It should not be used for calculations, convert to micrometer.
+// using ToMicrometer() before calculating to prevent rounding
+// errors because of the float-type.
 type Millimeter float32
 
 func (m Millimeter) ToMicrometer() Micrometer {
