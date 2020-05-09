@@ -22,7 +22,7 @@ func NewInfillModifier(options *data.Options) handle.LayerModifier {
 	}
 }
 
-// internalInfillOverlap is a magic number needed to compensate the extra inset done for each part which is needed for oblique walls.
+// internalInfillOverlap is added to the normal overlap to allow the infill to grow into the model.
 const internalInfillOverlap = 400
 
 func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {

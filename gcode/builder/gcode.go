@@ -1,3 +1,5 @@
+// Package builder provides a GCode builder for creating GCode files
+
 package builder
 
 import (
@@ -7,6 +9,8 @@ import (
 	"math"
 )
 
+// Builder provides methods for building gcode files.
+// The result can be obtained by calling Buffer().
 type Builder interface {
 	Buffer() *bytes.Buffer
 
@@ -21,6 +25,7 @@ type Builder interface {
 	AddPolygon(polygon data.Path, z data.Micrometer)
 }
 
+// GCode is an implementation of the Builder interface
 type GCode struct {
 	buf *bytes.Buffer
 
@@ -31,11 +36,7 @@ type GCode struct {
 }
 
 func NewGCodeBuilder(buf *bytes.Buffer) Builder {
-	g := &GCode{
-		moveSpeed:       150,
-		extrudeSpeed:    50,
-		currentPosition: data.NewMicroVec3(0, 0, 0),
-	}
+	g := &GCode{}
 
 	g.buf = buf
 	return g

@@ -1,3 +1,5 @@
+// This file provides renderers for gcode injected at specific layers.
+
 package renderer
 
 import (
@@ -5,6 +7,7 @@ import (
 	"GoSlice/gcode/builder"
 )
 
+// PreLayer adds starting gcode, resets the extrude speeds on each layer and enables the fan above a specific layer.
 type PreLayer struct{}
 
 func (PreLayer) Init(model data.OptimizedModel) {}
@@ -23,6 +26,10 @@ func (PreLayer) Render(builder builder.Builder, layerNr int, layers []data.Parti
 
 		builder.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
 
+		// set speeds
+		builder.SetExtrudeSpeed(options.Print.LayerSpeed)
+		builder.SetMoveSpeed(options.Print.MoveSpeed)
+
 		// force the InitialLayerSpeed for first layer
 		builder.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
 	} else {
@@ -35,6 +42,7 @@ func (PreLayer) Render(builder builder.Builder, layerNr int, layers []data.Parti
 	}
 }
 
+// PostLayer adds GCode at the last layer.
 type PostLayer struct{}
 
 func (PostLayer) Init(model data.OptimizedModel) {}
