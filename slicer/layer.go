@@ -1,11 +1,7 @@
-package slice
+package slicer
 
 import (
-	"GoSlice/clip"
 	"GoSlice/data"
-	"fmt"
-	clipper "github.com/aligator/go.clipper"
-	"os"
 )
 
 type layer struct {
@@ -175,39 +171,6 @@ RerunConnectPolygons:
 	l.polygons = clearedPolygons
 }
 
-func (l *layer) generateLayerParts() (data.PartitionedLayer, bool) {
-	c := clip.NewClipper()
-	return c.GenerateLayerParts(l)
-}
-
-func dumpPolygon(buf *os.File, polygons clipper.Path, modelSize data.MicroVec3, isRed bool) {
-	buf.WriteString("<polygon points=\"")
-	for _, p := range polygons {
-		buf.WriteString(fmt.Sprintf("%f,%f ", (float64(p.X)+float64(modelSize.X())/2)/float64(modelSize.X())*150, (float64(p.Y)+float64(modelSize.Y())/2)/float64(modelSize.Y())*150))
-
-	}
-	if isRed {
-		buf.WriteString("\" style=\"fill:red; stroke:black;stroke-width:1\" />\n")
-	} else {
-		buf.WriteString("\" style=\"fill:gray; s1031.680000640troke:black;stroke-width:1\" />\n")
-	}
-}
-
 func (l *layer) removeLastPoint(polyIndex int) {
 	l.polygons[polyIndex] = l.polygons[polyIndex][:len(l.polygons[polyIndex])]
 }
-
-/*
-func (l *layer) dump(buf *os.File, modelSize util.MicroVec3) {
-	buf.WriteString("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"width: 150px; height:150px\">\n")
-	for _, part := range l.parts {
-		for j, poly := range part.polygons {
-			dumpPolygon(buf, poly, modelSize, j == 0)
-
-		}
-	}
-	buf.WriteString("</svg>\n")
-}
-
-
-*/

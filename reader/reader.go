@@ -1,4 +1,4 @@
-package stl
+package reader
 
 import (
 	"GoSlice/data"
@@ -9,6 +9,7 @@ import (
 	"github.com/hschendel/stl"
 )
 
+// face is a 3d triangle face defined by three 3d vectors.
 type face struct {
 	vectors [3]data.MicroVec3
 }
@@ -81,6 +82,7 @@ func (m model) Max() data.MicroVec3 {
 
 type reader struct{}
 
+// Reader returns a stl model reader.
 func Reader(options *data.Options) handler.ModelReader {
 	return &reader{}
 }
@@ -111,6 +113,8 @@ func (r reader) Read(filename string) ([]data.Model, error) {
 	return []data.Model{newModel(faces)}, nil
 }
 
+// stlTriangleToFace converts a triangle from the stl package
+// into a face.
 func stlTriangleToFace(t stl.Triangle) face {
 	return face{vectors: [3]data.MicroVec3{
 		data.NewMicroVec3(

@@ -1,4 +1,4 @@
-package optimize
+package optimizer
 
 import (
 	"GoSlice/data"

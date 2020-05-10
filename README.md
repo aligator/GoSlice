@@ -32,7 +32,7 @@ go run . --help
 * ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
 * ~~simple infill~~ (very simple)
 * ~~options as commandline parameters~~
-* add function / interface / struct documentations
+* ~~add function / interface / struct documentations~~
 * add tests
 * brim
 * skirt

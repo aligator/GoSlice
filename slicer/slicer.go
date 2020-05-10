@@ -1,6 +1,10 @@
-package slice
+// Package slicer provides an implementation for slicing a model into
+// 2d slices.
+
+package slicer
 
 import (
+	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handler"
 	"errors"
@@ -11,6 +15,7 @@ type slicer struct {
 	options *data.Options
 }
 
+// NewSlicer provides the built in slicer implementation.
 func NewSlicer(options *data.Options) handler.ModelSlicer {
 	return &slicer{options: options}
 }
@@ -94,9 +99,11 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 	}
 
 	retLayers := make([]data.PartitionedLayer, len(layers))
+	c := clip.NewClipper()
+
 	for i, layer := range layers {
 		layer.makePolygons(m, s.options.JoinPolygonSnapDistance, s.options.FinishPolygonSnapDistance)
-		lp, ok := layer.generateLayerParts()
+		lp, ok := c.GenerateLayerParts(layer)
 
 		if !ok {
 			return nil, errors.New(fmt.Sprintf("partitioning failed at layer %v", i))

@@ -1,4 +1,4 @@
-package write
+package writer
 
 import (
 	"GoSlice/handler"
@@ -8,6 +8,7 @@ import (
 
 type writer struct{}
 
+// Writer can write gcode to a file.
 func Writer() handler.GCodeWriter {
 	return &writer{}
 }

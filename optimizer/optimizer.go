@@ -1,4 +1,6 @@
-package optimize
+// Package optimizer contains the built in model optimizer.
+
+package optimizer
 
 import (
 	"GoSlice/data"
@@ -10,12 +12,14 @@ type optimizer struct {
 	options *data.Options
 }
 
+// NewOptimizer provides a model optimizer
 func NewOptimizer(options *data.Options) handler.ModelOptimizer {
 	return &optimizer{
 		options: options,
 	}
 }
 
+// pointHash is used as type for the hash calculation of similar points.
 type pointHash uint
 
 func (o optimizer) Optimize(m data.Model) (data.OptimizedModel, error) {

@@ -1,15 +1,20 @@
-package slice
+package slicer
 
 import (
 	"GoSlice/data"
 )
 
+// segment is a line specified by two points.
 type segment struct {
-	start, end     data.MicroPoint
+	start, end data.MicroPoint
+
+	// faceIndex is the face which this segment belongs to.
 	faceIndex      int
 	addedToPolygon bool
 }
 
+// SliceFace generates a 2d slice out of a triangle at a specific z.
+// The triangle is defined by the three points.
 func SliceFace(z data.Micrometer, p0, p1, p2 data.MicroVec3) *segment {
 	seg := &segment{
 		start: data.NewMicroPoint(

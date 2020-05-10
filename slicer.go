@@ -6,15 +6,17 @@ import (
 	"GoSlice/gcode"
 	"GoSlice/gcode/renderer"
 	"GoSlice/handler"
-	"GoSlice/modify"
-	"GoSlice/optimize"
-	"GoSlice/slice"
-	"GoSlice/stl"
-	"GoSlice/write"
+	"GoSlice/modifier"
+	"GoSlice/optimizer"
+	"GoSlice/reader"
+	"GoSlice/slicer"
+	"GoSlice/writer"
 	"fmt"
 	"time"
 )
 
+// GoSlice combines all logic  needed to slice
+// a model and generate a GCode file.
 type GoSlice struct {
 	options   *data.Options
 	reader    handler.ModelReader
@@ -25,22 +27,23 @@ type GoSlice struct {
 	writer    handler.GCodeWriter
 }
 
+// NewGoSlice provides a GoSlice with all built in implementations.
 func NewGoSlice(options data.Options) *GoSlice {
 	s := &GoSlice{
 		options: &options,
 	}
 
-	// create handlerrs
+	// create handlers
 	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
 		return clip.NewLinearPattern(min, max, options.Printer.ExtrusionWidth)
 	}
 
-	s.reader = stl.Reader(&options)
-	s.optimizer = optimize.NewOptimizer(&options)
-	s.slicer = slice.NewSlicer(&options)
+	s.reader = reader.Reader(&options)
+	s.optimizer = optimizer.NewOptimizer(&options)
+	s.slicer = slicer.NewSlicer(&options)
 	s.modifiers = []handler.LayerModifier{
-		modify.NewPerimeterModifier(&options),
-		modify.NewInfillModifier(&options),
+		modifier.NewPerimeterModifier(&options),
+		modifier.NewInfillModifier(&options),
 	}
 	s.generator = gcode.NewGenerator(
 		&options,
@@ -77,7 +80,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		}),
 		gcode.WithRenderer(renderer.PostLayer{}),
 	)
-	s.writer = write.Writer()
+	s.writer = writer.Writer()
 
 	return s
 }

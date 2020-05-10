@@ -1,10 +1,12 @@
-package optimize
+package optimizer
 
 import (
 	"GoSlice/data"
+
 	"github.com/hschendel/stl"
 )
 
+// optimizedModel implements the OptimizedModel interface.
 type optimizedModel struct {
 	points    []point
 	faces     []optimizedFace
