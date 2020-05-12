@@ -60,12 +60,6 @@ type MicroVec3 interface {
 	// Use Size2() this whenever possible as it may be faster than Size().
 	Size() Micrometer
 
-	// Normalized returns the normalized MicroVec3.
-	Normalized() MicroVec3
-
-	// Cross can crossmultiply the vector with another one.
-	Cross(p2 MicroVec3) MicroVec3
-
 	// Copy returns a completely new copy of the vector.
 	Copy() MicroVec3
 
@@ -181,19 +175,6 @@ func (v *microVec3) Size2() Micrometer {
 
 func (v *microVec3) Size() Micrometer {
 	return Micrometer(math.Sqrt(float64(v.Size2())))
-}
-
-func (v *microVec3) Normalized() MicroVec3 {
-	return v.Div(v.Size())
-}
-
-func (v *microVec3) Cross(p2 MicroVec3) MicroVec3 {
-	crossVec := NewMicroVec3(
-		v.y*p2.Z()-v.z*p2.Y(),
-		v.z*p2.X()-v.x*p2.Z(),
-		v.x*p2.Y()-v.y*p2.X(),
-	)
-	return crossVec
 }
 
 func (v *microVec3) Copy() MicroVec3 {

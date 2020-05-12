@@ -41,7 +41,7 @@ func (m Millimeter) Type() string {
 }
 
 func (m microVec3) String() string {
-	return m.X().String() + "|" + m.Y().String() + "|" + m.Z().String()
+	return m.X().String() + "_" + m.Y().String() + "_" + m.Z().String()
 }
 
 func (m *microVec3) Set(s string) error {
@@ -73,7 +73,7 @@ func (m *microVec3) Set(s string) error {
 }
 
 func (m microVec3) Type() string {
-	return "microVec3"
+	return "Micrometer"
 }
 
 // PrintOptions contains all Print specific GoSlice options.
