@@ -26,7 +26,7 @@ func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) (
 	c := clip.NewClipper()
 	insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount)
 
-	newLayer := newTypedLayer(layers[layerNr])
+	newLayer := newExtendedLayer(layers[layerNr])
 	newLayer.attributes["perimeters"] = insetParts
 	layers[layerNr] = newLayer
 
