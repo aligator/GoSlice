@@ -40,11 +40,11 @@ func (m Millimeter) Type() string {
 	return "Millimeter"
 }
 
-func (m microVec3) String() string {
-	return m.X().String() + "_" + m.Y().String() + "_" + m.Z().String()
+func (v microVec3) String() string {
+	return v.X().String() + "_" + v.Y().String() + "_" + v.Z().String()
 }
 
-func (m *microVec3) Set(s string) error {
+func (v *microVec3) Set(s string) error {
 	const errorMsg = "the string should contain three integers separated by _"
 	parts := strings.Split(s, "_")
 	if len(parts) != 3 {
@@ -65,14 +65,14 @@ func (m *microVec3) Set(s string) error {
 		return errors.New(errorMsg)
 	}
 
-	m.x = result.x
-	m.y = result.y
-	m.z = result.z
+	v.x = result.x
+	v.y = result.y
+	v.z = result.z
 
 	return nil
 }
 
-func (m microVec3) Type() string {
+func (v microVec3) Type() string {
 	return "Micrometer"
 }
 

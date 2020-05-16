@@ -256,6 +256,7 @@ type PartitionedLayer interface {
 	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
 	Attributes() map[string]interface{}
 
+	// Bounds returns the min and max Points which specify the bounding box.
 	Bounds() (MicroPoint, MicroPoint)
 }
 
