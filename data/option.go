@@ -213,7 +213,11 @@ func ParseFlags() Options {
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")
-	center := microVec3{}
+	center := microVec3{
+		options.Printer.Center.X(),
+		options.Printer.Center.Y(),
+		options.Printer.Center.Z(),
+	}
 	flag.Var(&center, "center", "The point where the model is finally placed.")
 
 	flag.Parse()
