@@ -179,7 +179,7 @@ func DefaultOptions() Options {
 		},
 
 		MeldDistance:              30,
-		JoinPolygonSnapDistance:   100,
+		JoinPolygonSnapDistance:   160,
 		FinishPolygonSnapDistance: 1000,
 	}
 }
