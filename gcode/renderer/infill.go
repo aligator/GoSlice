@@ -6,6 +6,7 @@ import (
 	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/gcode/builder"
+	"GoSlice/modifier"
 )
 
 // Infill is a renderer which can fill parts which are defined by a layer part attribute of a specific name.
@@ -32,12 +33,15 @@ func (i *Infill) Render(builder builder.Builder, layerNr int, layers []data.Part
 		return
 	}
 
-	bottom, ok := layers[layerNr].Attributes()[i.AttrName].([]data.LayerPart)
-	if !ok {
+	infillParts, err := modifier.InfillParts(layers[layerNr], i.AttrName)
+	if err != nil {
+		panic(err)
+	}
+	if infillParts == nil {
 		return
 	}
 
-	for _, part := range bottom {
+	for _, part := range infillParts {
 		for _, c := range i.Comments {
 			builder.AddComment(c)
 		}

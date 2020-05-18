@@ -5,6 +5,7 @@ package renderer
 import (
 	"GoSlice/data"
 	"GoSlice/gcode/builder"
+	"GoSlice/modifier"
 )
 
 // Perimeter is a renderer which generates the gcode for the attribute "perimeters".
@@ -13,12 +14,14 @@ type Perimeter struct{}
 func (p Perimeter) Init(model data.OptimizedModel) {}
 
 func (p Perimeter) Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
-	if !ok {
+	perimeters, err := modifier.Perimeters(layers[layerNr])
+	if err != nil {
+		panic(err)
+	}
+	if perimeters == nil {
 		return
 	}
 
-	// perimeters contains them as [part][insetNr][insetParts]
 	for _, part := range perimeters {
 		for insetNr := range part {
 			// print the outer perimeter as last perimeter

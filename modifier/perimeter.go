@@ -4,6 +4,7 @@ import (
 	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handler"
+	"errors"
 )
 
 type perimeterModifier struct {
@@ -17,6 +18,40 @@ func NewPerimeterModifier(options *data.Options) handler.LayerModifier {
 	return &perimeterModifier{
 		options: options,
 	}
+}
+
+// OverlapPerimeters extracts the attribute "overlapPerimeters" from the layer.
+// If it has the wrong type, a error is returned.
+// If it doesn't exist, (nil, nil) is returned.
+// If it exists, the perimeters are returned as [part][insetParts]data.LayerPart.
+func OverlapPerimeters(layer data.PartitionedLayer) ([][]data.LayerPart, error) {
+	if attr, ok := layer.Attributes()["overlapPerimeters"]; ok {
+		overlappingPerimeters, ok := attr.([][]data.LayerPart)
+		if !ok {
+			return nil, errors.New("the attribute overlapPerimeters has the wrong datatype")
+		}
+
+		return overlappingPerimeters, nil
+	}
+
+	return nil, nil
+}
+
+// Perimeters extracts the attribute "perimeters" from the layer.
+// If it has the wrong type, a error is returned.
+// If it doesn't exist, (nil, nil) is returned.
+// If it exists, the perimeters are returned as [part][insetNr][insetParts]data.LayerPart.
+func Perimeters(layer data.PartitionedLayer) ([][][]data.LayerPart, error) {
+	if attr, ok := layer.Attributes()["perimeters"]; ok {
+		perimeters, ok := attr.([][][]data.LayerPart)
+		if !ok {
+			return nil, errors.New("the attribute perimeters has the wrong datatype")
+		}
+
+		return perimeters, nil
+	}
+
+	return nil, nil
 }
 
 func (m perimeterModifier) Init(model data.OptimizedModel) {}

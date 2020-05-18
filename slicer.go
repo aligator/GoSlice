@@ -44,6 +44,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 	s.modifiers = []handler.LayerModifier{
 		modifier.NewPerimeterModifier(&options),
 		modifier.NewInfillModifier(&options),
+		modifier.NewInternalInfillModifier(&options),
 	}
 	s.generator = gcode.NewGenerator(
 		&options,
