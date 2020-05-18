@@ -51,20 +51,11 @@ func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLay
 		}
 
 		// calculating the difference would fail if both are nil so just ignore this
-		if overlappingPart == nil && bottomInfill == nil {
+		if overlappingPart == nil && bottomInfill == nil && topInfill == nil {
 			continue
 		}
 
-		if parts, ok := c.Difference(overlappingPart, bottomInfill); !ok {
-			return nil, errors.New("error while calculating the difference between the max overlap border and the bottom infill")
-		} else {
-			internalInfill = append(internalInfill, parts...)
-		}
-
-		if overlappingPart == nil && topInfill == nil {
-			continue
-		}
-		if parts, ok := c.Difference(overlappingPart, topInfill); !ok {
+		if parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...)); !ok {
 			return nil, errors.New("error while calculating the difference between the max overlap border and the bottom infill")
 		} else {
 			internalInfill = append(internalInfill, parts...)
