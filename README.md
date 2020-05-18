@@ -36,11 +36,11 @@ go run . --help
 * ~~simple infill~~ (very simple)
 * ~~options as commandline parameters~~
 * ~~add function / interface / struct documentations~~
+* ~~multiple top / bottom layers~~
 * add tests
 * brim
 * skirt
 * retraction
-* grow top and bottom layer into model
 * rotate infill pattern
 * lots of other things...
 
