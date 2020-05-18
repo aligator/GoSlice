@@ -42,8 +42,8 @@ func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLay
 
 	// calculate the bottom parts for each inner perimeter part
 	for _, overlappingPart := range overlappingPerimeters {
-		// 1. Calculate the difference between the overlappingPerimeters and the final top/bottom infills
-		//    to get the internal infill areas.
+		// Calculate the difference between the overlappingPerimeters and the final top/bottom infills
+		// to get the internal infill areas.
 
 		// if no infill, just ignore the generation
 		if m.options.Print.InfillPercent == 0 {

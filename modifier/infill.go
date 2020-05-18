@@ -69,32 +69,74 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	var bottomInfill []data.LayerPart
 	var topInfill []data.LayerPart
 
-	// calculate the bottom/top parts for each inner perimeter part
+	// Calculate the bottom/top parts for each inner perimeter part.
+	// It also takes into account the configured number of top/bottom layers.
 	for partNr, part := range perimeters {
 		// for the last (most inner) inset of each part
 		for insetPartNr, insetPart := range part[len(part)-1] {
 			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insetPartNr))
 
 			var bottomInfillParts, topInfillParts []data.LayerPart
-			var err error
-
 			// 1. Calculate the area which needs full infill for top and bottom layerS
-			if layerNr == 0 {
-				// Just fill the bottom layer.
-				bottomInfillParts = []data.LayerPart{insetPart}
-			} else if layerNr == len(layers)-1 {
-				// Just fill the top layer.
-				topInfillParts = []data.LayerPart{insetPart}
-			} else {
-				// Subtract the below / above layer to get the parts which need infill.
-				bottomInfillParts, err = partDifference(insetPart, layers[layerNr-1])
-				if err != nil {
-					return nil, err
+
+			c := clip.NewClipper()
+
+			// TODO: maybe merge these two loops in one function somehow?
+			// calculate the difference with the layers bellow.
+			for i := 0; i < m.options.Print.NumberBottomLayers; i++ {
+				var parts []data.LayerPart
+				if layerNr-i == 0 {
+					// if it's the first layer, use the whole layer
+					parts = []data.LayerPart{insetPart}
+				} else if i > layerNr {
+					// if we are below layer 0 stop calculation
+					break
+				} else {
+					// else calculate the difference and use it
+					parts, err = partDifference(insetPart, layers[layerNr-1-i])
+					if err != nil {
+						return nil, err
+					}
 				}
 
-				topInfillParts, err = partDifference(insetPart, layers[layerNr+1])
-				if err != nil {
-					return nil, err
+				// union the parts if needed
+				if len(bottomInfillParts) == 0 {
+					bottomInfillParts = parts
+				} else {
+					var ok bool
+					bottomInfillParts, ok = c.Union(bottomInfillParts, parts)
+					if !ok {
+						return nil, errors.New("could not union bottom parts")
+					}
+				}
+			}
+
+			// calculate the difference with the layers above
+			for i := 0; i < m.options.Print.NumberTopLayers; i++ {
+				var parts []data.LayerPart
+				if layerNr+i == len(layers)-1 {
+					// if it's the last layer, use the whole layer
+					parts = []data.LayerPart{insetPart}
+				} else if layerNr+1+i >= len(layers) {
+					// if we are above the top layer stop calculation
+					break
+				} else {
+					// else calculate the difference and use it
+					parts, err = partDifference(insetPart, layers[layerNr+1+i])
+					if err != nil {
+						return nil, err
+					}
+				}
+
+				// union the parts if needed
+				if len(topInfillParts) == 0 {
+					topInfillParts = parts
+				} else {
+					var ok bool
+					topInfillParts, ok = c.Union(topInfillParts, parts)
+					if !ok {
+						return nil, errors.New("could not union top parts")
+					}
 				}
 			}
 
@@ -119,7 +161,6 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			// 3. Clip the resulting areas by the overlappingPerimeters.
-			c := clip.NewClipper()
 			if internalOverlappingBottomParts != nil {
 				clippedParts, ok := c.Intersection(internalOverlappingBottomParts, overlappingPerimeters[partNr])
 				if !ok {

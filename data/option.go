@@ -169,7 +169,7 @@ func DefaultOptions() Options {
 			AdditionalInternalInfillOverlapPercent: 400,
 			InfillPercent:                          20,
 			NumberBottomLayers:                     3,
-			NumberTopLayers:                        2,
+			NumberTopLayers:                        4,
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter: Millimeter(1.75).ToMicrometer(),
