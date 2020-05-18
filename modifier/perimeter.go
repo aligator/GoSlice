@@ -47,7 +47,7 @@ func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) (
 		}
 	}
 
-	newLayer := newTypedLayer(layers[layerNr])
+	newLayer := newExtendedLayer(layers[layerNr])
 	newLayer.attributes["perimeters"] = insetParts
 	newLayer.attributes["overlapPerimeters"] = overlapPerimeter
 	layers[layerNr] = newLayer

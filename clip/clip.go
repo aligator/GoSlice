@@ -138,7 +138,7 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 	}
 
 	if len(polyList) == 0 {
-		return data.NewPartitionedLayer([]data.LayerPart{}, -1), true
+		return data.NewPartitionedLayer([]data.LayerPart{}), true
 	}
 
 	cl := clipper.NewClipper(clipper.IoNone)
@@ -152,11 +152,9 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 }
 
 // polyTreeToLayerParts creates layer parts out of a poly tree (which is the result of clipper's Execute2).
-// it returns the new parts and the max depth of the tree.
-func polyTreeToLayerParts(tree *clipper.PolyTree) ([]data.LayerPart, int) {
+func polyTreeToLayerParts(tree *clipper.PolyTree) []data.LayerPart {
 	var layerParts []data.LayerPart
 
-	depth := 0
 	var polysForNextRound []*clipper.PolyNode
 
 	for _, c := range tree.Childs() {
@@ -181,15 +179,11 @@ func polyTreeToLayerParts(tree *clipper.PolyTree) ([]data.LayerPart, int) {
 			}
 
 			// TODO: simplify, yes / no ??
-			layerParts = append(layerParts, data.NewUnknownLayerPart(microPath(p.Contour(), false), holes, depth))
+			layerParts = append(layerParts, data.NewBasicLayerPart(microPath(p.Contour(), false), holes))
 		}
-
-		depth++
 	}
 
-	depth--
-
-	return layerParts, depth
+	return layerParts
 }
 
 func (c clipperClipper) InsetLayer(layer []data.LayerPart, offset data.Micrometer, insetCount int) [][][]data.LayerPart {
@@ -214,8 +208,7 @@ func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inset
 
 		co.MiterLimit = 2
 		allNewInsets := co.Execute2(float64(-int(offset)*insetNr) - float64(offset/2))
-		parts, _ := polyTreeToLayerParts(allNewInsets)
-		insets = append(insets, parts)
+		insets = append(insets, polyTreeToLayerParts(allNewInsets))
 	}
 
 	return insets
@@ -250,6 +243,5 @@ func (c clipperClipper) runClipper(clipType clipper.ClipType, parts []data.Layer
 	if !ok {
 		return nil, ok
 	}
-	clippedParts, _ = polyTreeToLayerParts(tree)
-	return clippedParts, ok
+	return polyTreeToLayerParts(tree), ok
 }

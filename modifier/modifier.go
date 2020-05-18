@@ -4,18 +4,18 @@ import (
 	"GoSlice/data"
 )
 
-// typedLayer is a partitioned layer which supports types
-type typedLayer struct {
+// extendedLayer is a partitioned layer which supports types
+type extendedLayer struct {
 	data.PartitionedLayer
 	typ        string
 	attributes map[string]interface{}
 }
 
-// newTypedLayer returns a new PartitionedLayer
+// newExtendedLayer returns a new PartitionedLayer
 // which supports a type and attributes.
 // These attributes can be used to add additional parts
 // or any other additional data.
-func newTypedLayer(layer data.PartitionedLayer, typ ...string) typedLayer {
+func newExtendedLayer(layer data.PartitionedLayer, typ ...string) extendedLayer {
 	attributes := layer.Attributes()
 	if attributes == nil {
 		attributes = map[string]interface{}{}
@@ -26,33 +26,26 @@ func newTypedLayer(layer data.PartitionedLayer, typ ...string) typedLayer {
 		newType = typ[0]
 	}
 
-	return typedLayer{
+	return extendedLayer{
 		PartitionedLayer: layer,
 		attributes:       attributes,
 		typ:              newType,
 	}
 }
 
-func (l typedLayer) Type() string {
-	if l.typ == "" {
-		return l.PartitionedLayer.Type()
-	}
-	return l.typ
-}
-
-func (l typedLayer) Attributes() map[string]interface{} {
+func (l extendedLayer) Attributes() map[string]interface{} {
 	return l.attributes
 }
 
-// typedLayerPart is a partitioned layer which supports types
-type typedLayerPart struct {
+// extendedLayerPart is a partitioned layer which supports types
+type extendedLayerPart struct {
 	data.LayerPart
 	typ        string
 	attributes map[string]interface{}
 }
 
-// newTypedLayerPart returns a new simple PartitionedLayer which just contains several LayerParts.
-func newTypedLayerPart(layerPart data.LayerPart, typ ...string) typedLayerPart {
+// newExtendedLayerPart returns a new simple PartitionedLayer which just contains several LayerParts.
+func newExtendedLayerPart(layerPart data.LayerPart, typ ...string) extendedLayerPart {
 	attributes := layerPart.Attributes()
 	if attributes == nil {
 		attributes = map[string]interface{}{}
@@ -63,20 +56,13 @@ func newTypedLayerPart(layerPart data.LayerPart, typ ...string) typedLayerPart {
 		newType = typ[0]
 	}
 
-	return typedLayerPart{
+	return extendedLayerPart{
 		LayerPart:  layerPart,
 		attributes: attributes,
 		typ:        newType,
 	}
 }
 
-func (l typedLayerPart) Type() string {
-	if l.typ == "" {
-		return l.LayerPart.Type()
-	}
-	return l.typ
-}
-
-func (l typedLayerPart) Attributes() map[string]interface{} {
+func (l extendedLayerPart) Attributes() map[string]interface{} {
 	return l.attributes
 }

@@ -190,7 +190,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 		}
 	}
 
-	newLayer := newTypedLayer(layers[layerNr])
+	newLayer := newExtendedLayer(layers[layerNr])
 	if len(bottomInfill) > 0 {
 		newLayer.attributes["bottom"] = bottomInfill
 	}

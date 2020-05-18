@@ -221,20 +221,10 @@ func (p Paths) Bounds() (MicroPoint, MicroPoint) {
 
 // LayerPart represents one part of a layer.
 // It consists of an outline and may have several holes
-// Some implementations may also provide a Type for it.
+// Some implementations may also provide Attributes for it.
 type LayerPart interface {
 	Outline() Path
 	Holes() Paths
-
-	// Depth returns how deep it is located inside the polygon tree where this part was derived from
-	// If it is unknown, just return -1.
-	Depth() int
-
-	// Type classifies the part.
-	// If the type is irrelevant or not known,
-	// Type() should just return:
-	//  "unknown"
-	Type() string
 
 	// Attributes can be any additional data, referenced by a key.
 	// Note that you have to know what type the attribute has to
@@ -258,12 +248,6 @@ type Layer interface {
 type PartitionedLayer interface {
 	LayerParts() []LayerPart
 
-	// Type classifies the layer.
-	// If the type is irrelevant or not known,
-	// Type() should just return:
-	//  "unknown"
-	Type() string
-
 	// Attributes can be any additional data, referenced by a key.
 	// Note that you have to know what type the attribute has to
 	// use proper type assertion.
@@ -272,73 +256,52 @@ type PartitionedLayer interface {
 	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
 	Attributes() map[string]interface{}
 
+	// Bounds returns the min and max Points which specify the bounding box.
 	Bounds() (MicroPoint, MicroPoint)
-
-	// The maximum depth a layer part can have in this layer. (Derived from an original tree structure.)
-	// If it is -1 the depth is unknown.
-	MaxDepth() int
 }
 
-// UnknownLayerPart is the simplest implementation of LayerPart.
+// basicLayerPart is the simplest implementation of LayerPart.
 // It holds one outline and several hole-paths.
 // You can assume that all paths are closed polygons.
 // (If the instance is created by GoSlice...)
-type UnknownLayerPart struct {
+type basicLayerPart struct {
 	outline Path
 	holes   Paths
-	depth   int
 }
 
-// NewUnknownLayerPart returns a new, simple LayerPart with the type "unknown".
-// If the depth is unknown just pass -1.
-func NewUnknownLayerPart(outline Path, holes Paths, depth int) LayerPart {
-	return UnknownLayerPart{
+// NewBasicLayerPart returns a new, simple LayerPart.
+func NewBasicLayerPart(outline Path, holes Paths) LayerPart {
+	return basicLayerPart{
 		outline: outline,
 		holes:   holes,
-		depth:   depth,
 	}
 }
 
-func (l UnknownLayerPart) Outline() Path {
+func (l basicLayerPart) Outline() Path {
 	return l.outline
 }
 
-func (l UnknownLayerPart) Holes() Paths {
+func (l basicLayerPart) Holes() Paths {
 	return l.holes
 }
 
-// Type returns always "unknown" in this implementation.
-func (l UnknownLayerPart) Type() string {
-	return "unknown"
-}
-
-func (l UnknownLayerPart) Attributes() map[string]interface{} {
+func (l basicLayerPart) Attributes() map[string]interface{} {
 	return nil
 }
 
-func (l UnknownLayerPart) Depth() int {
-	return l.depth
-}
-
 type partitionedLayer struct {
-	parts    []LayerPart
-	maxDepth int
+	parts []LayerPart
 }
 
 // NewPartitionedLayer returns a new simple PartitionedLayer which just contains several LayerParts.
-func NewPartitionedLayer(parts []LayerPart, maxDepth int) PartitionedLayer {
+func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
 	return partitionedLayer{
-		parts:    parts,
-		maxDepth: maxDepth,
+		parts: parts,
 	}
 }
 
 func (p partitionedLayer) LayerParts() []LayerPart {
 	return p.parts
-}
-
-func (p partitionedLayer) Type() string {
-	return "unknown"
 }
 
 func (p partitionedLayer) Attributes() map[string]interface{} {
@@ -352,8 +315,4 @@ func (p partitionedLayer) Bounds() (MicroPoint, MicroPoint) {
 	}
 
 	return paths.Bounds()
-}
-
-func (p partitionedLayer) MaxDepth() int {
-	return p.maxDepth
 }
