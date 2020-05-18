@@ -22,9 +22,6 @@ func NewInfillModifier(options *data.Options) handler.LayerModifier {
 	}
 }
 
-// internalInfillOverlap is added to the normal overlap to allow the infill to grow into the model.
-const internalInfillOverlap = 400
-
 /*
 // modifyInfillLayer adds the addedPart to the given layer to the attribute with the given typ.
 // It creates a union of them and clips by the most inner perimeter.
@@ -134,7 +131,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			// 2. Exset the area which needs infill to generate the internal overlap of top and bottom layer.
 			var internalOverlappingBottomParts, internalOverlappingTopParts []data.LayerPart
 			for _, bottomPart := range bottomInfillParts {
-				overlappingParts, err := calculateOverlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap, m.options.Printer.ExtrusionWidth)
+				overlappingParts, err := calculateOverlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+m.options.Print.AdditionalInternalInfillOverlapPercent, m.options.Printer.ExtrusionWidth)
 				if err != nil {
 					return nil, err
 				}
@@ -143,7 +140,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			for _, topPart := range topInfillParts {
-				overlappingParts, err := calculateOverlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap, m.options.Printer.ExtrusionWidth)
+				overlappingParts, err := calculateOverlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+m.options.Print.AdditionalInternalInfillOverlapPercent, m.options.Printer.ExtrusionWidth)
 				if err != nil {
 					return nil, err
 				}

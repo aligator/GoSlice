@@ -102,6 +102,10 @@ type PrintOptions struct {
 	// InfillOverlapPercent says how much the infill should overlap into the perimeters.
 	InfillOverlapPercent int
 
+	// AdditionalInternalInfillOverlapPercent is the percentage used to make the internal
+	// infill (infill not blocked by the perimeters) even bigger so that it grows a bit into the model.
+	AdditionalInternalInfillOverlapPercent int
+
 	// InfillPercent says how much infill should be generated.
 	InfillPercent int
 
@@ -158,13 +162,14 @@ func DefaultOptions() Options {
 			OuterPerimeterSpeed: 40,
 			MoveSpeed:           150,
 
-			InitialLayerThickness: 200,
-			LayerThickness:        200,
-			InsetCount:            2,
-			InfillOverlapPercent:  50,
-			InfillPercent:         20,
-			NumberBottomLayers:    3,
-			NumberTopLayers:       2,
+			InitialLayerThickness:                  200,
+			LayerThickness:                         200,
+			InsetCount:                             2,
+			InfillOverlapPercent:                   50,
+			AdditionalInternalInfillOverlapPercent: 400,
+			InfillPercent:                          20,
+			NumberBottomLayers:                     3,
+			NumberTopLayers:                        2,
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter: Millimeter(1.75).ToMicrometer(),
@@ -204,6 +209,7 @@ func ParseFlags() Options {
 	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The layer thickness for the first layer.")
+	flag.IntVar(&options.Print.AdditionalInternalInfillOverlapPercent, "additional-internal-infill-overlap-percent", options.Print.AdditionalInternalInfillOverlapPercent, "The percentage used to make the internal infill (infill not blocked by the perimeters) even bigger so that it grows a bit into the model.")
 	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
 	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
