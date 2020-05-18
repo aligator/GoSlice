@@ -51,6 +51,10 @@ type Clipper interface {
 	// Intersection calculates the intersection between the parts and the toIntersect parts.
 	// It returns the result as a new slice of layer parts.
 	Intersection(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
+
+	// Union calculates the union of the parts and the toMerge parts.
+	// It returns the result as a new slice of layer parts.
+	Union(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
 }
 
 // clipperClipper implements Clipper using the external clipper library.
@@ -218,40 +222,30 @@ func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inset
 }
 
 func (c clipperClipper) Difference(parts []data.LayerPart, toRemove []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
-	cl := clipper.NewClipper(clipper.IoNone)
-
-	for _, part := range parts {
-		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
-		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
-	}
-
-	for _, remove := range toRemove {
-		cl.AddPath(clipperPath(remove.Outline()), clipper.PtClip, true)
-		cl.AddPaths(clipperPaths(remove.Holes()), clipper.PtClip, true)
-	}
-
-	tree, ok := cl.Execute2(clipper.CtDifference, clipper.PftEvenOdd, clipper.PftEvenOdd)
-
-	if !ok {
-		return nil, ok
-	}
-	clippedParts, _ = polyTreeToLayerParts(tree)
-	return clippedParts, ok
+	return c.runClipper(clipper.CtDifference, parts, toRemove)
 }
 
 func (c clipperClipper) Intersection(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
+	return c.runClipper(clipper.CtIntersection, parts, toIntersect)
+}
+
+func (c clipperClipper) Union(parts []data.LayerPart, toMerge []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
+	return c.runClipper(clipper.CtUnion, parts, toMerge)
+}
+
+func (c clipperClipper) runClipper(clipType clipper.ClipType, parts []data.LayerPart, toClip []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
 	cl := clipper.NewClipper(clipper.IoNone)
 	for _, part := range parts {
 		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
 		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
 	}
 
-	for _, intersect := range toIntersect {
+	for _, intersect := range toClip {
 		cl.AddPath(clipperPath(intersect.Outline()), clipper.PtClip, true)
 		cl.AddPaths(clipperPaths(intersect.Holes()), clipper.PtClip, true)
 	}
 
-	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+	tree, ok := cl.Execute2(clipType, clipper.PftEvenOdd, clipper.PftEvenOdd)
 
 	if !ok {
 		return nil, ok

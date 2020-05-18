@@ -104,6 +104,12 @@ type PrintOptions struct {
 
 	// InfillPercent says how much infill should be generated.
 	InfillPercent int
+
+	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
+	NumberBottomLayers int
+
+	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
+	NumberTopLayers int
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
@@ -157,6 +163,8 @@ func DefaultOptions() Options {
 			InsetCount:            2,
 			InfillOverlapPercent:  50,
 			InfillPercent:         20,
+			NumberBottomLayers:    3,
+			NumberTopLayers:       2,
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter: Millimeter(1.75).ToMicrometer(),
@@ -197,6 +205,8 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The layer thickness for the first layer.")
+	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
+	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")

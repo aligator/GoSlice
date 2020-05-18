@@ -114,9 +114,8 @@ func (s *GoSlice) Process() error {
 	}
 
 	// 4. Modify the layers
-	// e.g. classify them,
-	// generate the parts which should be filled in,
-	// generate perimeter paths
+	// e.g. generate perimeter paths,
+	// generate the parts which should be filled in, ...
 	for _, m := range s.modifiers {
 		m.Init(optimizedModel)
 		for layerNr := range layers {

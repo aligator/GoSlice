@@ -25,12 +25,78 @@ func NewInfillModifier(options *data.Options) handler.LayerModifier {
 // internalInfillOverlap is added to the normal overlap to allow the infill to grow into the model.
 const internalInfillOverlap = 400
 
+/*
+// modifyInfillLayer adds the addedPart to the given layer to the attribute with the given typ.
+// It creates a union of them and clips by the most inner perimeter.
+// TODO: maybe just add the "maybe to fill areas" in the modifier (also in the main modify method) and clip by the outline in another modifier at the end.
+// 		 This would prevent multiple clips by the most inner perimeters.
+func (m infillModifier) modifyInfillLayer(layer data.PartitionedLayer, typ string, addedParts []data.LayerPart) (data.PartitionedLayer, error) {
+	oldInfill, ok := layer.Attributes()[typ].([]data.LayerPart)
+	if !ok {
+		// just use the new added part
+		oldInfill = addedParts
+	}
+
+	c := clip.NewClipper()
+
+	var parts []data.LayerPart
+
+	if len(oldInfill) != 0 && len(addedParts) != 0 {
+		parts, ok = c.Union(oldInfill, addedParts)
+		if !ok {
+			fmt.Println("", oldInfill, addedParts)
+			return layer, nil// errors.New("could not combine the old infill parts with the new ones")
+		}
+	} else if len(oldInfill) == 0 {
+		parts = addedParts
+	} else {
+		parts = oldInfill
+	}
+
+	// get the perimeters to clip the part-to-add by the most inner one
+	perimeters, ok := layer.Attributes()["perimeters"].([][][]data.LayerPart)
+	if !ok {
+		return layer, nil
+	}
+
+	var toRemove []data.LayerPart
+
+	for _, part := range perimeters {
+		// for the last (most inner) inset of each part
+		for _, insetPart := range part[len(part)-1] {
+			maxOverlapBorder, err := calculateOverlapPerimeter(insetPart, m.options.Print.InfillOverlapPercent, m.options.Printer.ExtrusionWidth)
+			if err != nil {
+				return nil, err
+			}
+
+			toRemove = append(toRemove, maxOverlapBorder...)
+		}
+	}
+
+	newParts, ok := c.Intersection(parts, toRemove)
+	if !ok {
+		return nil, errors.New("could not clip the infill parts by the border")
+	}
+
+	newLayer := newTypedLayer(layer)
+	if len(newParts) > 0 {
+		newLayer.attributes[typ] = newParts
+	}
+
+	return newLayer, nil
+}*/
+
 func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
-	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
+	overlappingPerimeters, ok := layers[layerNr].Attributes()["overlapPerimeters"].([][]data.LayerPart)
+	// overlappingPerimeters contains them as [part][insetParts]
 	if !ok {
 		return layers, nil
 	}
+	perimeters, ok := layers[layerNr].Attributes()["perimeters"].([][][]data.LayerPart)
 	// perimeters contains them as [part][insetNr][insetParts]
+	if !ok {
+		return layers, nil
+	}
 
 	var bottomInfill []data.LayerPart
 	var topInfill []data.LayerPart
@@ -39,8 +105,8 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	// calculate the bottom parts for each inner perimeter part
 	for partNr, part := range perimeters {
 		// for the last (most inner) inset of each part
-		for insertPart, insetPart := range part[len(part)-1] {
-			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insertPart))
+		for insetPartNr, insetPart := range part[len(part)-1] {
+			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insetPartNr))
 
 			var bottomInfillParts, topInfillParts []data.LayerPart
 			var err error
@@ -54,27 +120,21 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				topInfillParts = []data.LayerPart{insetPart}
 			} else {
 				// Subtract the below / above layer to get the parts which need infill.
-				bottomInfillParts, err = m.partDifference(insetPart, layers[layerNr-1])
+				bottomInfillParts, err = partDifference(insetPart, layers[layerNr-1])
 				if err != nil {
 					return nil, err
 				}
 
-				topInfillParts, err = m.partDifference(insetPart, layers[layerNr+1])
+				topInfillParts, err = partDifference(insetPart, layers[layerNr+1])
 				if err != nil {
 					return nil, err
 				}
 			}
 
-			// 2. Calculate the overlapping perimeter.
-			maxOverlapBorder, err := m.overlapPerimeter(insetPart, m.options.Print.InfillOverlapPercent)
-			if err != nil {
-				return nil, err
-			}
-
-			// 3. Exset the area which needs infill to generate the internal overlap of top and bottom layer.
+			// 2. Exset the area which needs infill to generate the internal overlap of top and bottom layer.
 			var internalOverlappingBottomParts, internalOverlappingTopParts []data.LayerPart
 			for _, bottomPart := range bottomInfillParts {
-				overlappingParts, err := m.overlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap)
+				overlappingParts, err := calculateOverlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap, m.options.Printer.ExtrusionWidth)
 				if err != nil {
 					return nil, err
 				}
@@ -83,7 +143,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			for _, topPart := range topInfillParts {
-				overlappingParts, err := m.overlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap)
+				overlappingParts, err := calculateOverlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+internalInfillOverlap, m.options.Printer.ExtrusionWidth)
 				if err != nil {
 					return nil, err
 				}
@@ -91,26 +151,25 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				internalOverlappingTopParts = append(internalOverlappingTopParts, overlappingParts...)
 			}
 
-			// 4. Clip the resulting areas by the maxOverlapBorder.
+			// 3. Clip the resulting areas by the overlappingPerimeters.
 			c := clip.NewClipper()
-			for _, part := range internalOverlappingBottomParts {
-				clippedParts, ok := c.Intersection([]data.LayerPart{part}, maxOverlapBorder)
+			if internalOverlappingBottomParts != nil {
+				clippedParts, ok := c.Intersection(internalOverlappingBottomParts, overlappingPerimeters[partNr])
 				if !ok {
-					return nil, errors.New("error while intersecting infill areas by the max overlap border")
+					return nil, errors.New("error while intersecting infill areas by the overlapping border")
 				}
-
 				bottomInfill = append(bottomInfill, clippedParts...)
 			}
-			for _, part := range internalOverlappingTopParts {
-				clippedParts, ok := c.Intersection([]data.LayerPart{part}, maxOverlapBorder)
+
+			if internalOverlappingTopParts != nil {
+				clippedParts, ok := c.Intersection(internalOverlappingTopParts, overlappingPerimeters[partNr])
 				if !ok {
-					return nil, errors.New("error while intersecting infill areas by the max overlap border")
+					return nil, errors.New("error while intersecting infill areas by the overlapping border")
 				}
 
 				topInfill = append(topInfill, clippedParts...)
 			}
-
-			// 5. Calculate the difference between the maxOverlapBorder and the final top/bottom infills
+			// 4. Calculate the difference between the overlappingPerimeters and the final top/bottom infills
 			//    to get the internal infill areas.
 
 			// if no infill, just ignore the generation
@@ -119,11 +178,11 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			}
 
 			// calculating the difference would fail if both are nil so just ignore this
-			if maxOverlapBorder == nil && bottomInfill == nil {
+			if overlappingPerimeters[partNr] == nil && bottomInfill == nil {
 				continue
 			}
 
-			if parts, ok := c.Difference(maxOverlapBorder, bottomInfill); !ok {
+			if parts, ok := c.Difference(overlappingPerimeters[partNr], bottomInfill); !ok {
 				return nil, errors.New("error while calculating the difference between the max overlap border and the bottom infill")
 			} else {
 				internalInfill = append(internalInfill, parts...)
@@ -147,7 +206,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	return layers, nil
 }
 
-func (m infillModifier) partDifference(part data.LayerPart, layerToRemove data.PartitionedLayer) ([]data.LayerPart, error) {
+func partDifference(part data.LayerPart, layerToRemove data.PartitionedLayer) ([]data.LayerPart, error) {
 	var toClip []data.LayerPart
 
 	for _, otherPart := range layerToRemove.LayerParts() {
@@ -162,16 +221,4 @@ func (m infillModifier) partDifference(part data.LayerPart, layerToRemove data.P
 	}
 
 	return diff, nil
-}
-
-func (m infillModifier) overlapPerimeter(part data.LayerPart, overlapPercent int) ([]data.LayerPart, error) {
-	perimeterOverlap := data.Micrometer(float32(m.options.Printer.ExtrusionWidth) * (100.0 - float32(overlapPercent)) / 100.0)
-
-	if perimeterOverlap != 0 {
-		c := clip.NewClipper()
-		// as we use only one inset, just return index 0
-		return c.Inset(part, perimeterOverlap, 1)[0], nil
-	} else {
-		return []data.LayerPart{part}, nil
-	}
 }

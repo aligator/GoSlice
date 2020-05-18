@@ -52,7 +52,7 @@ func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.M
 
 	horizontalLines := clipper.Paths{}
 	numLine = 0
-	// generate the verticalLines
+	// generate the horizontalLines
 	for y := min.Y(); y <= max.Y(); y += lineWidth {
 		// switch line direction based on even / odd
 		if numLine%2 == 1 {
