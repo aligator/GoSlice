@@ -69,6 +69,8 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	var bottomInfill []data.LayerPart
 	var topInfill []data.LayerPart
 
+	c := clip.NewClipper()
+
 	// Calculate the bottom/top parts for each inner perimeter part.
 	// It also takes into account the configured number of top/bottom layers.
 	for partNr, part := range perimeters {
@@ -164,7 +166,12 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				if !ok {
 					return nil, errors.New("error while intersecting infill areas by the overlapping border")
 				}
-				bottomInfill = append(bottomInfill, clippedParts...)
+
+				u, ok := c.Union(bottomInfill, clippedParts)
+				if !ok {
+					return nil, errors.New("error while calculating the union of new infill with already existing one")
+				}
+				bottomInfill = u
 			}
 
 			if internalOverlappingTopParts != nil {
@@ -172,10 +179,21 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 				if !ok {
 					return nil, errors.New("error while intersecting infill areas by the overlapping border")
 				}
-
-				topInfill = append(topInfill, clippedParts...)
+				u, ok := c.Union(topInfill, clippedParts)
+				if !ok {
+					return nil, errors.New("error while calculating the union of new infill with already existing one")
+				}
+				topInfill = u
 			}
 		}
+	}
+
+	if len(topInfill) > 0 && len(bottomInfill) > 0 {
+		diff, ok := c.Difference(topInfill, bottomInfill)
+		if !ok {
+			return nil, errors.New("error while calculating the difference of new top infill with the bottom infill to avoid duplicates")
+		}
+		topInfill = diff
 	}
 
 	newLayer := newExtendedLayer(layers[layerNr])
