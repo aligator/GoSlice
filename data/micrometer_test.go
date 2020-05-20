@@ -150,7 +150,7 @@ func TestMicroVec3TestLength(t *testing.T) {
 	}
 
 	for _, testCase := range tests {
-		actual := vec.TestLength(testCase.length)
+		actual := vec.ShorterThanOrEqual(testCase.length)
 		test.Assert(t, testCase.expected == actual, "the length %v should return %v but it returns %v", testCase.length, testCase.expected, actual)
 	}
 }

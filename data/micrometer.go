@@ -46,9 +46,9 @@ type MicroVec3 interface {
 
 	Max() Micrometer
 
-	// TestLength checks if the length of the vector fits inside the given length.
+	// ShorterThanOrEqual checks if the length of the vector fits inside the given length.
 	// Returns true if the vector length is <= the given length.
-	TestLength(length Micrometer) bool
+	ShorterThanOrEqual(length Micrometer) bool
 
 	// Size2 returns the length of the vector^2.
 	//
@@ -165,7 +165,7 @@ func (v *microVec3) Max() Micrometer {
 	return v.z
 }
 
-func (v *microVec3) TestLength(length Micrometer) bool {
+func (v *microVec3) ShorterThanOrEqual(length Micrometer) bool {
 	return v.Size2() <= length*length
 }
 

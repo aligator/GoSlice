@@ -79,8 +79,6 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			var bottomInfillParts, topInfillParts []data.LayerPart
 			// 1. Calculate the area which needs full infill for top and bottom layerS
 
-			c := clip.NewClipper()
-
 			// TODO: maybe merge these two loops in one function somehow?
 			// calculate the difference with the layers bellow.
 			for i := 0; i < m.options.Print.NumberBottomLayers; i++ {

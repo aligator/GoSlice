@@ -53,7 +53,7 @@ FacesLoop:
 			// is smaller (or same) than the currently tested pos
 			for _, index := range indices[hash] {
 				differenceVec := om.points[index].pos.Sub(currentPoint)
-				if differenceVec.TestLength(o.options.MeldDistance) {
+				if differenceVec.ShorterThanOrEqual(o.options.MeldDistance) {
 					// if true for any of the points with the same hash,
 					// do not add the current pos to the indices map
 					// but save the indices of the already existing duplicate
