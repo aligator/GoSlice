@@ -120,6 +120,10 @@ func (g *GCode) AddPolygon(polygon data.Path, z data.Micrometer) {
 		g.AddComment("ignore Too small polygon")
 		return
 	}
+
+	// smooth the polygon
+	polygon = data.DouglasPeucker(polygon, -1)
+
 	for i, p := range polygon {
 		if i == 0 {
 			g.AddMove(data.NewMicroVec3(

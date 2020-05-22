@@ -5,8 +5,6 @@ import (
 	"GoSlice/data"
 	"GoSlice/handler"
 	"errors"
-	"fmt"
-	"strconv"
 )
 
 type infillModifier struct {
@@ -75,9 +73,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	// It also takes into account the configured number of top/bottom layers.
 	for partNr, part := range perimeters {
 		// for the last (most inner) inset of each part
-		for insetPartNr, insetPart := range part[len(part)-1] {
-			fmt.Println("layerNr " + strconv.Itoa(layerNr) + " partNr " + strconv.Itoa(partNr) + " insertPart " + strconv.Itoa(insetPartNr))
-
+		for _, insetPart := range part[len(part)-1] {
 			var bottomInfillParts, topInfillParts []data.LayerPart
 			// 1. Calculate the area which needs full infill for top and bottom layerS
 

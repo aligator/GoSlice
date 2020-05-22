@@ -21,5 +21,5 @@ func TestXDistance2ToLine(t *testing.T) {
 
 	point := data.NewMicroPoint(0, 40)
 
-	test.Equals(t, data.Micrometer(400), data.XDistance2ToLine(vec1, vec2, point))
+	test.Equals(t, data.Micrometer(400), data.PerpendicularDistance2(vec1, vec2, point))
 }

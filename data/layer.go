@@ -91,7 +91,7 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		// twice the Shoelace formula for area of polygon per line segment.
 		areaRemoveNext := current.X()*next.Y() - current.Y()*next.X()
 
-		// area between the origin and the shurtcutting segment
+		// area between the origin and the shortcutting segment
 		negativeAreaClosing := next.X()*previous.Y() - next.Y()*previous.X()
 
 		areaRemoved += areaRemoveNext
@@ -99,7 +99,7 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		length2 := current.Sub(previous).Size2()
 		nextLength2 := current.Sub(next).Size2()
 
-		// close the shurtcut area polygon
+		// close the shortcut area polygon
 		areaRemovedSoFar := areaRemoved + negativeAreaClosing
 
 		baseLength2 := next.Sub(previous).Size2()
@@ -117,8 +117,8 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		// h^2 = (L / b)^2     [square it]
 		// h^2 = L^2 / b^2     [factor the divisor]
 		height2 := areaRemovedSoFar * areaRemovedSoFar / baseLength2
-		if (height2 <= 25 && //Almost exactly colinear (barring rounding errors).
-			XDistance2ToLine(current, previous, next) <= 25) ||
+		if (height2 <= 25 && //Almost exactly collinear (barring rounding errors).
+			PerpendicularDistance2(current, previous, next) <= 25) ||
 			(length2 < smallestLineSegmentSquared &&
 				nextLength2 < smallestLineSegmentSquared && // segments are small
 				height2 <= allowedErrorDistanceSquared) { // removing the vertex doesn't introduce too much error.
