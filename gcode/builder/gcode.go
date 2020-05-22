@@ -22,7 +22,7 @@ type Builder interface {
 	AddCommand(command string, args ...interface{})
 	AddComment(comment string, args ...interface{})
 	AddMove(p data.MicroVec3, extrusion data.Millimeter)
-	AddPolygon(polygon data.Path, z data.Micrometer)
+	AddPolygon(polygon data.Path, z data.Micrometer, open bool)
 }
 
 // GCode is an implementation of the Builder interface
@@ -115,7 +115,7 @@ func (g *GCode) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *GCode) AddPolygon(polygon data.Path, z data.Micrometer) {
+func (g *GCode) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
 	if len(polygon) == 0 {
 		g.AddComment("ignore Too small polygon")
 		return
@@ -141,6 +141,11 @@ func (g *GCode) AddPolygon(polygon data.Path, z data.Micrometer) {
 			data.NewMicroVec3(p.X(), p.Y(), z),
 			point.Sub(prevPoint).SizeMM()*g.extrusionPerMM,
 		)
+	}
+
+	// add the move from the last point to the first point only if the path is closed
+	if open {
+		return
 	}
 
 	point0 := data.NewMicroPoint(polygon[0].X(), polygon[0].Y())

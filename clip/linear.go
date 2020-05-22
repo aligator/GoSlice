@@ -81,20 +81,16 @@ func (p linear) sortInfill(unsorted data.Paths) data.Paths {
 	isUsed[0] = true
 
 	// Saves the last path to know where to continue.
-	lastLine := unsorted[0]
+	lastindex := 0
 
 	// Save if the first or second point from the lastPath was the last point.
 	lastPoint := 0
 
 	for len(sorted) < len(unsorted) {
-		point := lastLine[lastPoint]
+		point := unsorted[lastindex][lastPoint]
 
 		bestIndex := -1
 		bestDiff := data.Micrometer(-1)
-
-		// To save the current path. If we find no match, it is the last one.
-		// Then we just add it at the end.
-		var current data.Path
 
 		// get the line with the nearest point (of the same side)
 		for i, line := range unsorted {
@@ -113,17 +109,25 @@ func (p linear) sortInfill(unsorted data.Paths) data.Paths {
 		}
 
 		if bestIndex > -1 {
-			lastLine = unsorted[bestIndex]
-			sorted = append(sorted, lastLine)
+			lastindex = bestIndex
+			sorted = append(sorted, unsorted[lastindex])
 			isUsed[bestIndex] = true
 			lastPoint = 1 - lastPoint
 		} else {
-			sorted = append(sorted, current)
+			sorted = append(sorted, unsorted[lastindex])
+			isUsed[lastindex] = true
+		}
+
+		if lastPoint == 1 {
+			sorted[len(sorted)-1] = []data.MicroPoint{
+				sorted[len(sorted)-1][1],
+				sorted[len(sorted)-1][0],
+			}
 		}
 	}
 
 	if len(sorted) < len(unsorted) {
-		panic("asdf")
+		panic("the sorted lines should have the same amount as the unsorted lines")
 	}
 
 	return sorted

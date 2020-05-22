@@ -41,10 +41,10 @@ func (p Perimeter) Render(builder builder.Builder, layerNr int, layers []data.Pa
 				}
 
 				for _, hole := range insetParts.Holes() {
-					builder.AddPolygon(hole, z)
+					builder.AddPolygon(hole, z, false)
 				}
 
-				builder.AddPolygon(insetParts.Outline(), z)
+				builder.AddPolygon(insetParts.Outline(), z, false)
 			}
 		}
 	}

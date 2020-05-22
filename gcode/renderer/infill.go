@@ -47,7 +47,7 @@ func (i *Infill) Render(builder builder.Builder, layerNr int, layers []data.Part
 		}
 
 		for _, path := range i.pattern.Fill(layerNr, part) {
-			builder.AddPolygon(path, z)
+			builder.AddPolygon(path, z, true)
 		}
 	}
 }
