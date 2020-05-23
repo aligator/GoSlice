@@ -132,8 +132,7 @@ func (s *GoSlice) Process() error {
 	gcode := s.generator.Generate(layers)
 
 	err = s.writer.Write(gcode, s.options.InputFilePath+".gcode")
-
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
-	return nil
+	return err
 }
