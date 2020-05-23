@@ -1,5 +1,7 @@
 github.com/aligator/go.clipper v0.0.0-20200424185851-fc8a51077d44 h1:5nsfJ11G3udJ3c9UE8XAqQgIsS/hDcttx1aACpcvwkI=
 github.com/aligator/go.clipper v0.0.0-20200424185851-fc8a51077d44/go.mod h1:Fwf1mwr8bsQcByXvpURfbGDrJz6TnVop0RJMkXK22UA=
+github.com/aligator/stl v1.0.4-0.20200523114928-6b361c0d4a2c h1:0J3qmCInbtlfdFGBTVVxbK0VWXl/TGp9e9wrd5FWfp4=
+github.com/aligator/stl v1.0.4-0.20200523114928-6b361c0d4a2c/go.mod h1:XQFFLKrq9YTaBpmouDui4JSaxMyAYkpD7elGSSj/y3M=
 github.com/google/go-cmp v0.4.0 h1:xsAVV57WRhGj6kEIi8ReJzQlHHqcBYCElAvkovg3B/4=
 github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/hschendel/stl v1.0.3 h1:2HjK2cA8LDpR2GZvRM+I0SDI89nMi+Evneco5x8Yj3A=
