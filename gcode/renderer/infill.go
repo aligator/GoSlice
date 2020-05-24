@@ -5,7 +5,7 @@ package renderer
 import (
 	"GoSlice/clip"
 	"GoSlice/data"
-	"GoSlice/gcode/builder"
+	"GoSlice/gcode"
 	"GoSlice/modifier"
 )
 
@@ -28,7 +28,7 @@ func (i *Infill) Init(model data.OptimizedModel) {
 	i.pattern = i.PatternSetup(model.Min().PointXY(), model.Max().PointXY())
 }
 
-func (i *Infill) Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 	if i.pattern == nil {
 		return
 	}
@@ -43,11 +43,11 @@ func (i *Infill) Render(builder builder.Builder, layerNr int, layers []data.Part
 
 	for _, part := range infillParts {
 		for _, c := range i.Comments {
-			builder.AddComment(c)
+			b.AddComment(c)
 		}
 
 		for _, path := range i.pattern.Fill(layerNr, part) {
-			builder.AddPolygon(path, z, true)
+			b.AddPolygon(path, z, true)
 		}
 	}
 }

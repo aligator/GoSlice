@@ -1,6 +1,4 @@
-// Package builder provides a GCode builder for creating GCode files
-
-package builder
+package gcode
 
 import (
 	"GoSlice/data"
@@ -9,24 +7,8 @@ import (
 	"math"
 )
 
-// Builder provides methods for building gcode files.
-// The result can be obtained by calling Buffer().
-type Builder interface {
-	Buffer() *bytes.Buffer
-
-	SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer)
-	SetMoveSpeed(moveSpeed data.Millimeter)
-	SetExtrudeSpeed(extrudeSpeed data.Millimeter)
-	SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter)
-	DisableExtrudeSpeedOverride()
-	AddCommand(command string, args ...interface{})
-	AddComment(comment string, args ...interface{})
-	AddMove(p data.MicroVec3, extrusion data.Millimeter)
-	AddPolygon(polygon data.Path, z data.Micrometer, open bool)
-}
-
-// GCode is an implementation of the Builder interface
-type GCode struct {
+// Builder creates GCode by combining several commands.
+type Builder struct {
 	buf *bytes.Buffer
 
 	extrusionAmount                                             data.Millimeter
@@ -35,8 +17,8 @@ type GCode struct {
 	moveSpeed, extrudeSpeed, currentSpeed, extrudeSpeedOverride int
 }
 
-func NewGCodeBuilder(buf *bytes.Buffer) Builder {
-	g := &GCode{
+func NewGCodeBuilder(buf *bytes.Buffer) *Builder {
+	g := &Builder{
 		currentPosition: data.NewMicroVec3(0, 0, 0),
 	}
 
@@ -44,44 +26,44 @@ func NewGCodeBuilder(buf *bytes.Buffer) Builder {
 	return g
 }
 
-func (g *GCode) Buffer() *bytes.Buffer {
+func (g *Builder) Buffer() *bytes.Buffer {
 	return g.buf
 }
 
-func (g *GCode) SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
+func (g *Builder) SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
 	filamentArea := data.Millimeter(math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0))
 	g.extrusionPerMM = layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea
 }
 
-func (g *GCode) SetMoveSpeed(moveSpeed data.Millimeter) {
+func (g *Builder) SetMoveSpeed(moveSpeed data.Millimeter) {
 	g.moveSpeed = int(moveSpeed)
 }
 
-func (g *GCode) SetExtrudeSpeed(extrudeSpeed data.Millimeter) {
+func (g *Builder) SetExtrudeSpeed(extrudeSpeed data.Millimeter) {
 	g.extrudeSpeed = int(extrudeSpeed)
 }
 
-func (g *GCode) SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
+func (g *Builder) SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
 	g.extrudeSpeedOverride = int(extrudeSpeed)
 }
 
-func (g *GCode) DisableExtrudeSpeedOverride() {
+func (g *Builder) DisableExtrudeSpeedOverride() {
 	g.extrudeSpeedOverride = -1
 }
 
-func (g *GCode) AddCommand(command string, args ...interface{}) {
+func (g *Builder) AddCommand(command string, args ...interface{}) {
 	command = command + "\n"
 	command = fmt.Sprintf(command, args...)
 	g.buf.WriteString(command)
 }
 
-func (g *GCode) AddComment(comment string, args ...interface{}) {
+func (g *Builder) AddComment(comment string, args ...interface{}) {
 	comment = ";" + comment + "\n"
 	comment = fmt.Sprintf(comment, args...)
 	g.buf.WriteString(comment)
 }
 
-func (g *GCode) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
+func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	var speed int
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
@@ -115,7 +97,7 @@ func (g *GCode) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *GCode) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
+func (g *Builder) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
 	if len(polygon) == 0 {
 		g.AddComment("ignore Too small polygon")
 		return

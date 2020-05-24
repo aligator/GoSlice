@@ -4,7 +4,7 @@ package renderer
 
 import (
 	"GoSlice/data"
-	"GoSlice/gcode/builder"
+	"GoSlice/gcode"
 	"GoSlice/modifier"
 )
 
@@ -13,7 +13,7 @@ type Perimeter struct{}
 
 func (p Perimeter) Init(model data.OptimizedModel) {}
 
-func (p Perimeter) Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (p Perimeter) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 	perimeters, err := modifier.Perimeters(layers[layerNr])
 	if err != nil {
 		panic(err)
@@ -33,18 +33,18 @@ func (p Perimeter) Render(builder builder.Builder, layerNr int, layers []data.Pa
 
 			for _, insetParts := range part[insetNr] {
 				if insetNr == 0 {
-					builder.AddComment("TYPE:WALL-OUTER")
-					builder.SetExtrudeSpeed(options.Print.OuterPerimeterSpeed)
+					b.AddComment("TYPE:WALL-OUTER")
+					b.SetExtrudeSpeed(options.Print.OuterPerimeterSpeed)
 				} else {
-					builder.AddComment("TYPE:WALL-INNER")
-					builder.SetExtrudeSpeed(options.Print.LayerSpeed)
+					b.AddComment("TYPE:WALL-INNER")
+					b.SetExtrudeSpeed(options.Print.LayerSpeed)
 				}
 
 				for _, hole := range insetParts.Holes() {
-					builder.AddPolygon(hole, z, false)
+					b.AddPolygon(hole, z, false)
 				}
 
-				builder.AddPolygon(insetParts.Outline(), z, false)
+				b.AddPolygon(insetParts.Outline(), z, false)
 			}
 		}
 	}
