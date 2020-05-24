@@ -47,11 +47,11 @@ type PostLayer struct{}
 
 func (PostLayer) Init(model data.OptimizedModel) {}
 
-func (PostLayer) Render(builder *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 	// ending gcode
 	if layerNr == len(layers)-1 {
-		builder.AddComment("END_GCODE")
-		builder.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
-		builder.AddCommand("M107 ; disable fan")
+		b.AddComment("END_GCODE")
+		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
+		b.AddCommand("M107 ; disable fan")
 	}
 }

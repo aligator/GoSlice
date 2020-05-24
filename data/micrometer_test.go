@@ -60,6 +60,23 @@ func assertMicroPoint(t testing.TB, vec data.MicroPoint, xy ...data.Micrometer) 
 	test.Assert(t, vec.Y() == xy[1], "Y() should be %v but it is %v", y, vec.Y())
 }
 
+func TestMax(t *testing.T) {
+	var tests = []struct {
+		expected data.Micrometer
+		a, b     data.Micrometer
+	}{
+		{3, 1, 3},
+		{3, 3, 1},
+		{-20, -30, -20},
+		{-20, -20, -20},
+	}
+
+	for _, testCase := range tests {
+		actual := data.Max(testCase.a, testCase.b)
+		test.Equals(t, testCase.expected, actual)
+	}
+}
+
 // Test MicroVec3 implementation
 
 func TestNewMicroVec3(t *testing.T) {
@@ -120,12 +137,23 @@ func TestMicroVec3Div(t *testing.T) {
 }
 
 func TestMicroVec3Max(t *testing.T) {
-	var expected = data.Micrometer(30)
+	var tests = []struct {
+		expected data.Micrometer
+		vector   data.MicroVec3
+	}{
+		{3, data.NewMicroVec3(1, 2, 3)},
+		{3, data.NewMicroVec3(1, 3, 2)},
+		{3, data.NewMicroVec3(3, 2, 1)},
 
-	vec := setupMicroVec3()
-	actual := vec.Max()
+		{1, data.NewMicroVec3(1, 1, 1)},
+		{1, data.NewMicroVec3(0, 0, 1)},
+		{-5, data.NewMicroVec3(-10, -5, -10)},
+	}
 
-	test.Equals(t, actual, expected)
+	for _, testCase := range tests {
+		actual := testCase.vector.Max()
+		test.Equals(t, testCase.expected, actual)
+	}
 }
 
 func TestMicroVec3PointXY(t *testing.T) {
@@ -277,6 +305,13 @@ func TestMicroPointTestSize(t *testing.T) {
 	vec := setupMicroPoint()
 
 	test.Equals(t, expected, vec.Size())
+}
+
+func TestMicroPointTestSizeMM(t *testing.T) {
+	var expected = data.Millimeter(0.022360682)
+	vec := setupMicroPoint()
+
+	test.Equals(t, expected, vec.SizeMM())
 }
 
 func TestMicroPointTestCopy(t *testing.T) {

@@ -5,3 +5,4 @@
 *.gcode
 \#*#
 GoSlice
+coverage.out

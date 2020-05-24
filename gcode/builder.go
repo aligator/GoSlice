@@ -8,6 +8,7 @@ import (
 )
 
 // Builder creates GCode by combining several commands.
+// Use  NewGCodeBuilder to create a new builder.
 type Builder struct {
 	buf *bytes.Buffer
 
@@ -17,21 +18,20 @@ type Builder struct {
 	moveSpeed, extrudeSpeed, currentSpeed, extrudeSpeedOverride int
 }
 
-func NewGCodeBuilder(buf *bytes.Buffer) *Builder {
+func NewGCodeBuilder() *Builder {
 	g := &Builder{
 		currentPosition: data.NewMicroVec3(0, 0, 0),
 	}
-
-	g.buf = buf
+	g.buf = bytes.NewBuffer([]byte{})
 	return g
 }
 
-func (g *Builder) Buffer() *bytes.Buffer {
-	return g.buf
+func (g *Builder) String() string {
+	return g.buf.String()
 }
 
 func (g *Builder) SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
-	filamentArea := data.Millimeter(math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0))
+	filamentArea := math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0)
 	g.extrusionPerMM = layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea
 }
 
@@ -48,7 +48,7 @@ func (g *Builder) SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
 }
 
 func (g *Builder) DisableExtrudeSpeedOverride() {
-	g.extrudeSpeedOverride = -1
+	g.extrudeSpeedOverride = 0
 }
 
 func (g *Builder) AddCommand(command string, args ...interface{}) {
@@ -68,7 +68,7 @@ func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
 
-		if g.extrudeSpeedOverride == -1 {
+		if g.extrudeSpeedOverride <= 0 {
 			speed = g.extrudeSpeed
 		} else {
 			speed = g.extrudeSpeedOverride
@@ -78,14 +78,14 @@ func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 		speed = g.moveSpeed
 	}
 
+	g.buf.WriteString(fmt.Sprintf(" X%0.2f Y%0.2f", p.X().ToMillimeter(), p.Y().ToMillimeter()))
+	if p.Z() != g.currentPosition.Z() {
+		g.buf.WriteString(fmt.Sprintf(" Z%0.2f", p.Z().ToMillimeter()))
+	}
+
 	if g.currentSpeed != speed {
 		g.buf.WriteString(fmt.Sprintf(" F%v", speed*60))
 		g.currentSpeed = speed
-	}
-
-	g.buf.WriteString(fmt.Sprintf(" X%0.2f Y%0.2f", p.X().ToMillimeter(), p.Y().ToMillimeter()))
-	if p.Z() != g.currentPosition.Z() {
-		g.buf.WriteString(fmt.Sprintf(" Z%0.2f Y%0.2f", p.Z().ToMillimeter(), p.Y().ToMillimeter()))
 	}
 
 	g.extrusionAmount += extrusion
@@ -99,7 +99,6 @@ func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 
 func (g *Builder) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
 	if len(polygon) == 0 {
-		g.AddComment("ignore Too small polygon")
 		return
 	}
 

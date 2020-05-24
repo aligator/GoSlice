@@ -4,7 +4,6 @@ package gcode
 import (
 	"GoSlice/data"
 	"GoSlice/handler"
-	"bytes"
 )
 
 // Renderer can be used to add GCodes based on the current layer and layer data.
@@ -61,8 +60,7 @@ func NewGenerator(options *data.Options, generatorOptions ...option) handler.GCo
 }
 
 func (g *generator) init() {
-	var b []byte
-	g.builder = NewGCodeBuilder(bytes.NewBuffer(b))
+	g.builder = NewGCodeBuilder()
 }
 
 // Generate generates the GCode by using the renderers added to the generator.
@@ -77,5 +75,5 @@ func (g *generator) Generate(layers []data.PartitionedLayer) string {
 		}
 	}
 
-	return g.builder.Buffer().String()
+	return g.builder.String()
 }
