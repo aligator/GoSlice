@@ -33,12 +33,6 @@ func (g *generator) Init(model data.OptimizedModel) {
 
 type option func(s *generator)
 
-func (s *generator) With(o ...option) {
-	for _, option := range o {
-		option(s)
-	}
-}
-
 // WithRenderer adds a renderer to the generator.
 func WithRenderer(r Renderer) option {
 	return func(s *generator) {
@@ -52,7 +46,9 @@ func NewGenerator(options *data.Options, generatorOptions ...option) handler.GCo
 		options: options,
 	}
 
-	g.With(generatorOptions...)
+	for _, option := range generatorOptions {
+		option(g)
+	}
 
 	return g
 }
