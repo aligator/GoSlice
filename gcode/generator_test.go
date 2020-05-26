@@ -32,30 +32,10 @@ func (f *fakeRenderer) Render(b *gcode.Builder, layerNr int, layers []data.Parti
 	b.AddCommand("number %v", layerNr)
 }
 
-type fakePartitionedLayer struct {
-	t testing.TB
-}
-
-func (f *fakePartitionedLayer) LayerParts() []data.LayerPart {
-	panic("implement me")
-}
-
-func (f *fakePartitionedLayer) Attributes() map[string]interface{} {
-	panic("implement me")
-}
-
-func (f *fakePartitionedLayer) Bounds() (data.MicroPoint, data.MicroPoint) {
-	panic("implement me")
-}
-
 func TestGCodeGenerator(t *testing.T) {
 	rendererCounter := newCounter()
 
-	layers := []data.PartitionedLayer{
-		&fakePartitionedLayer{t: t},
-		&fakePartitionedLayer{t: t},
-		&fakePartitionedLayer{t: t},
-	}
+	layers := make([]data.PartitionedLayer, 3)
 
 	generator := gcode.NewGenerator(&data.Options{}, gcode.WithRenderer(&fakeRenderer{t: t, c: rendererCounter}))
 	generator.Init(nil)
