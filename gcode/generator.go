@@ -52,9 +52,7 @@ func NewGenerator(options *data.Options, generatorOptions ...option) handler.GCo
 		options: options,
 	}
 
-	for _, o := range generatorOptions {
-		o(g)
-	}
+	g.With(generatorOptions...)
 
 	return g
 }

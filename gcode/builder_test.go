@@ -38,7 +38,9 @@ func TestGCodeBuilder(t *testing.T) {
 				b.AddComment("This is another comment.")
 				b.AddComment("This is a third comment.")
 			},
-			expected: ";This is a comment.\n;This is another comment.\n;This is a third comment.\n",
+			expected: ";This is a comment.\n" +
+				";This is another comment.\n" +
+				";This is a third comment.\n",
 		},
 		"add polygon": {
 			exec: func(b *gcode.Builder) {
