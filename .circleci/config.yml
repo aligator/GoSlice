@@ -19,4 +19,4 @@ jobs:
       - store_artifacts:
           path: /tmp/artifacts
       - store_test_results:
-          path: test-results
+          path: /tmp/test-results
