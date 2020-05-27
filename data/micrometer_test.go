@@ -93,9 +93,9 @@ func TestMicroVec3Add(t *testing.T) {
 	vec2 := setupMicroVec3()
 	actual := vec.Add(vec2)
 
-	new := setupMicroVec3()
+	newInstance := setupMicroVec3()
 
-	test.Assert(t, cmp.Equal(vec, new, microVec3Comparer()), "the instance should not have been modified")
+	test.Assert(t, cmp.Equal(vec, newInstance, microVec3Comparer()), "the instance should not have been modified")
 	assertMicroVec3(t, actual, expected...)
 }
 
@@ -106,9 +106,9 @@ func TestMicroVec3Sub(t *testing.T) {
 	vec2 := setupMicroVec3()
 	actual := vec.Sub(vec2)
 
-	new := setupMicroVec3()
+	newInstance := setupMicroVec3()
 
-	test.Assert(t, cmp.Equal(vec, new, microVec3Comparer()), "the instance should not have been modified")
+	test.Assert(t, cmp.Equal(vec, newInstance, microVec3Comparer()), "the instance should not have been modified")
 	assertMicroVec3(t, actual, expected...)
 }
 
@@ -118,9 +118,9 @@ func TestMicroVec3Mul(t *testing.T) {
 	vec := setupMicroVec3()
 	actual := vec.Mul(3)
 
-	new := setupMicroVec3()
+	newInstance := setupMicroVec3()
 
-	test.Assert(t, cmp.Equal(vec, new, microVec3Comparer()), "the instance should not have been modified")
+	test.Assert(t, cmp.Equal(vec, newInstance, microVec3Comparer()), "the instance should not have been modified")
 	assertMicroVec3(t, actual, expected...)
 }
 
@@ -130,9 +130,9 @@ func TestMicroVec3Div(t *testing.T) {
 	vec := setupMicroVec3()
 	actual := vec.Div(2)
 
-	new := setupMicroVec3()
+	newInstance := setupMicroVec3()
 
-	test.Assert(t, cmp.Equal(vec, new, microVec3Comparer()), "the instance should not have been modified")
+	test.Assert(t, cmp.Equal(vec, newInstance, microVec3Comparer()), "the instance should not have been modified")
 	assertMicroVec3(t, actual, expected...)
 }
 
@@ -197,10 +197,10 @@ func TestMicroVec3TestSize(t *testing.T) {
 
 func TestMicroVec3TestCopy(t *testing.T) {
 	vec := setupMicroVec3()
-	copy := vec.Copy()
+	copied := vec.Copy()
 
-	test.Assert(t, &copy != &vec, "Copy should create a new instance")
-	test.Equals(t, vec, copy, microVec3Comparer())
+	test.Assert(t, &copied != &vec, "Copy should create a new instance")
+	test.Equals(t, vec, copied, microVec3Comparer())
 }
 
 func TestMicroVec3TestString(t *testing.T) {
@@ -254,8 +254,8 @@ func TestMicroPointAdd(t *testing.T) {
 	vec2 := setupMicroPoint()
 	actual := vec.Add(vec2)
 
-	new := setupMicroPoint()
-	test.Assert(t, cmp.Equal(vec, new, microPointComparer()), "the instance should not have been modified")
+	newInstance := setupMicroPoint()
+	test.Assert(t, cmp.Equal(vec, newInstance, microPointComparer()), "the instance should not have been modified")
 	assertMicroPoint(t, actual, expected...)
 }
 
@@ -266,8 +266,8 @@ func TestMicroPointSub(t *testing.T) {
 	vec2 := setupMicroPoint()
 	actual := vec.Sub(vec2)
 
-	new := setupMicroPoint()
-	test.Assert(t, cmp.Equal(vec, new, microPointComparer()), "the instance should not have been modified")
+	newInstance := setupMicroPoint()
+	test.Assert(t, cmp.Equal(vec, newInstance, microPointComparer()), "the instance should not have been modified")
 	assertMicroPoint(t, actual, expected...)
 }
 
@@ -277,8 +277,8 @@ func TestMicroPointMul(t *testing.T) {
 	vec := setupMicroPoint()
 	actual := vec.Mul(3)
 
-	new := setupMicroPoint()
-	test.Assert(t, cmp.Equal(vec, new, microPointComparer()), "the instance should not have been modified")
+	newInstance := setupMicroPoint()
+	test.Assert(t, cmp.Equal(vec, newInstance, microPointComparer()), "the instance should not have been modified")
 	assertMicroPoint(t, actual, expected...)
 }
 
@@ -288,8 +288,8 @@ func TestMicroPointDiv(t *testing.T) {
 	vec := setupMicroPoint()
 	actual := vec.Div(2)
 
-	new := setupMicroPoint()
-	test.Assert(t, cmp.Equal(vec, new, microPointComparer()), "the instance should not have been modified")
+	newInstance := setupMicroPoint()
+	test.Assert(t, cmp.Equal(vec, newInstance, microPointComparer()), "the instance should not have been modified")
 	assertMicroPoint(t, actual, expected...)
 }
 
@@ -308,7 +308,7 @@ func TestMicroPointTestSize(t *testing.T) {
 }
 
 func TestMicroPointTestSizeMM(t *testing.T) {
-	var expected = data.Millimeter(0.022360682)
+	var expected = data.Millimeter(0.022360679)
 	vec := setupMicroPoint()
 
 	test.Equals(t, expected, vec.SizeMM())
@@ -317,10 +317,10 @@ func TestMicroPointTestSizeMM(t *testing.T) {
 func TestMicroPointTestCopy(t *testing.T) {
 	vec := setupMicroPoint()
 
-	copy := vec.Copy()
+	copied := vec.Copy()
 
-	test.Assert(t, &copy != &vec, "Copy should create a new instance")
-	test.Equals(t, vec, copy, microPointComparer())
+	test.Assert(t, &copied != &vec, "Copy should create a new instance")
+	test.Equals(t, vec, copied, microPointComparer())
 }
 
 func TestMicroPointTestSetXY(t *testing.T) {
