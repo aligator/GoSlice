@@ -20,7 +20,6 @@ jobs:
       - run: go get github.com/jpoles1/gopherbadger
       - run: $GOPATH/bin/gopherbadger
       - run: mv coverage_badge.png /tmp/artifacts/coverage_badge.png
-      - run: ~/go/bin/gopherbadger
       - store_artifacts:
           path: /tmp/artifacts
       - store_test_results:
