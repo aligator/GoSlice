@@ -18,4 +18,4 @@ jobs:
       - store_artifacts:
           path: /tmp/artifacts
       - store_test_results:
-          path: /tmp/test-results
+          path: unit-tests.xml
