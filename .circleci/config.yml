@@ -13,6 +13,8 @@ jobs:
       - run: go get -v -t -d ./...
       - run: go test -coverprofile=c.out -v ./...
       - run: go tool cover -html=c.out -o coverage.html
+      - run: gotestsum --junitfile unit-tests.xml
       - run: mv coverage.html /tmp/artifacts
+      - run: mv unit-tests.xml /tmp/artifacts
       - store_artifacts:
           path: /tmp/artifacts
