@@ -18,7 +18,7 @@ jobs:
       - run: mv coverage.html /tmp/artifacts/coverage.html
       - run: mv unit-tests.xml /tmp/test-results/unit-tests.xml
       - run: go get github.com/jpoles1/gopherbadger
-      - run: gopherbadger
+      - run: $GOPATH/bin/gopherbadger
       - run: mv coverage_badge.png /tmp/artifacts/coverage_badge.png
       - run: ~/go/bin/gopherbadger
       - store_artifacts:
