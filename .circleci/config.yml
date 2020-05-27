@@ -15,7 +15,8 @@ jobs:
       - run: go tool cover -html=c.out -o coverage.html
       - run: gotestsum --junitfile unit-tests.xml
       - run: mv coverage.html /tmp/artifacts
+      - run: mv unit-tests.xml /test-results
       - store_artifacts:
           path: /tmp/artifacts
       - store_test_results:
-          path: unit-tests.xml
+          path: test-results
