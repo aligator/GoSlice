@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/aligator/GoSlice/tree/circleci-project-setup.svg?style=svg)](https://circleci.com/gh/aligator/GoSlice)
+[![CircleCI](https://circleci.com/gh/aligator/GoSlice.svg?style=svg)](https://circleci.com/gh/aligator/GoSlice)
 
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/logo.png">
 
