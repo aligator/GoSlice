@@ -14,3 +14,5 @@ jobs:
       - run: go test -coverprofile=c.out -v ./...
       - run: go tool cover -html=c.out -o coverage.html
       - run: mv coverage.html /tmp/artifacts
+      - store_artifacts:
+          path: /tmp/artifacts
