@@ -14,9 +14,13 @@ jobs:
       - run: go test -coverprofile=c.out -v ./...
       - run: go tool cover -html=c.out -o coverage.html
       - run: gotestsum --junitfile unit-tests.xml
-      - run: mv coverage.html /tmp/artifacts
+      - run: mv coverage.html /tmp/artifacts/coverage.html
       - run: mkdir /tmp/test-results
       - run: mv unit-tests.xml /tmp/test-results/unit-tests.xml
+      - run: go get github.com/jpoles1/gopherbadger
+      - run: gopherbadger
+      - run: coverage_badge.png /tmp/artifacts/coverage_badge.png
+      - run: ~/go/bin/gopherbadger
       - store_artifacts:
           path: /tmp/artifacts
       - store_test_results:
