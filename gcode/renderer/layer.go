@@ -32,6 +32,12 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
+
+		// set and wait for the initial temperature
+		// use the R parameter to also wait for cooling if needed
+		b.AddComment("SET_INITIAL_TEMP")
+		b.AddCommand("M190 R%d", options.Filament.InitialBedTemperature)
+		b.AddCommand("M109 R%d", options.Filament.InitialHotEndTemperature)
 	} else {
 		b.DisableExtrudeSpeedOverride()
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
@@ -39,6 +45,14 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 	if layerNr == 2 {
 		b.AddCommand("M106 ; enable fan")
+	}
+
+	if layerNr == options.Filament.InitialTemeratureLayerCount {
+		// set the normal temperature
+		// this is done without waiting
+		b.AddComment("SET_TEMP")
+		b.AddCommand("M140 S%d", options.Filament.BedTemperature)
+		b.AddCommand("M104 S%d", options.Filament.HotEndTemperature)
 	}
 }
 
@@ -53,5 +67,9 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		b.AddComment("END_GCODE")
 		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
 		b.AddCommand("M107 ; disable fan")
+
+		// disable heaters
+		b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
+		b.AddCommand("M140 S0 ; Set bed to 0C (off)")
 	}
 }

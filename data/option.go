@@ -120,6 +120,22 @@ type PrintOptions struct {
 type FilamentOptions struct {
 	// FilamentDiameter is the filament diameter used by the printer.
 	FilamentDiameter Micrometer
+
+	// InitialBedTemperature is the temperature for the heated bed for the first layers.
+	InitialBedTemperature int
+
+	// InitialHotendTemperature is the temperature for the hot end for the first layers.
+	InitialHotEndTemperature int
+
+	// BedTemperature is the temperature for the heated bed after the first layers.
+	BedTemperature int
+
+	// HotEndTemperature is the temperature for the hot end after the first layers.
+	HotEndTemperature int
+
+	// InitialTemeratureLayerCount is the number of layers which use the initial temperatures.
+	// After this amount of layers, the normal temperatures are used.
+	InitialTemeratureLayerCount int
 }
 
 // PrinterOptions contains all Printer specific GoSlice options.
@@ -172,7 +188,12 @@ func DefaultOptions() Options {
 			NumberTopLayers:                        4,
 		},
 		Filament: FilamentOptions{
-			FilamentDiameter: Millimeter(1.75).ToMicrometer(),
+			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
+			InitialBedTemperature:       60,
+			InitialHotEndTemperature:    205,
+			BedTemperature:              55,
+			HotEndTemperature:           200,
+			InitialTemeratureLayerCount: 3,
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
@@ -216,6 +237,11 @@ func ParseFlags() Options {
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")
+	flag.IntVar(&options.Filament.InitialBedTemperature, "initial-bed-temperature", options.Filament.InitialBedTemperature, "The temperature for the heated bed for the first layers.")
+	flag.IntVar(&options.Filament.InitialHotEndTemperature, "initial-hot-end-temperature", options.Filament.InitialHotEndTemperature, "The filament diameter used by the printer.")
+	flag.IntVar(&options.Filament.BedTemperature, "bed-temperature", options.Filament.BedTemperature, "The temperature for the heated bed after the first layers.")
+	flag.IntVar(&options.Filament.HotEndTemperature, "hot-end-temperature", options.Filament.HotEndTemperature, "The temperature for the hot end after the first layers.")
+	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")
