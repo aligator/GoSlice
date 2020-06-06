@@ -27,24 +27,9 @@ To get help for all possible flags take a look at /data/option.go or just run:
 go run . --help
 ```
 
-## ToDo
-* ~~read stl~~ (initially done by using external lib github.com/hschendel/stl)
-* ~~implement optimisation as in first Cura Commit~~
-* ~~first gcode result~~ YAY!!
-* ~~refactor and Go-ify the code~~ (done, for now...)
-* ~~perimeters, with configurable outer perimeter speed~~
-* ~~bottom layer~~ (only one layer and not perfect but it works)
-* ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
-* ~~simple infill~~ (very simple)
-* ~~options as commandline parameters~~
-* ~~add function / interface / struct documentations~~
-* ~~multiple top / bottom layers~~
-* add tests
-* brim
-* skirt
-* retraction
-* rotate infill pattern
-* lots of other things...
+## Contribution
+You are welcome to help.  
+[Just look for open issues](https://github.com/aligator/GoSlice/issues) and pick one, create new issues or create new pull requests.
 
 ## Credits
 * CuraEngine for the great first commit, which was a very good starting point for research.
