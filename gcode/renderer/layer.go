@@ -15,9 +15,19 @@ func (PreLayer) Init(model data.OptimizedModel) {}
 func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
 	b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
+		b.AddComment("Generated with GoSlice")
+		b.AddComment("______________________")
+
+		b.AddCommand("M107 ; disable fan")
+
+		// set and wait for the initial temperature
+		b.AddComment("SET_INITIAL_TEMP")
+		b.AddCommand("M104 S%d ; start heating hot end", options.Filament.InitialHotEndTemperature)
+		b.AddCommand("M190 S%d ; heat and wait for bed", options.Filament.InitialBedTemperature)
+		b.AddCommand("M109 S%d ; wait for hot end temperature", options.Filament.InitialHotEndTemperature)
+
 		// starting gcode
 		b.AddComment("START_GCODE")
-		b.AddComment("Generated with GoSlice")
 		b.AddCommand("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
 		b.AddCommand("G92 E0 ; reset extrusion distance")
 		b.AddCommand("G1 X200 E20 F600 ; prime nozzle")
@@ -32,12 +42,6 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
-
-		// set and wait for the initial temperature
-		// use the R parameter to also wait for cooling if needed
-		b.AddComment("SET_INITIAL_TEMP")
-		b.AddCommand("M190 R%d", options.Filament.InitialBedTemperature)
-		b.AddCommand("M109 R%d", options.Filament.InitialHotEndTemperature)
 	} else {
 		b.DisableExtrudeSpeedOverride()
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
