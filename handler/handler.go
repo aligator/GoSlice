@@ -22,7 +22,7 @@ type ModelSlicer interface {
 // LayerModifier can add new attributes to the layers or even alter the layer directly.
 type LayerModifier interface {
 	Init(m data.OptimizedModel)
-	Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error)
+	Modify(layerNr int, layers []data.PartitionedLayer) error
 }
 
 // GCodeGenerator generates the GCode out of the given layers.

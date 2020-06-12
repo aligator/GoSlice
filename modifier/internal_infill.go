@@ -20,20 +20,20 @@ func NewInternalInfillModifier(options *data.Options) handler.LayerModifier {
 	}
 }
 
-func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
+func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
 	overlappingPerimeters, err := OverlapPerimeters(layers[layerNr])
 	if err != nil || overlappingPerimeters == nil {
-		return layers, err
+		return err
 	}
 
 	bottomInfill, err := BottomInfill(layers[layerNr])
 	if err != nil {
-		return layers, err
+		return err
 	}
 
 	topInfill, err := TopInfill(layers[layerNr])
 	if err != nil {
-		return layers, err
+		return err
 	}
 
 	var internalInfill []data.LayerPart
@@ -56,7 +56,7 @@ func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLay
 		}
 
 		if parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...)); !ok {
-			return nil, errors.New("error while calculating the difference between the max overlap border and the bottom infill")
+			return errors.New("error while calculating the difference between the max overlap border and the bottom infill")
 		} else {
 			internalInfill = append(internalInfill, parts...)
 		}
@@ -67,7 +67,7 @@ func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLay
 		newLayer.attributes["infill"] = internalInfill
 	}
 
-	return layers, nil
+	return nil
 }
 
 func partDifference(part data.LayerPart, layerToRemove data.PartitionedLayer) ([]data.LayerPart, error) {

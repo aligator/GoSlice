@@ -53,15 +53,15 @@ func InfillParts(layer data.PartitionedLayer, typ string) ([]data.LayerPart, err
 	return nil, nil
 }
 
-func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
+func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
 	overlappingPerimeters, err := OverlapPerimeters(layers[layerNr])
 	if err != nil || overlappingPerimeters == nil {
-		return layers, err
+		return err
 	}
 
 	perimeters, err := Perimeters(layers[layerNr])
 	if err != nil || perimeters == nil {
-		return layers, err
+		return err
 	}
 
 	var bottomInfill []data.LayerPart
@@ -91,7 +91,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 					// else calculate the difference and use it
 					parts, err = partDifference(insetPart, layers[layerNr-1-i])
 					if err != nil {
-						return nil, err
+						return err
 					}
 				}
 
@@ -102,7 +102,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 					var ok bool
 					bottomInfillParts, ok = c.Union(bottomInfillParts, parts)
 					if !ok {
-						return nil, errors.New("could not union bottom parts")
+						return errors.New("could not union bottom parts")
 					}
 				}
 			}
@@ -120,7 +120,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 					// else calculate the difference and use it
 					parts, err = partDifference(insetPart, layers[layerNr+1+i])
 					if err != nil {
-						return nil, err
+						return err
 					}
 				}
 
@@ -131,7 +131,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 					var ok bool
 					topInfillParts, ok = c.Union(topInfillParts, parts)
 					if !ok {
-						return nil, errors.New("could not union top parts")
+						return errors.New("could not union top parts")
 					}
 				}
 			}
@@ -141,7 +141,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			for _, bottomPart := range bottomInfillParts {
 				overlappingParts, err := calculateOverlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+m.options.Print.AdditionalInternalInfillOverlapPercent, m.options.Printer.ExtrusionWidth)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
 				internalOverlappingBottomParts = append(internalOverlappingBottomParts, overlappingParts...)
@@ -150,7 +150,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			for _, topPart := range topInfillParts {
 				overlappingParts, err := calculateOverlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+m.options.Print.AdditionalInternalInfillOverlapPercent, m.options.Printer.ExtrusionWidth)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
 				internalOverlappingTopParts = append(internalOverlappingTopParts, overlappingParts...)
@@ -160,12 +160,12 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			if internalOverlappingBottomParts != nil {
 				clippedParts, ok := c.Intersection(internalOverlappingBottomParts, overlappingPerimeters[partNr])
 				if !ok {
-					return nil, errors.New("error while intersecting infill areas by the overlapping border")
+					return errors.New("error while intersecting infill areas by the overlapping border")
 				}
 
 				u, ok := c.Union(bottomInfill, clippedParts)
 				if !ok {
-					return nil, errors.New("error while calculating the union of new infill with already existing one")
+					return errors.New("error while calculating the union of new infill with already existing one")
 				}
 				bottomInfill = u
 			}
@@ -173,11 +173,11 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 			if internalOverlappingTopParts != nil {
 				clippedParts, ok := c.Intersection(internalOverlappingTopParts, overlappingPerimeters[partNr])
 				if !ok {
-					return nil, errors.New("error while intersecting infill areas by the overlapping border")
+					return errors.New("error while intersecting infill areas by the overlapping border")
 				}
 				u, ok := c.Union(topInfill, clippedParts)
 				if !ok {
-					return nil, errors.New("error while calculating the union of new infill with already existing one")
+					return errors.New("error while calculating the union of new infill with already existing one")
 				}
 				topInfill = u
 			}
@@ -187,7 +187,7 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 	if len(topInfill) > 0 && len(bottomInfill) > 0 {
 		diff, ok := c.Difference(topInfill, bottomInfill)
 		if !ok {
-			return nil, errors.New("error while calculating the difference of new top infill with the bottom infill to avoid duplicates")
+			return errors.New("error while calculating the difference of new top infill with the bottom infill to avoid duplicates")
 		}
 		topInfill = diff
 	}
@@ -202,5 +202,5 @@ func (m infillModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]d
 
 	layers[layerNr] = newLayer
 
-	return layers, nil
+	return nil
 }

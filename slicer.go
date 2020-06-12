@@ -120,7 +120,7 @@ func (s *GoSlice) Process() error {
 	for _, m := range s.modifiers {
 		m.Init(optimizedModel)
 		for layerNr := range layers {
-			layers, err = m.Modify(layerNr, layers)
+			err = m.Modify(layerNr, layers)
 			if err != nil {
 				return err
 			}

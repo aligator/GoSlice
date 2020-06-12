@@ -56,7 +56,7 @@ func Perimeters(layer data.PartitionedLayer) ([][][]data.LayerPart, error) {
 
 func (m perimeterModifier) Init(model data.OptimizedModel) {}
 
-func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) ([]data.PartitionedLayer, error) {
+func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
 	// Generate the perimeters.
 	c := clip.NewClipper()
 	insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount)
@@ -76,7 +76,7 @@ func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) (
 
 			maxOverlapBorder, err := calculateOverlapPerimeter(insetPart, m.options.Print.InfillOverlapPercent, m.options.Printer.ExtrusionWidth)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			overlapPerimeter[partNr] = append(overlapPerimeter[partNr], maxOverlapBorder...)
 		}
@@ -87,7 +87,7 @@ func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) (
 	newLayer.attributes["overlapPerimeters"] = overlapPerimeter
 	layers[layerNr] = newLayer
 
-	return layers, nil
+	return nil
 }
 
 // calculateOverlapPerimeter helper function for calculating the overlap-perimeter out of a layer part.
