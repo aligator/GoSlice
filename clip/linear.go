@@ -12,59 +12,50 @@ import (
 // linear provides an infill which consists of simple parallel lines.
 // The direction of the lines is switching for each layer by 90°..
 type linear struct {
-	verticalPaths   clipper.Paths
-	horizontalPaths clipper.Paths
-	lineWidth       data.Micrometer
+	lineDistance data.Micrometer
+	lineWidth    data.Micrometer
+	degree       int
 }
 
 // NewLinearPattern provides a simple linear infill pattern consisting of simple parallel lines.
 // The direction of the lines is switching for each layer by 90°.
-func NewLinearPattern(min data.MicroPoint, max data.MicroPoint, lineWidth data.Micrometer) Pattern {
-	verticalLines := clipper.Paths{}
-	numLine := 0
-	// generate the verticalLines
-	for x := min.X(); x <= max.X(); x += lineWidth {
-		verticalLines = append(verticalLines, clipper.Path{
-			&clipper.IntPoint{
-				X: clipper.CInt(x),
-				Y: clipper.CInt(max.Y()),
-			},
-			&clipper.IntPoint{
-				X: clipper.CInt(x),
-				Y: clipper.CInt(min.Y()),
-			},
-		})
-		numLine++
-	}
-
-	horizontalLines := clipper.Paths{}
-	numLine = 0
-	// generate the horizontalLines
-	for y := min.Y(); y <= max.Y(); y += lineWidth {
-		horizontalLines = append(horizontalLines, clipper.Path{
-			&clipper.IntPoint{
-				X: clipper.CInt(max.X()),
-				Y: clipper.CInt(y),
-			},
-			&clipper.IntPoint{
-				X: clipper.CInt(min.X()),
-				Y: clipper.CInt(y),
-			},
-		})
-		numLine++
-	}
-
+func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, degree int) Pattern {
 	return linear{
-		verticalPaths:   verticalLines,
-		horizontalPaths: horizontalLines,
-		lineWidth:       lineWidth,
+		lineDistance: lineDistance,
+		lineWidth:    lineWidth,
+		degree:       degree,
 	}
 }
 
 // Fill implements the Pattern interface by using simple linear lines as infill.
 func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
-	resultInfill := p.getInfill(layerNr, clipperPath(part.Outline()), clipperPaths(part.Holes()), 0)
-	return p.sortInfill(microPaths(resultInfill, false))
+	rotation := p.degree
+
+	if layerNr%2 == 0 {
+		rotation += 90
+	}
+
+	// copy holes and outline as the original layer part should not be modified by the rotation (slices are passed by reference)
+	var holes = data.Paths{}
+	for _, points := range part.Holes() {
+		var copied = make(data.Path, len(points))
+		copy(copied, points)
+		holes = append(holes, copied)
+	}
+	var outline = make(data.Path, len(part.Outline()))
+	copy(outline, part.Outline())
+
+	// rotate them
+	outline.Rotate(float64(rotation))
+	holes.Rotate(float64(rotation))
+
+	boundsX, boundsY := outline.Bounds()
+	resultInfill := p.getInfill(layerNr, boundsX, boundsY, clipperPath(outline), clipperPaths(holes), 0)
+	result := p.sortInfill(microPaths(resultInfill, false))
+
+	result.Rotate(float64(-rotation))
+
+	return result
 }
 
 // sortInfill optimizes the order of the infill lines.
@@ -134,7 +125,7 @@ func (p linear) sortInfill(unsorted data.Paths) data.Paths {
 }
 
 // getInfill fills a polygon (with holes)
-func (p linear) getInfill(layerNr int, outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
+func (p linear) getInfill(layerNr int, min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
 	var result clipper.Paths
 
 	// clip the paths with the lines using intersection
@@ -159,11 +150,24 @@ func (p linear) getInfill(layerNr int, outline clipper.Path, holes clipper.Paths
 	cl.AddPaths(exset, clipper.PtClip, true)
 	cl.AddPaths(holes, clipper.PtClip, true)
 
-	if layerNr%2 == 0 {
-		cl.AddPaths(p.verticalPaths, clipper.PtSubject, false)
-	} else {
-		cl.AddPaths(p.horizontalPaths, clipper.PtSubject, false)
+	verticalLines := clipper.Paths{}
+	numLine := 0
+	// generate the verticalLines
+	for x := min.X(); x <= max.X(); x += p.lineDistance {
+		verticalLines = append(verticalLines, clipper.Path{
+			&clipper.IntPoint{
+				X: clipper.CInt(x),
+				Y: clipper.CInt(max.Y()),
+			},
+			&clipper.IntPoint{
+				X: clipper.CInt(x),
+				Y: clipper.CInt(min.Y()),
+			},
+		})
+		numLine++
 	}
+
+	cl.AddPaths(verticalLines, clipper.PtSubject, false)
 
 	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 	if !ok {

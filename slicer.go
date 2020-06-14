@@ -34,8 +34,8 @@ func NewGoSlice(options data.Options) *GoSlice {
 	}
 
 	// create handlers
-	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-		return clip.NewLinearPattern(min, max, options.Printer.ExtrusionWidth)
+	topBottomPatternFactory := func() clip.Pattern {
+		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, options.Print.InfillRotationDegree)
 	}
 
 	s.reader = reader.Reader(&options)
@@ -61,7 +61,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 			Comments:     []string{"TYPE:FILL", "TOP-FILL"},
 		}),
 		gcode.WithRenderer(&renderer.Infill{
-			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
+			PatternSetup: func() clip.Pattern {
 				// TODO: the calculation of the percentage is currently very basic and may not be correct.
 
 				if options.Print.InfillPercent != 0 {
@@ -71,7 +71,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 					lineWidth := data.Micrometer(float64(mm10) / linesPer10mmForInfillPercent)
 
-					return clip.NewLinearPattern(min, max, lineWidth)
+					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, options.Print.InfillRotationDegree)
 				}
 
 				return nil
@@ -129,9 +129,9 @@ func (s *GoSlice) Process() error {
 
 	// 5. generate gcode from the layers
 	s.generator.Init(optimizedModel)
-	gcode := s.generator.Generate(layers)
+	finalGcode := s.generator.Generate(layers)
 
-	err = s.writer.Write(gcode, s.options.InputFilePath+".gcode")
+	err = s.writer.Write(finalGcode, s.options.InputFilePath+".gcode")
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
 	return err

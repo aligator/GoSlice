@@ -2,6 +2,8 @@
 
 package data
 
+import "math"
+
 // DotProduct calculates the dot product of two points
 func DotProduct(a, b MicroPoint) Micrometer {
 	return a.X()*b.X() + a.Y()*b.Y()
@@ -68,4 +70,8 @@ func DouglasPeucker(points Path, epsilon Micrometer) Path {
 		epsilon = 70
 	}
 	return douglasPeucker(points, epsilon)
+}
+
+func ToRadians(angle float64) float64 {
+	return angle * (math.Pi / 180)
 }

@@ -13,7 +13,7 @@ import (
 // The attribute has to be of type []data.LayerPart.
 type Infill struct {
 	// PatternSetup is called once on init and sets a specific pattern this infill renderer should use.
-	PatternSetup func(min data.MicroPoint, max data.MicroPoint) clip.Pattern
+	PatternSetup func() clip.Pattern
 
 	// AttrName is the name of the attribute containing the []data.LayerPart's to fill.
 	AttrName string
@@ -25,7 +25,7 @@ type Infill struct {
 }
 
 func (i *Infill) Init(model data.OptimizedModel) {
-	i.pattern = i.PatternSetup(model.Min().PointXY(), model.Max().PointXY())
+	i.pattern = i.PatternSetup()
 }
 
 func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {

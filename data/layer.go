@@ -175,6 +175,13 @@ func (p Path) Bounds() (MicroPoint, MicroPoint) {
 	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)
 }
 
+// Rotate rotates all points around (0|0) by the given degree.
+func (p Path) Rotate(degree float64) {
+	for i, point := range p {
+		p[i] = point.Rotate(degree)
+	}
+}
+
 // Paths represents a group of Paths.
 type Paths []Path
 
@@ -217,6 +224,13 @@ func (p Paths) Bounds() (MicroPoint, MicroPoint) {
 	}
 
 	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)
+}
+
+// Rotate rotates all points around (0|0) by the given degree.
+func (p Paths) Rotate(degree float64) {
+	for _, path := range p {
+		path.Rotate(degree)
+	}
 }
 
 // LayerPart represents one part of a layer.

@@ -332,3 +332,37 @@ func TestMicroPointTestSetXY(t *testing.T) {
 
 	assertMicroPoint(t, actual, expected...)
 }
+
+func TestMicroPointTestRotate(t *testing.T) {
+	var testCases = []struct {
+		point    data.MicroPoint
+		degree   float64
+		expected data.MicroPoint
+	}{
+		{
+			point:    setupMicroPoint(),
+			degree:   90,
+			expected: data.NewMicroPoint(-20, 10),
+		},
+		{
+			point:    setupMicroPoint(),
+			degree:   -90,
+			expected: data.NewMicroPoint(20, -10),
+		},
+		{
+			point:    setupMicroPoint(),
+			degree:   360,
+			expected: setupMicroPoint(),
+		},
+		{
+			point:    setupMicroPoint(),
+			degree:   365,
+			expected: setupMicroPoint().Rotate(5),
+		},
+	}
+
+	for i, testCase := range testCases {
+		t.Log("testCase", i)
+		test.Equals(t, testCase.expected, testCase.point.Rotate(testCase.degree), microPointComparer())
+	}
+}

@@ -99,15 +99,18 @@ type PrintOptions struct {
 	// InsetCount is the number of perimeters.
 	InsetCount int
 
-	// InfillOverlapPercent says how much the infill should overlap into the perimeters.
+	// InfillOverlapPercent is the percentage of overlap into the perimeters.
 	InfillOverlapPercent int
 
 	// AdditionalInternalInfillOverlapPercent is the percentage used to make the internal
 	// infill (infill not blocked by the perimeters) even bigger so that it grows a bit into the model.
 	AdditionalInternalInfillOverlapPercent int
 
-	// InfillPercent says how much infill should be generated.
+	// InfillPercent is the amount of infill which should be generated.
 	InfillPercent int
+
+	// InfillRotationDegree is the rotation used for the infill.
+	InfillRotationDegree int
 
 	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
 	NumberBottomLayers int
@@ -184,6 +187,7 @@ func DefaultOptions() Options {
 			InfillOverlapPercent:                   50,
 			AdditionalInternalInfillOverlapPercent: 400,
 			InfillPercent:                          20,
+			InfillRotationDegree:                   45,
 			NumberBottomLayers:                     3,
 			NumberTopLayers:                        4,
 		},
@@ -227,11 +231,12 @@ func ParseFlags() Options {
 	flag.Var(&options.Print.OuterPerimeterSpeed, "outer-perimeter-speed", "The speed only for outer perimeters.")
 	flag.Var(&options.Print.MoveSpeed, "move-speed", "The speed for all non printing moves.")
 	flag.Var(&options.Print.InitialLayerThickness, "initial-layer-thickness", "The layer thickness for the first layer.")
-	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The layer thickness for the first layer.")
-	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The layer thickness for the first layer.")
-	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The layer thickness for the first layer.")
+	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The thickness for all but the first layer.")
+	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The number of perimeters.")
+	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The percentage of overlap into the perimeters.")
 	flag.IntVar(&options.Print.AdditionalInternalInfillOverlapPercent, "additional-internal-infill-overlap-percent", options.Print.AdditionalInternalInfillOverlapPercent, "The percentage used to make the internal infill (infill not blocked by the perimeters) even bigger so that it grows a bit into the model.")
-	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The layer thickness for the first layer.")
+	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The amount of infill which should be generated.")
+	flag.IntVar(&options.Print.InfillRotationDegree, "infill-rotation-degree", options.Print.InfillRotationDegree, "The rotation used for the infill.")
 	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
 	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
 

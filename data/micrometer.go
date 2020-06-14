@@ -214,6 +214,11 @@ type MicroPoint interface {
 	// By convention it should never mutate the instance and instead return a new copy.
 	Div(value Micrometer) MicroPoint
 
+	// Rotate returns a new vector which is rotated around (0|0) by the given degree value.
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
+	Rotate(degree float64) MicroPoint
+
 	// ShorterThanOrEqual checks if the length of the vector fits inside the given length.
 	// Returns true if the vector length is <= the given length.
 	ShorterThanOrEqual(length Micrometer) bool
@@ -287,6 +292,17 @@ func (p *microPoint) Div(value Micrometer) MicroPoint {
 	result := p.Copy()
 	result.SetX(result.X() / value)
 	result.SetY(result.Y() / value)
+	return result
+}
+
+func (p *microPoint) Rotate(degree float64) MicroPoint {
+	rad := ToRadians(degree)
+	sin := math.Sin(rad)
+	cos := math.Cos(rad)
+
+	result := p.Copy()
+	result.SetX(Micrometer(math.RoundToEven(float64(p.x)*cos - float64(p.y)*sin)))
+	result.SetY(Micrometer(math.RoundToEven(float64(p.x)*sin + float64(p.y)*cos)))
 	return result
 }
 
