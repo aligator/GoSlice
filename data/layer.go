@@ -149,10 +149,7 @@ func (p Path) Bounds() (MicroPoint, MicroPoint) {
 	maxX := MinMicrometer
 	maxY := MinMicrometer
 
-	// return 0, 0, 0, 0 if everything is empty
-	any := false
 	for _, point := range p {
-		any = true
 		if point.X() < minX {
 			minX = point.X()
 		}
@@ -166,10 +163,6 @@ func (p Path) Bounds() (MicroPoint, MicroPoint) {
 		if point.Y() > maxY {
 			maxY = point.Y()
 		}
-	}
-
-	if !any {
-		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
 	}
 
 	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)

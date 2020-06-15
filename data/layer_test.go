@@ -153,6 +153,10 @@ func TestPathBounds(t *testing.T) {
 			data.NewMicroPoint(50, 0),
 			data.NewMicroPoint(0, 50),
 		}, expectedMin: data.NewMicroPoint(0, 0), expectedMax: data.NewMicroPoint(100, 100)},
+		{toTest: data.Path{
+			data.NewMicroPoint(0, 0),
+		}, expectedMin: data.NewMicroPoint(0, 0), expectedMax: data.NewMicroPoint(0, 0)},
+		{toTest: data.Path{}, expectedMin: data.NewMicroPoint(0, 0), expectedMax: data.NewMicroPoint(0, 0)},
 	}
 
 	for i, testCase := range testCases {
