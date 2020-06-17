@@ -92,6 +92,13 @@ func Max(a, b Micrometer) Micrometer {
 	return b
 }
 
+func Min(a, b Micrometer) Micrometer {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func (v *microVec3) X() Micrometer {
 	return v.x
 }

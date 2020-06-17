@@ -15,21 +15,24 @@ type linear struct {
 	lineDistance data.Micrometer
 	lineWidth    data.Micrometer
 	degree       int
+	min, max     data.MicroPoint
 }
 
 // NewLinearPattern provides a simple linear infill pattern consisting of simple parallel lines.
 // The direction of the lines is switching for each layer by 90°.
-func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, degree int) Pattern {
+func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, min data.MicroPoint, max data.MicroPoint, degree int) Pattern {
 	return linear{
 		lineDistance: lineDistance,
 		lineWidth:    lineWidth,
 		degree:       degree,
+		min:          min,
+		max:          max,
 	}
 }
 
 // Fill implements the Pattern interface by using simple linear lines as infill.
 func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
-	rotation := p.degree
+	rotation := float64(p.degree)
 
 	if layerNr%2 == 0 {
 		rotation += 90
@@ -46,14 +49,24 @@ func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
 	copy(outline, part.Outline())
 
 	// rotate them
-	outline.Rotate(float64(rotation))
-	holes.Rotate(float64(rotation))
+	outline.Rotate(rotation)
+	holes.Rotate(rotation)
 
-	boundsX, boundsY := outline.Bounds()
-	resultInfill := p.getInfill(layerNr, boundsX, boundsY, clipperPath(outline), clipperPaths(holes), 0)
+	// create rectangle for the max bounding box and rotate it,
+	// then get the min and max from the rotated bounding rectangle.
+	bounds := data.Path{
+		p.min,
+		data.NewMicroPoint(p.max.X(), p.min.Y()),
+		p.max,
+		data.NewMicroPoint(p.min.X(), p.max.Y()),
+	}
+	bounds.Rotate(rotation)
+	min, max := bounds.Bounds()
+
+	resultInfill := p.getInfill(min, max, clipperPath(outline), clipperPaths(holes), 0)
 	result := p.sortInfill(microPaths(resultInfill, false))
 
-	result.Rotate(float64(-rotation))
+	result.Rotate(-rotation)
 
 	return result
 }
@@ -125,7 +138,7 @@ func (p linear) sortInfill(unsorted data.Paths) data.Paths {
 }
 
 // getInfill fills a polygon (with holes)
-func (p linear) getInfill(layerNr int, min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
+func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
 	var result clipper.Paths
 
 	// clip the paths with the lines using intersection

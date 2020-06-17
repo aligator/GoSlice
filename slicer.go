@@ -34,8 +34,8 @@ func NewGoSlice(options data.Options) *GoSlice {
 	}
 
 	// create handlers
-	topBottomPatternFactory := func() clip.Pattern {
-		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, options.Print.InfillRotationDegree)
+	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
+		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree)
 	}
 
 	s.reader = reader.Reader(&options)
@@ -61,7 +61,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 			Comments:     []string{"TYPE:FILL", "TOP-FILL"},
 		}),
 		gcode.WithRenderer(&renderer.Infill{
-			PatternSetup: func() clip.Pattern {
+			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
 				// TODO: the calculation of the percentage is currently very basic and may not be correct.
 
 				if options.Print.InfillPercent != 0 {
@@ -71,7 +71,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 					lineWidth := data.Micrometer(float64(mm10) / linesPer10mmForInfillPercent)
 
-					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, options.Print.InfillRotationDegree)
+					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, min, max, options.Print.InfillRotationDegree)
 				}
 
 				return nil
