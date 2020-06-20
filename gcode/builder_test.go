@@ -44,22 +44,24 @@ func TestGCodeBuilder(t *testing.T) {
 		},
 		"add polygon": {
 			exec: func(b *gcode.Builder) {
-				b.AddPolygon(nil, data.Path{
+				err := b.AddPolygon(nil, data.Path{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(100, 0),
 					data.NewMicroPoint(100, 100),
 					data.NewMicroPoint(0, 100),
 				}, 100, true)
+				test.Ok(t, err)
 
 				// empty polygon should just be ignored
-				b.AddPolygon(nil, data.Path{}, 100, false)
-
-				b.AddPolygon(nil, data.Path{
+				err = b.AddPolygon(nil, data.Path{}, 100, false)
+				test.Ok(t, err)
+				err = b.AddPolygon(nil, data.Path{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(50, 0),
 					data.NewMicroPoint(50, 50),
 					data.NewMicroPoint(0, 50),
 				}, 100, false)
+				test.Ok(t, err)
 			},
 			expected: "G0 X0.00 Y0.00 Z0.10\n" +
 				"G0 X0.10 Y0.00\n" +
@@ -151,10 +153,11 @@ func TestGCodeBuilder(t *testing.T) {
 		"set extrusion": {
 			exec: func(b *gcode.Builder) {
 				b.SetExtrusion(200, 400, 175)
-				b.AddPolygon(nil, []data.MicroPoint{
+				err := b.AddPolygon(nil, []data.MicroPoint{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(0, 10000),
 				}, 0, true)
+				test.Ok(t, err)
 			},
 			expected: "G0 X0.00 Y0.00\n" +
 				"G1 X0.00 Y10.00 E33.2601\n",

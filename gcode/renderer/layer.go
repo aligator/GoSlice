@@ -12,7 +12,7 @@ type PreLayer struct{}
 
 func (PreLayer) Init(model data.OptimizedModel) {}
 
-func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
 		b.AddComment("Generated with GoSlice")
@@ -62,6 +62,8 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 		b.AddCommand("M140 S%d", options.Filament.BedTemperature)
 		b.AddCommand("M104 S%d", options.Filament.HotEndTemperature)
 	}
+
+	return nil
 }
 
 // PostLayer adds GCode at the last layer.
@@ -69,7 +71,7 @@ type PostLayer struct{}
 
 func (PostLayer) Init(model data.OptimizedModel) {}
 
-func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	// ending gcode
 	if layerNr == len(layers)-1 {
 		b.AddComment("END_GCODE")
@@ -80,4 +82,6 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
 		b.AddCommand("M140 S0 ; Set bed to 0C (off)")
 	}
+
+	return nil
 }

@@ -13,13 +13,13 @@ type Perimeter struct{}
 
 func (p Perimeter) Init(model data.OptimizedModel) {}
 
-func (p Perimeter) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (p Perimeter) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	perimeters, err := modifier.Perimeters(layers[layerNr])
 	if err != nil {
-		panic(err)
+		return err
 	}
 	if perimeters == nil {
-		return
+		return nil
 	}
 
 	for _, part := range perimeters {
@@ -41,11 +41,19 @@ func (p Perimeter) Render(b *gcode.Builder, layerNr int, layers []data.Partition
 				}
 
 				for _, hole := range insetParts.Holes() {
-					b.AddPolygon(layers[layerNr], hole, z, false)
+					err := b.AddPolygon(layers[layerNr], hole, z, false)
+					if err != nil {
+						return err
+					}
 				}
 
-				b.AddPolygon(layers[layerNr], insetParts.Outline(), z, false)
+				err := b.AddPolygon(layers[layerNr], insetParts.Outline(), z, false)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
+
+	return nil
 }

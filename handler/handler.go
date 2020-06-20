@@ -30,7 +30,7 @@ type LayerModifier interface {
 // So the attributes added by them can be used.
 type GCodeGenerator interface {
 	Init(m data.OptimizedModel)
-	Generate(layer []data.PartitionedLayer) string
+	Generate(layer []data.PartitionedLayer) (string, error)
 }
 
 // GCodeWriter writes the given GCode into the given file.

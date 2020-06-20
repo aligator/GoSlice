@@ -121,7 +121,7 @@ type PrintOptions struct {
 
 // FilamentOptions contains all Filament specific GoSlice options.
 type FilamentOptions struct {
-	// FilamentDiameter is the filament diameter used by the printer.
+	// FilamentDiameter is the filament diameter used by the printer in micrometer.
 	FilamentDiameter Micrometer
 
 	// InitialBedTemperature is the temperature for the heated bed for the first layers.
@@ -256,7 +256,7 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Filament.HotEndTemperature, "hot-end-temperature", options.Filament.HotEndTemperature, "The temperature for the hot end after the first layers.")
 	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
-	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in micrometer.")
+	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")

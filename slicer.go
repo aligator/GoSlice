@@ -106,7 +106,10 @@ func (s *GoSlice) Process() error {
 	}
 	//}
 
-	optimizedModel.SaveDebugSTL("test.stl")
+	err = optimizedModel.SaveDebugSTL("test.stl")
+	if err != nil {
+		return err
+	}
 
 	// 3. Slice model into layers
 	layers, err := s.slicer.Slice(optimizedModel)
@@ -129,7 +132,10 @@ func (s *GoSlice) Process() error {
 
 	// 5. generate gcode from the layers
 	s.generator.Init(optimizedModel)
-	finalGcode := s.generator.Generate(layers)
+	finalGcode, err := s.generator.Generate(layers)
+	if err != nil {
+		return err
+	}
 
 	err = s.writer.Write(finalGcode, s.options.InputFilePath+".gcode")
 	fmt.Println("full processing time:", time.Now().Sub(startTime))

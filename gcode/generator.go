@@ -14,7 +14,7 @@ type Renderer interface {
 	Init(model data.OptimizedModel)
 
 	// Render is called for each layer and the provided Builder can be used to add gcode.
-	Render(b *Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
+	Render(b *Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error
 }
 
 type generator struct {
@@ -59,15 +59,18 @@ func (g *generator) init() {
 
 // Generate generates the GCode by using the renderers added to the generator.
 // The final GCode is just returned as string.
-func (g *generator) Generate(layers []data.PartitionedLayer) string {
+func (g *generator) Generate(layers []data.PartitionedLayer) (string, error) {
 	g.init()
 
 	for layerNr := range layers {
 		for _, renderer := range g.renderers {
 			z := g.options.Print.InitialLayerThickness + data.Micrometer(layerNr)*g.options.Print.LayerThickness
-			renderer.Render(g.builder, layerNr, layers, z, g.options)
+			err := renderer.Render(g.builder, layerNr, layers, z, g.options)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
-	return g.builder.String()
+	return g.builder.String(), nil
 }
