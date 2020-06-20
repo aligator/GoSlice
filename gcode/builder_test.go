@@ -44,7 +44,7 @@ func TestGCodeBuilder(t *testing.T) {
 		},
 		"add polygon": {
 			exec: func(b *gcode.Builder) {
-				b.AddPolygon(data.Path{
+				b.AddPolygon(nil, data.Path{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(100, 0),
 					data.NewMicroPoint(100, 100),
@@ -52,9 +52,9 @@ func TestGCodeBuilder(t *testing.T) {
 				}, 100, true)
 
 				// empty polygon should just be ignored
-				b.AddPolygon(data.Path{}, 100, false)
+				b.AddPolygon(nil, data.Path{}, 100, false)
 
-				b.AddPolygon(data.Path{
+				b.AddPolygon(nil, data.Path{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(50, 0),
 					data.NewMicroPoint(50, 50),
@@ -151,7 +151,7 @@ func TestGCodeBuilder(t *testing.T) {
 		"set extrusion": {
 			exec: func(b *gcode.Builder) {
 				b.SetExtrusion(200, 400, 175)
-				b.AddPolygon([]data.MicroPoint{
+				b.AddPolygon(nil, []data.MicroPoint{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(0, 10000),
 				}, 0, true)

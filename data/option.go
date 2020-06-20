@@ -84,10 +84,10 @@ type PrintOptions struct {
 	// LayerSpeed is the speed for all but the first layer in mm per second.
 	LayerSpeed Millimeter
 
-	// OuterPerimeterSpeed is the speed only for outer perimeters.
+	// OuterPerimeterSpeed is the speed only for outer perimeters in mm per second.
 	OuterPerimeterSpeed Millimeter
 
-	// MoveSpeed is the speed for all non printing moves.
+	// MoveSpeed is the speed for all non printing moves in mm per second.
 	MoveSpeed Millimeter
 
 	// InitialLayerThickness is the layer thickness for the first layer.
@@ -139,6 +139,12 @@ type FilamentOptions struct {
 	// InitialTemeratureLayerCount is the number of layers which use the initial temperatures.
 	// After this amount of layers, the normal temperatures are used.
 	InitialTemeratureLayerCount int
+
+	// RetractionSpeed is the speed used for retraction in mm/s.
+	RetractionSpeed Millimeter
+
+	// RetractionLength is the amount to retract in millimeter.
+	RetractionLength Millimeter
 }
 
 // PrinterOptions contains all Printer specific GoSlice options.
@@ -198,6 +204,8 @@ func DefaultOptions() Options {
 			BedTemperature:              55,
 			HotEndTemperature:           200,
 			InitialTemeratureLayerCount: 3,
+			RetractionSpeed:             30,
+			RetractionLength:            Millimeter(2),
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
@@ -247,6 +255,8 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Filament.BedTemperature, "bed-temperature", options.Filament.BedTemperature, "The temperature for the heated bed after the first layers.")
 	flag.IntVar(&options.Filament.HotEndTemperature, "hot-end-temperature", options.Filament.HotEndTemperature, "The temperature for the hot end after the first layers.")
 	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
+	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
+	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in micrometer.")
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")

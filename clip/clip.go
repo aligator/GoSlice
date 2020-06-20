@@ -55,6 +55,9 @@ type Clipper interface {
 	// Union calculates the union of the parts and the toMerge parts.
 	// It returns the result as a new slice of layer parts.
 	Union(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
+
+	// IsCrossingPerimeter checks if the given line crosses any perimeter of the given parts. If yes, the result is true.
+	IsCrossingPerimeter(parts []data.LayerPart, line data.Path) (result, ok bool)
 }
 
 // clipperClipper implements Clipper using the external clipper library.
@@ -244,4 +247,26 @@ func (c clipperClipper) runClipper(clipType clipper.ClipType, parts []data.Layer
 		return nil, ok
 	}
 	return polyTreeToLayerParts(tree), ok
+}
+
+func (c clipperClipper) IsCrossingPerimeter(parts []data.LayerPart, line data.Path) (result, ok bool) {
+	// TODO: iIs there a more performant way to detect this?
+	cl := clipper.NewClipper(clipper.IoNone)
+
+	for _, part := range parts {
+		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtClip, true)
+		cl.AddPath(clipperPath(part.Outline()), clipper.PtClip, true)
+	}
+
+	cl.AddPath(clipperPath(line), clipper.PtSubject, false)
+
+	// calculate the intersection of the line and the parts, then look if the result is split into more paths than one.
+	// If yes, the line crossed a perimeter.
+	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+
+	if !ok {
+		return false, ok
+	}
+
+	return len(polyTreeToLayerParts(tree)) > 1, true
 }

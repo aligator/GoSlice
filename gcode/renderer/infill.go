@@ -48,7 +48,7 @@ func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		}
 
 		for _, path := range i.pattern.Fill(layerNr, part) {
-			b.AddPolygon(path, z, true)
+			b.AddPolygon(layers[layerNr], path, z, true)
 		}
 	}
 }

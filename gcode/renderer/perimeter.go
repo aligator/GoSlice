@@ -41,10 +41,10 @@ func (p Perimeter) Render(b *gcode.Builder, layerNr int, layers []data.Partition
 				}
 
 				for _, hole := range insetParts.Holes() {
-					b.AddPolygon(hole, z, false)
+					b.AddPolygon(layers[layerNr], hole, z, false)
 				}
 
-				b.AddPolygon(insetParts.Outline(), z, false)
+				b.AddPolygon(layers[layerNr], insetParts.Outline(), z, false)
 			}
 		}
 	}

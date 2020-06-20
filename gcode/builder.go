@@ -1,8 +1,10 @@
 package gcode
 
 import (
+	"GoSlice/clip"
 	"GoSlice/data"
 	"bytes"
+	"errors"
 	"fmt"
 	"math"
 )
@@ -16,6 +18,9 @@ type Builder struct {
 	extrusionPerMM                                              data.Millimeter
 	currentPosition                                             data.MicroVec3
 	moveSpeed, extrudeSpeed, currentSpeed, extrudeSpeedOverride int
+
+	retractionSpeed  int
+	retractionAmount data.Millimeter
 }
 
 func NewGCodeBuilder() *Builder {
@@ -49,6 +54,14 @@ func (g *Builder) SetExtrudeSpeedOverride(extrudeSpeed data.Millimeter) {
 
 func (g *Builder) DisableExtrudeSpeedOverride() {
 	g.extrudeSpeedOverride = 0
+}
+
+func (g *Builder) SetRetractionSpeed(retractionSpeed data.Millimeter) {
+	g.retractionSpeed = int(retractionSpeed)
+}
+
+func (g *Builder) SetRetractionAmount(retractionAmount data.Millimeter) {
+	g.retractionAmount = retractionAmount
 }
 
 func (g *Builder) AddCommand(command string, args ...interface{}) {
@@ -97,9 +110,9 @@ func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	g.currentPosition = p
 }
 
-func (g *Builder) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
+func (g *Builder) AddPolygon(currentLayer data.PartitionedLayer, polygon data.Path, z data.Micrometer, open bool) error {
 	if len(polygon) == 0 {
-		return
+		return nil
 	}
 
 	// smooth the polygon
@@ -107,10 +120,36 @@ func (g *Builder) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
 
 	for i, p := range polygon {
 		if i == 0 {
+			// for the move to the polygon: detect move through perimeters and add retraction if needed
+			// TODO: this is very ineffective, as it has to clip for every first move of every polygon with the whole layer...
+			move := data.Path{
+				g.currentPosition.PointXY(),
+				polygon[0],
+			}
+
+			isCrossing := false
+			if currentLayer != nil && g.retractionSpeed != 0 && g.retractionAmount != 0 {
+				c := clip.NewClipper()
+				var ok bool
+				isCrossing, ok = c.IsCrossingPerimeter(currentLayer.LayerParts(), move)
+
+				if !ok {
+					return errors.New("could not calculate the difference between the current layer and the non-extrusion-move")
+				}
+			}
+
+			if isCrossing {
+				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount-g.retractionAmount)
+			}
+
 			g.AddMove(data.NewMicroVec3(
-				polygon[0].X(),
-				polygon[0].Y(),
+				polygon[i].X(),
+				polygon[i].Y(),
 				z), 0.0)
+
+			if isCrossing {
+				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount)
+			}
 			continue
 		}
 
@@ -126,7 +165,7 @@ func (g *Builder) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
 
 	// add the move from the last point to the first point only if the path is closed
 	if open {
-		return
+		return nil
 	}
 
 	point0 := data.NewMicroPoint(polygon[0].X(), polygon[0].Y())
@@ -138,4 +177,6 @@ func (g *Builder) AddPolygon(polygon data.Path, z data.Micrometer, open bool) {
 		data.NewMicroVec3(polygon[0].X(), polygon[0].Y(), z),
 		point0.Sub(pointLast).SizeMM()*g.extrusionPerMM,
 	)
+
+	return nil
 }

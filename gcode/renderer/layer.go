@@ -40,6 +40,10 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
 		b.SetMoveSpeed(options.Print.MoveSpeed)
 
+		// set retraction
+		b.SetRetractionSpeed(options.Filament.RetractionSpeed)
+		b.SetRetractionAmount(options.Filament.RetractionLength)
+
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
 	} else {
