@@ -117,6 +117,12 @@ type PrintOptions struct {
 
 	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
 	NumberTopLayers int
+
+	// SupportEnabled enables the generation of support structures.
+	SupportEnabled bool
+
+	// SupportThresholdAngle is the angle up to which no support is generated.
+	SupportThresholdAngle int
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
@@ -182,11 +188,10 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		Print: PrintOptions{
-			IntialLayerSpeed:    30,
-			LayerSpeed:          60,
-			OuterPerimeterSpeed: 40,
-			MoveSpeed:           150,
-
+			IntialLayerSpeed:                       30,
+			LayerSpeed:                             60,
+			OuterPerimeterSpeed:                    40,
+			MoveSpeed:                              150,
 			InitialLayerThickness:                  200,
 			LayerThickness:                         200,
 			InsetCount:                             2,
@@ -196,6 +201,8 @@ func DefaultOptions() Options {
 			InfillRotationDegree:                   45,
 			NumberBottomLayers:                     3,
 			NumberTopLayers:                        4,
+			SupportEnabled:                         false,
+			SupportThresholdAngle:                  60,
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
@@ -247,6 +254,8 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Print.InfillRotationDegree, "infill-rotation-degree", options.Print.InfillRotationDegree, "The rotation used for the infill.")
 	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
 	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
+	flag.BoolVar(&options.Print.SupportEnabled, "support-enabled", options.Print.SupportEnabled, "Enables the generation of support structures.")
+	flag.IntVar(&options.Print.SupportThresholdAngle, "support-threshold-angle", options.Print.SupportThresholdAngle, "The angle up to which no support is generated.")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")

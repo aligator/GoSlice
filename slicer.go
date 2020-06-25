@@ -45,11 +45,22 @@ func NewGoSlice(options data.Options) *GoSlice {
 		modifier.NewPerimeterModifier(&options),
 		modifier.NewInfillModifier(&options),
 		modifier.NewInternalInfillModifier(&options),
+		modifier.NewSupportModifier(&options),
 	}
 	s.generator = gcode.NewGenerator(
 		&options,
 		gcode.WithRenderer(renderer.PreLayer{}),
 		gcode.WithRenderer(renderer.Perimeter{}),
+
+		// debug support generation
+		gcode.WithRenderer(&renderer.Infill{
+			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
+				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, data.Millimeter(2).ToMicrometer(), min, max, 0)
+			},
+			AttrName: "support",
+			Comments: []string{"TYPE:SUPPORT"},
+		}),
+
 		gcode.WithRenderer(&renderer.Infill{
 			PatternSetup: topBottomPatternFactory,
 			AttrName:     "bottom",
