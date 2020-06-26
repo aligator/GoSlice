@@ -23,7 +23,7 @@ func NewSupportModifier(options *data.Options) handler.LayerModifier {
 }
 
 func (m supportModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
-	if !m.options.Print.SupportEnabled || layerNr == 0 {
+	if !m.options.Print.Support.Enabled || layerNr <= m.options.Print.Support.TopGapLayers {
 		return nil
 	}
 
@@ -31,13 +31,13 @@ func (m supportModifier) Modify(layerNr int, layers []data.PartitionedLayer) err
 	//
 	// ############
 	// ############
-	// ### ___d____
-	// ### |     /
-	// ### |    /
-	// ### h   /
-	// ### |  /
-	// ### |θ/
-	// ### |/
+	// ### ___d____  |
+	// ### |     /   |
+	// ### |    /    |
+	// ### h   /     | h = 1 layer height
+	// ### |  /      |
+	// ### |θ/       |
+	// ### |/        |
 	//
 	// d = h * tan θ
 	// https://tams.informatik.uni-hamburg.de/publications/2018/MSc_Daniel_Ahlers.pdf
@@ -48,7 +48,7 @@ func (m supportModifier) Modify(layerNr int, layers []data.PartitionedLayer) err
 	//  All areas that remain have a higher angle than the threshold and need to be supported."
 
 	// calculate distance (d):
-	distance := float64(m.options.Print.LayerThickness) * math.Tan(data.ToRadians(float64(m.options.Print.SupportThresholdAngle)))
+	distance := float64(m.options.Print.LayerThickness) * math.Tan(data.ToRadians(float64(m.options.Print.Support.ThresholdAngle)))
 
 	// offset previous layer by d
 	cl := clip.NewClipper()

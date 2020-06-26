@@ -15,7 +15,7 @@ func main() {
 	o.Print.NumberTopLayers = 0
 
 	// enable support to debug it
-	o.Print.SupportEnabled = true
+	o.Print.Support.Enabled = true
 
 	p := NewGoSlice(o)
 	err := p.Process()
