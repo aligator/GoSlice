@@ -45,7 +45,8 @@ func NewGoSlice(options data.Options) *GoSlice {
 		modifier.NewPerimeterModifier(&options),
 		modifier.NewInfillModifier(&options),
 		modifier.NewInternalInfillModifier(&options),
-		modifier.NewSupportModifier(&options),
+		modifier.NewSupportDetectorModifier(&options),
+		modifier.NewSupportGeneratorModifier(&options),
 	}
 	s.generator = gcode.NewGenerator(
 		&options,
@@ -55,7 +56,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		// debug support generation
 		gcode.WithRenderer(&renderer.Infill{
 			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, data.Millimeter(2).ToMicrometer(), min, max, 0)
+				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, data.Millimeter(0.5).ToMicrometer(), min, max, 0)
 			},
 			AttrName: "support",
 			Comments: []string{"TYPE:SUPPORT"},
@@ -133,11 +134,9 @@ func (s *GoSlice) Process() error {
 	// generate the parts which should be filled in, ...
 	for _, m := range s.modifiers {
 		m.Init(optimizedModel)
-		for layerNr := range layers {
-			err = m.Modify(layerNr, layers)
-			if err != nil {
-				return err
-			}
+		err = m.Modify(layers)
+		if err != nil {
+			return err
 		}
 	}
 

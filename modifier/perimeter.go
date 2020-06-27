@@ -56,36 +56,38 @@ func Perimeters(layer data.PartitionedLayer) ([][][]data.LayerPart, error) {
 
 func (m perimeterModifier) Init(model data.OptimizedModel) {}
 
-func (m perimeterModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
-	// Generate the perimeters.
-	c := clip.NewClipper()
-	insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount)
+func (m perimeterModifier) Modify(layers []data.PartitionedLayer) error {
+	for layerNr := range layers {
+		// Generate the perimeters.
+		c := clip.NewClipper()
+		insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount)
 
-	// Also generate the overlapping perimeter, which helps with calculating the infill.
-	// This is derived from the most inner perimeters and offset by the options.Print.InfillOverlapPercent option.
+		// Also generate the overlapping perimeter, which helps with calculating the infill.
+		// This is derived from the most inner perimeters and offset by the options.Print.InfillOverlapPercent option.
 
-	var overlapPerimeter [][]data.LayerPart
+		var overlapPerimeter [][]data.LayerPart
 
-	for partNr, part := range insetParts {
-		if len(overlapPerimeter) >= partNr {
-			overlapPerimeter = append(overlapPerimeter, nil)
-		}
-
-		// Use only the most inner perimeter.
-		for _, insetPart := range part[len(part)-1] {
-
-			maxOverlapBorder, err := calculateOverlapPerimeter(insetPart, m.options.Print.InfillOverlapPercent, m.options.Printer.ExtrusionWidth)
-			if err != nil {
-				return err
+		for partNr, part := range insetParts {
+			if len(overlapPerimeter) >= partNr {
+				overlapPerimeter = append(overlapPerimeter, nil)
 			}
-			overlapPerimeter[partNr] = append(overlapPerimeter[partNr], maxOverlapBorder...)
-		}
-	}
 
-	newLayer := newExtendedLayer(layers[layerNr])
-	newLayer.attributes["perimeters"] = insetParts
-	newLayer.attributes["overlapPerimeters"] = overlapPerimeter
-	layers[layerNr] = newLayer
+			// Use only the most inner perimeter.
+			for _, insetPart := range part[len(part)-1] {
+
+				maxOverlapBorder, err := calculateOverlapPerimeter(insetPart, m.options.Print.InfillOverlapPercent, m.options.Printer.ExtrusionWidth)
+				if err != nil {
+					return err
+				}
+				overlapPerimeter[partNr] = append(overlapPerimeter[partNr], maxOverlapBorder...)
+			}
+		}
+
+		newLayer := newExtendedLayer(layers[layerNr])
+		newLayer.attributes["perimeters"] = insetParts
+		newLayer.attributes["overlapPerimeters"] = overlapPerimeter
+		layers[layerNr] = newLayer
+	}
 
 	return nil
 }
