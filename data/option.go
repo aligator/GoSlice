@@ -79,7 +79,7 @@ func (v microVec3) Type() string {
 
 // FanSpeedOptions used to control fan speed at given layers.
 type FanSpeedOptions struct {
-  LayerToSpeedLUT map[int]int
+	LayerToSpeedLUT map[int]int
 }
 
 // NewDefaultFanSpeedOptions Creates instance FanSpeedOptions
@@ -97,10 +97,10 @@ func (f FanSpeedOptions) Type() string {
 
 func (f FanSpeedOptions) String() string {
 	var s []string
-	for k,v := range f.LayerToSpeedLUT {
-		s = append(s, fmt.Sprintf("%d=%d",k,v))
+	for k, v := range f.LayerToSpeedLUT {
+		s = append(s, fmt.Sprintf("%d=%d", k, v))
 	}
-	return strings.Join(s,",")
+	return strings.Join(s, ",")
 }
 
 // Set takes string in format layerNo2=FanSpeed2,LayerNo2=FanSpeed2
@@ -108,23 +108,23 @@ func (f FanSpeedOptions) String() string {
 // Also confirms layer is at at least 0 or above.
 func (f *FanSpeedOptions) Set(s string) error {
 	errMessage := "fan control needs to be in format layernum=fanspeed<0-255>,layernum=fanspeed<0-255>"
-	sp := strings.Split(s,",")
-	lut := make(map[int]int,len(sp))
-	for _,kvp := range sp {
-	  kv := strings.Split(kvp,"=")
-	  if len(kv) == 2 {
-	  	layer, layerErr := strconv.Atoi(kv[0])
-	  	speed, speedErr := strconv.Atoi(kv[1])
-	  	if layerErr != nil || speedErr != nil || layer < 0 || speed < 0 || speed > 255 {
-	  		return errors.New(errMessage)
-		  }
-		  lut[layer] = speed
-	  } else {
-		  return errors.New(errMessage)
-	  }
+	sp := strings.Split(s, ",")
+	lut := make(map[int]int, len(sp))
+	for _, kvp := range sp {
+		kv := strings.Split(kvp, "=")
+		if len(kv) == 2 {
+			layer, layerErr := strconv.Atoi(kv[0])
+			speed, speedErr := strconv.Atoi(kv[1])
+			if layerErr != nil || speedErr != nil || layer < 0 || speed < 0 || speed > 255 {
+				return errors.New(errMessage)
+			}
+			lut[layer] = speed
+		} else {
+			return errors.New(errMessage)
+		}
 	}
 
-  f.LayerToSpeedLUT = lut
+	f.LayerToSpeedLUT = lut
 	return nil
 }
 
@@ -161,7 +161,7 @@ type PrintOptions struct {
 	// InfillPercent is the amount of infill which should be generated.
 	InfillPercent int
 
- 	// InfillRotationDegree is the rotation used for the infill.
+	// InfillRotationDegree is the rotation used for the infill.
 	InfillRotationDegree int
 
 	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
@@ -169,10 +169,6 @@ type PrintOptions struct {
 
 	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
 	NumberTopLayers int
-
-	// Primary (fan 0) speed, at given layers
-	FanSpeed FanSpeedOptions
-
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
@@ -201,6 +197,9 @@ type FilamentOptions struct {
 
 	// RetractionLength is the amount to retract in millimeter.
 	RetractionLength Millimeter
+
+	// Primary (fan 0) speed, at given layers
+	FanSpeed FanSpeedOptions
 }
 
 // PrinterOptions contains all Printer specific GoSlice options.
@@ -238,10 +237,10 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		Print: PrintOptions{
-			IntialLayerSpeed:    30,
-			LayerSpeed:          60,
-			OuterPerimeterSpeed: 40,
-			MoveSpeed:           150,
+			IntialLayerSpeed:                       30,
+			LayerSpeed:                             60,
+			OuterPerimeterSpeed:                    40,
+			MoveSpeed:                              150,
 			InitialLayerThickness:                  200,
 			LayerThickness:                         200,
 			InsetCount:                             2,
@@ -251,7 +250,7 @@ func DefaultOptions() Options {
 			InfillRotationDegree:                   45,
 			NumberBottomLayers:                     3,
 			NumberTopLayers:                        4,
-			FanSpeed: NewDefaultFanSpeedOptions(),
+			FanSpeed:                               NewDefaultFanSpeedOptions(),
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
@@ -303,7 +302,6 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Print.InfillRotationDegree, "infill-rotation-degree", options.Print.InfillRotationDegree, "The rotation used for the infill.")
 	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
 	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
-	flag.Var(&options.Print.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")
@@ -314,6 +312,7 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
 	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
+	flag.Var(&options.Filament.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40. Fan speed can range from 0-255.")
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")
