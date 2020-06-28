@@ -4,6 +4,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -76,6 +77,57 @@ func (m microVec3) Type() string {
 	return "microVec3"
 }
 
+// FanSpeedOptions used to control fan speed at given layers.
+type FanSpeedOptions struct {
+  LayerToSpeedLUT map[int]int
+}
+
+// NewDefaultFanSpeedOptions Creates instance FanSpeedOptions
+// and sets a of full fan (255) at layer 3.
+func NewDefaultFanSpeedOptions() FanSpeedOptions {
+	fo := FanSpeedOptions{}
+	fo.LayerToSpeedLUT = make(map[int]int)
+	fo.LayerToSpeedLUT[2] = 255
+	return fo
+}
+
+func (f FanSpeedOptions) Type() string {
+	return "FanSpeedOptions"
+}
+
+func (f FanSpeedOptions) String() string {
+	var s []string
+	for k,v := range f.LayerToSpeedLUT {
+		s = append(s, fmt.Sprintf("%d=%d",k,v))
+	}
+	return strings.Join(s,",")
+}
+
+// Set takes string in format layerNo2=FanSpeed2,LayerNo2=FanSpeed2
+// Checks fan speed is within allowed range 0-255.
+// Also confirms layer is at at least 0 or above.
+func (f *FanSpeedOptions) Set(s string) error {
+	errMessage := "fan control needs to be in format layernum=fanspeed<0-255>,layernum=fanspeed<0-255>"
+	sp := strings.Split(s,",")
+	lut := make(map[int]int,len(sp))
+	for _,kvp := range sp {
+	  kv := strings.Split(kvp,"=")
+	  if len(kv) == 2 {
+	  	layer, layerErr := strconv.Atoi(kv[0])
+	  	speed, speedErr := strconv.Atoi(kv[1])
+	  	if layerErr != nil || speedErr != nil || layer < 0 || speed < 0 || speed > 255 {
+	  		return errors.New(errMessage)
+		  }
+		  lut[layer] = speed
+	  } else {
+		  return errors.New(errMessage)
+	  }
+	}
+
+  f.LayerToSpeedLUT = lut
+	return nil
+}
+
 // PrintOptions contains all Print specific GoSlice options.
 type PrintOptions struct {
 	// InitialLayerSpeed is the speed only for the first layer in mm per second.
@@ -104,6 +156,9 @@ type PrintOptions struct {
 
 	// InfillPercent says how much infill should be generated.
 	InfillPercent int
+
+	// Primary (fan 0) speed, at given layers
+	FanSpeed FanSpeedOptions
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
@@ -157,6 +212,7 @@ func DefaultOptions() Options {
 			InsetCount:            2,
 			InfillOverlapPercent:  50,
 			InfillPercent:         20,
+			FanSpeed: NewDefaultFanSpeedOptions(),
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter: Millimeter(1.75).ToMicrometer(),
@@ -194,6 +250,7 @@ func ParseFlags() Options {
 	flag.Var(&options.Print.MoveSpeed, "move-speed", "The speed for all non printing moves.")
 	flag.Var(&options.Print.InitialLayerThickness, "initial-layer-thickness", "The layer thickness for the first layer.")
 	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The layer thickness for the first layer.")
+	flag.Var(&options.Print.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40")
 	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The layer thickness for the first layer.")
 	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The layer thickness for the first layer.")
