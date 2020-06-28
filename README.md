@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/aligator/GoSlice.svg?style=svg)](https://circleci.com/gh/aligator/GoSlice)
+
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/logo.png">
 
 # GoSlice
@@ -16,33 +18,14 @@ Minimal usage:
 ```
 go run . --file /path/to/stl/file.stl
 ```
-If you get an error while reading the file, it may help to import it in Prusa Slicer and export the stl from there. (e.g. 3DBenchy has this problem)
-I didn't look into this error yet, but it may be a problem of the stl lib I use.
-
-
 To get help for all possible flags take a look at /data/option.go or just run:
 ```
 go run . --help
 ```
 
-## ToDo
-* ~~read stl~~ (initially done by using external lib github.com/hschendel/stl)
-* ~~implement optimisation as in first Cura Commit~~
-* ~~first gcode result~~ YAY!!
-* ~~refactor and Go-ify the code~~ (done, for now...)
-* ~~perimeters, with configurable outer perimeter speed~~
-* ~~bottom layer~~ (only one layer and not perfect but it works)
-* ~~top layer~~ (same as for bottom: only one layer and not perfect but it works)
-* ~~simple infill~~ (very simple)
-* ~~options as commandline parameters~~
-* ~~add function / interface / struct documentations~~
-* add tests
-* brim
-* skirt
-* retraction
-* grow top and bottom layer into model
-* rotate infill pattern
-* lots of other things...
+## Contribution
+You are welcome to help.  
+[Just look for open issues](https://github.com/aligator/GoSlice/issues) and pick one, create new issues or create new pull requests.
 
 ## Credits
 * CuraEngine for the great first commit, which was a very good starting point for research.

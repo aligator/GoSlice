@@ -5,13 +5,15 @@ package renderer
 import (
 	"GoSlice/clip"
 	"GoSlice/data"
-	"GoSlice/gcode/builder"
+	"GoSlice/gcode"
+	"GoSlice/modifier"
 )
 
 // Infill is a renderer which can fill parts which are defined by a layer part attribute of a specific name.
 // The attribute has to be of type []data.LayerPart.
 type Infill struct {
 	// PatternSetup is called once on init and sets a specific pattern this infill renderer should use.
+	// Min and max define the dimension of the model (in X and Y direction)
 	PatternSetup func(min data.MicroPoint, max data.MicroPoint) clip.Pattern
 
 	// AttrName is the name of the attribute containing the []data.LayerPart's to fill.
@@ -27,23 +29,31 @@ func (i *Infill) Init(model data.OptimizedModel) {
 	i.pattern = i.PatternSetup(model.Min().PointXY(), model.Max().PointXY())
 }
 
-func (i *Infill) Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	if i.pattern == nil {
-		return
+		return nil
 	}
 
-	bottom, ok := layers[layerNr].Attributes()[i.AttrName].([]data.LayerPart)
-	if !ok {
-		return
+	infillParts, err := modifier.InfillParts(layers[layerNr], i.AttrName)
+	if err != nil {
+		return err
+	}
+	if infillParts == nil {
+		return nil
 	}
 
-	for _, part := range bottom {
+	for _, part := range infillParts {
 		for _, c := range i.Comments {
-			builder.AddComment(c)
+			b.AddComment(c)
 		}
 
 		for _, path := range i.pattern.Fill(layerNr, part) {
-			builder.AddPolygon(path, z)
+			err := b.AddPolygon(layers[layerNr], path, z, true)
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }

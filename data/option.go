@@ -41,11 +41,11 @@ func (m Millimeter) Type() string {
 	return "Millimeter"
 }
 
-func (m microVec3) String() string {
-	return m.X().String() + "|" + m.Y().String() + "|" + m.Z().String()
+func (v microVec3) String() string {
+	return v.X().String() + "_" + v.Y().String() + "_" + v.Z().String()
 }
 
-func (m *microVec3) Set(s string) error {
+func (v *microVec3) Set(s string) error {
 	const errorMsg = "the string should contain three integers separated by _"
 	parts := strings.Split(s, "_")
 	if len(parts) != 3 {
@@ -66,15 +66,15 @@ func (m *microVec3) Set(s string) error {
 		return errors.New(errorMsg)
 	}
 
-	m.x = result.x
-	m.y = result.y
-	m.z = result.z
+	v.x = result.x
+	v.y = result.y
+	v.z = result.z
 
 	return nil
 }
 
-func (m microVec3) Type() string {
-	return "microVec3"
+func (v microVec3) Type() string {
+	return "Micrometer"
 }
 
 // FanSpeedOptions used to control fan speed at given layers.
@@ -136,10 +136,10 @@ type PrintOptions struct {
 	// LayerSpeed is the speed for all but the first layer in mm per second.
 	LayerSpeed Millimeter
 
-	// OuterPerimeterSpeed is the speed only for outer perimeters.
+	// OuterPerimeterSpeed is the speed only for outer perimeters in mm per second.
 	OuterPerimeterSpeed Millimeter
 
-	// MoveSpeed is the speed for all non printing moves.
+	// MoveSpeed is the speed for all non printing moves in mm per second.
 	MoveSpeed Millimeter
 
 	// InitialLayerThickness is the layer thickness for the first layer.
@@ -151,20 +151,56 @@ type PrintOptions struct {
 	// InsetCount is the number of perimeters.
 	InsetCount int
 
-	// InfillOverlapPercent says how much the infill should overlap into the perimeters.
+	// InfillOverlapPercent is the percentage of overlap into the perimeters.
 	InfillOverlapPercent int
 
-	// InfillPercent says how much infill should be generated.
+	// AdditionalInternalInfillOverlapPercent is the percentage used to make the internal
+	// infill (infill not blocked by the perimeters) even bigger so that it grows a bit into the model.
+	AdditionalInternalInfillOverlapPercent int
+
+	// InfillPercent is the amount of infill which should be generated.
 	InfillPercent int
+
+ 	// InfillRotationDegree is the rotation used for the infill.
+	InfillRotationDegree int
+
+	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
+	NumberBottomLayers int
+
+	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
+	NumberTopLayers int
 
 	// Primary (fan 0) speed, at given layers
 	FanSpeed FanSpeedOptions
+
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
 type FilamentOptions struct {
-	// FilamentDiameter is the filament diameter used by the printer.
+	// FilamentDiameter is the filament diameter used by the printer in micrometer.
 	FilamentDiameter Micrometer
+
+	// InitialBedTemperature is the temperature for the heated bed for the first layers.
+	InitialBedTemperature int
+
+	// InitialHotendTemperature is the temperature for the hot end for the first layers.
+	InitialHotEndTemperature int
+
+	// BedTemperature is the temperature for the heated bed after the first layers.
+	BedTemperature int
+
+	// HotEndTemperature is the temperature for the hot end after the first layers.
+	HotEndTemperature int
+
+	// InitialTemeratureLayerCount is the number of layers which use the initial temperatures.
+	// After this amount of layers, the normal temperatures are used.
+	InitialTemeratureLayerCount int
+
+	// RetractionSpeed is the speed used for retraction in mm/s.
+	RetractionSpeed Millimeter
+
+	// RetractionLength is the amount to retract in millimeter.
+	RetractionLength Millimeter
 }
 
 // PrinterOptions contains all Printer specific GoSlice options.
@@ -206,16 +242,26 @@ func DefaultOptions() Options {
 			LayerSpeed:          60,
 			OuterPerimeterSpeed: 40,
 			MoveSpeed:           150,
-
-			InitialLayerThickness: 200,
-			LayerThickness:        200,
-			InsetCount:            2,
-			InfillOverlapPercent:  50,
-			InfillPercent:         20,
+			InitialLayerThickness:                  200,
+			LayerThickness:                         200,
+			InsetCount:                             2,
+			InfillOverlapPercent:                   50,
+			AdditionalInternalInfillOverlapPercent: 400,
+			InfillPercent:                          20,
+			InfillRotationDegree:                   45,
+			NumberBottomLayers:                     3,
+			NumberTopLayers:                        4,
 			FanSpeed: NewDefaultFanSpeedOptions(),
 		},
 		Filament: FilamentOptions{
-			FilamentDiameter: Millimeter(1.75).ToMicrometer(),
+			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
+			InitialBedTemperature:       60,
+			InitialHotEndTemperature:    205,
+			BedTemperature:              55,
+			HotEndTemperature:           200,
+			InitialTemeratureLayerCount: 3,
+			RetractionSpeed:             30,
+			RetractionLength:            Millimeter(2),
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
@@ -227,7 +273,7 @@ func DefaultOptions() Options {
 		},
 
 		MeldDistance:              30,
-		JoinPolygonSnapDistance:   100,
+		JoinPolygonSnapDistance:   160,
 		FinishPolygonSnapDistance: 1000,
 	}
 }
@@ -249,18 +295,33 @@ func ParseFlags() Options {
 	flag.Var(&options.Print.OuterPerimeterSpeed, "outer-perimeter-speed", "The speed only for outer perimeters.")
 	flag.Var(&options.Print.MoveSpeed, "move-speed", "The speed for all non printing moves.")
 	flag.Var(&options.Print.InitialLayerThickness, "initial-layer-thickness", "The layer thickness for the first layer.")
-	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The layer thickness for the first layer.")
+	flag.Var(&options.Print.LayerThickness, "layer-thickness", "The thickness for all but the first layer.")
+	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The number of perimeters.")
+	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The percentage of overlap into the perimeters.")
+	flag.IntVar(&options.Print.AdditionalInternalInfillOverlapPercent, "additional-internal-infill-overlap-percent", options.Print.AdditionalInternalInfillOverlapPercent, "The percentage used to make the internal infill (infill not blocked by the perimeters) even bigger so that it grows a bit into the model.")
+	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The amount of infill which should be generated.")
+	flag.IntVar(&options.Print.InfillRotationDegree, "infill-rotation-degree", options.Print.InfillRotationDegree, "The rotation used for the infill.")
+	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
+	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
 	flag.Var(&options.Print.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40")
-	flag.IntVar(&options.Print.InsetCount, "inset-count", options.Print.InsetCount, "The layer thickness for the first layer.")
-	flag.IntVar(&options.Print.InfillOverlapPercent, "infill-overlap-percent", options.Print.InfillOverlapPercent, "The layer thickness for the first layer.")
-	flag.IntVar(&options.Print.InfillPercent, "infill-percent", options.Print.InfillPercent, "The layer thickness for the first layer.")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")
+	flag.IntVar(&options.Filament.InitialBedTemperature, "initial-bed-temperature", options.Filament.InitialBedTemperature, "The temperature for the heated bed for the first layers.")
+	flag.IntVar(&options.Filament.InitialHotEndTemperature, "initial-hot-end-temperature", options.Filament.InitialHotEndTemperature, "The filament diameter used by the printer.")
+	flag.IntVar(&options.Filament.BedTemperature, "bed-temperature", options.Filament.BedTemperature, "The temperature for the heated bed after the first layers.")
+	flag.IntVar(&options.Filament.HotEndTemperature, "hot-end-temperature", options.Filament.HotEndTemperature, "The temperature for the hot end after the first layers.")
+	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
+	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
+	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")
-	center := microVec3{}
+	center := microVec3{
+		options.Printer.Center.X(),
+		options.Printer.Center.Y(),
+		options.Printer.Center.Z(),
+	}
 	flag.Var(&center, "center", "The point where the model is finally placed.")
 
 	flag.Parse()

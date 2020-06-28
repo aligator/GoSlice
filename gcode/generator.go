@@ -3,9 +3,7 @@ package gcode
 
 import (
 	"GoSlice/data"
-	"GoSlice/gcode/builder"
 	"GoSlice/handler"
-	"bytes"
 )
 
 // Renderer can be used to add GCodes based on the current layer and layer data.
@@ -15,14 +13,14 @@ type Renderer interface {
 	// For example the infill patterns can be instanciated int this method.
 	Init(model data.OptimizedModel)
 
-	// Render is called for each layer and the provided builder can be used to add gcode.
-	Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options)
+	// Render is called for each layer and the provided Builder can be used to add gcode.
+	Render(b *Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error
 }
 
 type generator struct {
 	options *data.Options
 	gcode   string
-	builder builder.Builder
+	builder *Builder
 
 	renderers []Renderer
 }
@@ -35,12 +33,6 @@ func (g *generator) Init(model data.OptimizedModel) {
 
 type option func(s *generator)
 
-func (s *generator) With(o ...option) {
-	for _, option := range o {
-		option(s)
-	}
-}
-
 // WithRenderer adds a renderer to the generator.
 func WithRenderer(r Renderer) option {
 	return func(s *generator) {
@@ -48,35 +40,37 @@ func WithRenderer(r Renderer) option {
 	}
 }
 
-// NewGenerator returns a new GCode generator which can be customized by adding several renderers using WithRenderer().
+// NewGenerator returns a new Builder generator which can be customized by adding several renderers using WithRenderer().
 func NewGenerator(options *data.Options, generatorOptions ...option) handler.GCodeGenerator {
 	g := &generator{
 		options: options,
 	}
 
-	for _, o := range generatorOptions {
-		o(g)
+	for _, option := range generatorOptions {
+		option(g)
 	}
 
 	return g
 }
 
 func (g *generator) init() {
-	var b []byte
-	g.builder = builder.NewGCodeBuilder(bytes.NewBuffer(b))
+	g.builder = NewGCodeBuilder()
 }
 
 // Generate generates the GCode by using the renderers added to the generator.
-// The final GCode is just returned.
-func (g *generator) Generate(layers []data.PartitionedLayer) string {
+// The final GCode is just returned as string.
+func (g *generator) Generate(layers []data.PartitionedLayer) (string, error) {
 	g.init()
 
 	for layerNr := range layers {
 		for _, renderer := range g.renderers {
 			z := g.options.Print.InitialLayerThickness + data.Micrometer(layerNr)*g.options.Print.LayerThickness
-			renderer.Render(g.builder, layerNr, layers, z, g.options)
+			err := renderer.Render(g.builder, layerNr, layers, z, g.options)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
-	return g.builder.Buffer().String()
+	return g.builder.String(), nil
 }

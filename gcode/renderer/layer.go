@@ -4,7 +4,7 @@ package renderer
 
 import (
 	"GoSlice/data"
-	"GoSlice/gcode/builder"
+	"GoSlice/gcode"
 	"fmt"
 )
 
@@ -13,34 +13,58 @@ type PreLayer struct{}
 
 func (PreLayer) Init(model data.OptimizedModel) {}
 
-func (PreLayer) Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
-	builder.AddComment("LAYER:%v", layerNr)
+func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+	b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
-		// starting gcode
-		builder.AddComment("START_GCODE")
-		builder.AddComment("Generated with GoSlice")
-		builder.AddCommand("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
-		builder.AddCommand("G92 E0 ; reset extrusion distance")
-		builder.AddCommand("G1 X200 E20 F600 ; prime nozzle")
-		builder.AddCommand("G1 Z5 F5000 ; lift nozzle")
-		builder.AddCommand("G92 E0 ; reset extrusion distance")
+		b.AddComment("Generated with GoSlice")
+		b.AddComment("______________________")
 
-		builder.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
+		b.AddCommand("M107 ; disable fan")
+
+		// set and wait for the initial temperature
+		b.AddComment("SET_INITIAL_TEMP")
+		b.AddCommand("M104 S%d ; start heating hot end", options.Filament.InitialHotEndTemperature)
+		b.AddCommand("M190 S%d ; heat and wait for bed", options.Filament.InitialBedTemperature)
+		b.AddCommand("M109 S%d ; wait for hot end temperature", options.Filament.InitialHotEndTemperature)
+
+		// starting gcode
+		b.AddComment("START_GCODE")
+		b.AddCommand("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
+		b.AddCommand("G92 E0 ; reset extrusion distance")
+		b.AddCommand("G1 X200 E20 F600 ; prime nozzle")
+		b.AddCommand("G1 Z5 F5000 ; lift nozzle")
+		b.AddCommand("G92 E0 ; reset extrusion distance")
+
+		b.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
 
 		// set speeds
-		builder.SetExtrudeSpeed(options.Print.LayerSpeed)
-		builder.SetMoveSpeed(options.Print.MoveSpeed)
+		b.SetExtrudeSpeed(options.Print.LayerSpeed)
+		b.SetMoveSpeed(options.Print.MoveSpeed)
+
+		// set retraction
+		b.SetRetractionSpeed(options.Filament.RetractionSpeed)
+		b.SetRetractionAmount(options.Filament.RetractionLength)
 
 		// force the InitialLayerSpeed for first layer
-		builder.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
+		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
 	} else {
-		builder.DisableExtrudeSpeedOverride()
-		builder.SetExtrudeSpeed(options.Print.LayerSpeed)
+		b.DisableExtrudeSpeedOverride()
+		b.SetExtrudeSpeed(options.Print.LayerSpeed)
 	}
 
 	if fanSpeed, ok := options.Print.FanSpeed.LayerToSpeedLUT[layerNr]; ok {
-		builder.AddCommand(fmt.Sprintf("M106 S%d; enable fan", fanSpeed))
+		b.AddCommand(fmt.Sprintf("M106 S%d; enable fan", fanSpeed))
 	}
+
+	if layerNr == options.Filament.InitialTemeratureLayerCount {
+		// set the normal temperature
+		// this is done without waiting
+		b.AddComment("SET_TEMP")
+		b.AddCommand("M140 S%d", options.Filament.BedTemperature)
+		b.AddCommand("M104 S%d", options.Filament.HotEndTemperature)
+	}
+
+	return nil
 }
 
 // PostLayer adds GCode at the last layer.
@@ -48,11 +72,17 @@ type PostLayer struct{}
 
 func (PostLayer) Init(model data.OptimizedModel) {}
 
-func (PostLayer) Render(builder builder.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) {
+func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	// ending gcode
 	if layerNr == len(layers)-1 {
-		builder.AddComment("END_GCODE")
-		builder.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
-		builder.AddCommand("M107 ; disable fan")
+		b.AddComment("END_GCODE")
+		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
+		b.AddCommand("M107 ; disable fan")
+
+		// disable heaters
+		b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
+		b.AddCommand("M140 S0 ; Set bed to 0C (off)")
 	}
+
+	return nil
 }

@@ -51,6 +51,13 @@ type Clipper interface {
 	// Intersection calculates the intersection between the parts and the toIntersect parts.
 	// It returns the result as a new slice of layer parts.
 	Intersection(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
+
+	// Union calculates the union of the parts and the toMerge parts.
+	// It returns the result as a new slice of layer parts.
+	Union(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool)
+
+	// IsCrossingPerimeter checks if the given line crosses any perimeter of the given parts. If yes, the result is true.
+	IsCrossingPerimeter(parts []data.LayerPart, line data.Path) (result, ok bool)
 }
 
 // clipperClipper implements Clipper using the external clipper library.
@@ -134,7 +141,7 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 	}
 
 	if len(polyList) == 0 {
-		return data.NewPartitionedLayer([]data.LayerPart{}, -1), true
+		return data.NewPartitionedLayer([]data.LayerPart{}), true
 	}
 
 	cl := clipper.NewClipper(clipper.IoNone)
@@ -148,11 +155,9 @@ func (c clipperClipper) GenerateLayerParts(l data.Layer) (data.PartitionedLayer,
 }
 
 // polyTreeToLayerParts creates layer parts out of a poly tree (which is the result of clipper's Execute2).
-// it returns the new parts and the max depth of the tree.
-func polyTreeToLayerParts(tree *clipper.PolyTree) ([]data.LayerPart, int) {
+func polyTreeToLayerParts(tree *clipper.PolyTree) []data.LayerPart {
 	var layerParts []data.LayerPart
 
-	depth := 0
 	var polysForNextRound []*clipper.PolyNode
 
 	for _, c := range tree.Childs() {
@@ -177,15 +182,11 @@ func polyTreeToLayerParts(tree *clipper.PolyTree) ([]data.LayerPart, int) {
 			}
 
 			// TODO: simplify, yes / no ??
-			layerParts = append(layerParts, data.NewUnknownLayerPart(microPath(p.Contour(), false), holes, depth))
+			layerParts = append(layerParts, data.NewBasicLayerPart(microPath(p.Contour(), false), holes))
 		}
-
-		depth++
 	}
 
-	depth--
-
-	return layerParts, depth
+	return layerParts
 }
 
 func (c clipperClipper) InsetLayer(layer []data.LayerPart, offset data.Micrometer, insetCount int) [][][]data.LayerPart {
@@ -210,52 +211,62 @@ func (c clipperClipper) Inset(part data.LayerPart, offset data.Micrometer, inset
 
 		co.MiterLimit = 2
 		allNewInsets := co.Execute2(float64(-int(offset)*insetNr) - float64(offset/2))
-		parts, _ := polyTreeToLayerParts(allNewInsets)
-		insets = append(insets, parts)
+		insets = append(insets, polyTreeToLayerParts(allNewInsets))
 	}
 
 	return insets
 }
 
 func (c clipperClipper) Difference(parts []data.LayerPart, toRemove []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
-	cl := clipper.NewClipper(clipper.IoNone)
-
-	for _, part := range parts {
-		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
-		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
-	}
-
-	for _, remove := range toRemove {
-		cl.AddPath(clipperPath(remove.Outline()), clipper.PtClip, true)
-		cl.AddPaths(clipperPaths(remove.Holes()), clipper.PtClip, true)
-	}
-
-	tree, ok := cl.Execute2(clipper.CtDifference, clipper.PftEvenOdd, clipper.PftEvenOdd)
-
-	if !ok {
-		return nil, ok
-	}
-	clippedParts, _ = polyTreeToLayerParts(tree)
-	return clippedParts, ok
+	return c.runClipper(clipper.CtDifference, parts, toRemove)
 }
 
 func (c clipperClipper) Intersection(parts []data.LayerPart, toIntersect []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
+	return c.runClipper(clipper.CtIntersection, parts, toIntersect)
+}
+
+func (c clipperClipper) Union(parts []data.LayerPart, toMerge []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
+	return c.runClipper(clipper.CtUnion, parts, toMerge)
+}
+
+func (c clipperClipper) runClipper(clipType clipper.ClipType, parts []data.LayerPart, toClip []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
 	cl := clipper.NewClipper(clipper.IoNone)
 	for _, part := range parts {
 		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
 		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtSubject, true)
 	}
 
-	for _, intersect := range toIntersect {
+	for _, intersect := range toClip {
 		cl.AddPath(clipperPath(intersect.Outline()), clipper.PtClip, true)
 		cl.AddPaths(clipperPaths(intersect.Holes()), clipper.PtClip, true)
 	}
 
-	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+	tree, ok := cl.Execute2(clipType, clipper.PftEvenOdd, clipper.PftEvenOdd)
 
 	if !ok {
 		return nil, ok
 	}
-	clippedParts, _ = polyTreeToLayerParts(tree)
-	return clippedParts, ok
+	return polyTreeToLayerParts(tree), ok
+}
+
+func (c clipperClipper) IsCrossingPerimeter(parts []data.LayerPart, line data.Path) (result, ok bool) {
+	// TODO: iIs there a more performant way to detect this?
+	cl := clipper.NewClipper(clipper.IoNone)
+
+	for _, part := range parts {
+		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtClip, true)
+		cl.AddPath(clipperPath(part.Outline()), clipper.PtClip, true)
+	}
+
+	cl.AddPath(clipperPath(line), clipper.PtSubject, false)
+
+	// calculate the intersection of the line and the parts, then look if the result is split into more paths than one.
+	// If yes, the line crossed a perimeter.
+	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+
+	if !ok {
+		return false, ok
+	}
+
+	return len(polyTreeToLayerParts(tree)) > 1, true
 }

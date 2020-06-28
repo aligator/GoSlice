@@ -35,7 +35,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 	// create handlers
 	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-		return clip.NewLinearPattern(min, max, options.Printer.ExtrusionWidth)
+		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree)
 	}
 
 	s.reader = reader.Reader(&options)
@@ -44,6 +44,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 	s.modifiers = []handler.LayerModifier{
 		modifier.NewPerimeterModifier(&options),
 		modifier.NewInfillModifier(&options),
+		modifier.NewInternalInfillModifier(&options),
 	}
 	s.generator = gcode.NewGenerator(
 		&options,
@@ -70,7 +71,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 					lineWidth := data.Micrometer(float64(mm10) / linesPer10mmForInfillPercent)
 
-					return clip.NewLinearPattern(min, max, lineWidth)
+					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, min, max, options.Print.InfillRotationDegree)
 				}
 
 				return nil
@@ -105,7 +106,10 @@ func (s *GoSlice) Process() error {
 	}
 	//}
 
-	optimizedModel.SaveDebugSTL("test.stl")
+	err = optimizedModel.SaveDebugSTL("test.stl")
+	if err != nil {
+		return err
+	}
 
 	// 3. Slice model into layers
 	layers, err := s.slicer.Slice(optimizedModel)
@@ -114,13 +118,12 @@ func (s *GoSlice) Process() error {
 	}
 
 	// 4. Modify the layers
-	// e.g. classify them,
-	// generate the parts which should be filled in,
-	// generate perimeter paths
+	// e.g. generate perimeter paths,
+	// generate the parts which should be filled in, ...
 	for _, m := range s.modifiers {
 		m.Init(optimizedModel)
 		for layerNr := range layers {
-			layers, err = m.Modify(layerNr, layers)
+			err = m.Modify(layerNr, layers)
 			if err != nil {
 				return err
 			}
@@ -129,11 +132,13 @@ func (s *GoSlice) Process() error {
 
 	// 5. generate gcode from the layers
 	s.generator.Init(optimizedModel)
-	gcode := s.generator.Generate(layers)
+	finalGcode, err := s.generator.Generate(layers)
+	if err != nil {
+		return err
+	}
 
-	err = s.writer.Write(gcode, s.options.InputFilePath+".gcode")
-
+	err = s.writer.Write(finalGcode, s.options.InputFilePath+".gcode")
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
-	return nil
+	return err
 }

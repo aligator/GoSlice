@@ -91,7 +91,7 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		// twice the Shoelace formula for area of polygon per line segment.
 		areaRemoveNext := current.X()*next.Y() - current.Y()*next.X()
 
-		// area between the origin and the shurtcutting segment
+		// area between the origin and the shortcutting segment
 		negativeAreaClosing := next.X()*previous.Y() - next.Y()*previous.X()
 
 		areaRemoved += areaRemoveNext
@@ -99,7 +99,7 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		length2 := current.Sub(previous).Size2()
 		nextLength2 := current.Sub(next).Size2()
 
-		// close the shurtcut area polygon
+		// close the shortcut area polygon
 		areaRemovedSoFar := areaRemoved + negativeAreaClosing
 
 		baseLength2 := next.Sub(previous).Size2()
@@ -117,8 +117,8 @@ func (p Path) Simplify(smallestLineSegmentSquared, allowedErrorDistanceSquared M
 		// h^2 = (L / b)^2     [square it]
 		// h^2 = L^2 / b^2     [factor the divisor]
 		height2 := areaRemovedSoFar * areaRemovedSoFar / baseLength2
-		if (height2 <= 25 && //Almost exactly colinear (barring rounding errors).
-			XDistance2ToLine(current, previous, next) <= 25) ||
+		if (height2 <= 25 && //Almost exactly collinear (barring rounding errors).
+			PerpendicularDistance2(current, previous, next) <= 25) ||
 			(length2 < smallestLineSegmentSquared &&
 				nextLength2 < smallestLineSegmentSquared && // segments are small
 				height2 <= allowedErrorDistanceSquared) { // removing the vertex doesn't introduce too much error.
@@ -149,10 +149,7 @@ func (p Path) Bounds() (MicroPoint, MicroPoint) {
 	maxX := MinMicrometer
 	maxY := MinMicrometer
 
-	// return 0, 0, 0, 0 if everything is empty
-	any := false
 	for _, point := range p {
-		any = true
 		if point.X() < minX {
 			minX = point.X()
 		}
@@ -168,11 +165,14 @@ func (p Path) Bounds() (MicroPoint, MicroPoint) {
 		}
 	}
 
-	if !any {
-		return NewMicroPoint(0, 0), NewMicroPoint(0, 0)
-	}
-
 	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)
+}
+
+// Rotate rotates all points around (0|0) by the given degree.
+func (p Path) Rotate(degree float64) {
+	for i, point := range p {
+		p[i] = point.Rotate(degree)
+	}
 }
 
 // Paths represents a group of Paths.
@@ -219,22 +219,19 @@ func (p Paths) Bounds() (MicroPoint, MicroPoint) {
 	return NewMicroPoint(minX, minY), NewMicroPoint(maxX, maxY)
 }
 
+// Rotate rotates all points around (0|0) by the given degree.
+func (p Paths) Rotate(degree float64) {
+	for _, path := range p {
+		path.Rotate(degree)
+	}
+}
+
 // LayerPart represents one part of a layer.
 // It consists of an outline and may have several holes
-// Some implementations may also provide a Type for it.
+// Some implementations may also provide Attributes for it.
 type LayerPart interface {
 	Outline() Path
 	Holes() Paths
-
-	// Depth returns how deep it is located inside the polygon tree where this part was derived from
-	// If it is unknown, just return -1.
-	Depth() int
-
-	// Type classifies the part.
-	// If the type is irrelevant or not known,
-	// Type() should just return:
-	//  "unknown"
-	Type() string
 
 	// Attributes can be any additional data, referenced by a key.
 	// Note that you have to know what type the attribute has to
@@ -258,12 +255,6 @@ type Layer interface {
 type PartitionedLayer interface {
 	LayerParts() []LayerPart
 
-	// Type classifies the layer.
-	// If the type is irrelevant or not known,
-	// Type() should just return:
-	//  "unknown"
-	Type() string
-
 	// Attributes can be any additional data, referenced by a key.
 	// Note that you have to know what type the attribute has to
 	// use proper type assertion.
@@ -272,73 +263,52 @@ type PartitionedLayer interface {
 	// If the implementation supports attributes but doesn't have ane, it should return an empty map.
 	Attributes() map[string]interface{}
 
+	// Bounds returns the min and max Points which specify the bounding box.
 	Bounds() (MicroPoint, MicroPoint)
-
-	// The maximum depth a layer part can have in this layer. (Derived from an original tree structure.)
-	// If it is -1 the depth is unknown.
-	MaxDepth() int
 }
 
-// UnknownLayerPart is the simplest implementation of LayerPart.
+// basicLayerPart is the simplest implementation of LayerPart.
 // It holds one outline and several hole-paths.
 // You can assume that all paths are closed polygons.
 // (If the instance is created by GoSlice...)
-type UnknownLayerPart struct {
+type basicLayerPart struct {
 	outline Path
 	holes   Paths
-	depth   int
 }
 
-// NewUnknownLayerPart returns a new, simple LayerPart with the type "unknown".
-// If the depth is unknown just pass -1.
-func NewUnknownLayerPart(outline Path, holes Paths, depth int) LayerPart {
-	return UnknownLayerPart{
+// NewBasicLayerPart returns a new, simple LayerPart.
+func NewBasicLayerPart(outline Path, holes Paths) LayerPart {
+	return basicLayerPart{
 		outline: outline,
 		holes:   holes,
-		depth:   depth,
 	}
 }
 
-func (l UnknownLayerPart) Outline() Path {
+func (l basicLayerPart) Outline() Path {
 	return l.outline
 }
 
-func (l UnknownLayerPart) Holes() Paths {
+func (l basicLayerPart) Holes() Paths {
 	return l.holes
 }
 
-// Type returns always "unknown" in this implementation.
-func (l UnknownLayerPart) Type() string {
-	return "unknown"
-}
-
-func (l UnknownLayerPart) Attributes() map[string]interface{} {
+func (l basicLayerPart) Attributes() map[string]interface{} {
 	return nil
 }
 
-func (l UnknownLayerPart) Depth() int {
-	return l.depth
-}
-
 type partitionedLayer struct {
-	parts    []LayerPart
-	maxDepth int
+	parts []LayerPart
 }
 
 // NewPartitionedLayer returns a new simple PartitionedLayer which just contains several LayerParts.
-func NewPartitionedLayer(parts []LayerPart, maxDepth int) PartitionedLayer {
+func NewPartitionedLayer(parts []LayerPart) PartitionedLayer {
 	return partitionedLayer{
-		parts:    parts,
-		maxDepth: maxDepth,
+		parts: parts,
 	}
 }
 
 func (p partitionedLayer) LayerParts() []LayerPart {
 	return p.parts
-}
-
-func (p partitionedLayer) Type() string {
-	return "unknown"
 }
 
 func (p partitionedLayer) Attributes() map[string]interface{} {
@@ -352,8 +322,4 @@ func (p partitionedLayer) Bounds() (MicroPoint, MicroPoint) {
 	}
 
 	return paths.Bounds()
-}
-
-func (p partitionedLayer) MaxDepth() int {
-	return p.maxDepth
 }

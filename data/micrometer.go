@@ -46,9 +46,9 @@ type MicroVec3 interface {
 
 	Max() Micrometer
 
-	// TestLength checks if the length of the vector fits inside the given length.
+	// ShorterThanOrEqual checks if the length of the vector fits inside the given length.
 	// Returns true if the vector length is <= the given length.
-	TestLength(length Micrometer) bool
+	ShorterThanOrEqual(length Micrometer) bool
 
 	// Size2 returns the length of the vector^2.
 	//
@@ -59,12 +59,6 @@ type MicroVec3 interface {
 	//
 	// Use Size2() this whenever possible as it may be faster than Size().
 	Size() Micrometer
-
-	// Normalized returns the normalized MicroVec3.
-	Normalized() MicroVec3
-
-	// Cross can crossmultiply the vector with another one.
-	Cross(p2 MicroVec3) MicroVec3
 
 	// Copy returns a completely new copy of the vector.
 	Copy() MicroVec3
@@ -93,6 +87,13 @@ func NewMicroVec3(x Micrometer, y Micrometer, z Micrometer) MicroVec3 {
 
 func Max(a, b Micrometer) Micrometer {
 	if a > b {
+		return a
+	}
+	return b
+}
+
+func Min(a, b Micrometer) Micrometer {
+	if a < b {
 		return a
 	}
 	return b
@@ -171,7 +172,7 @@ func (v *microVec3) Max() Micrometer {
 	return v.z
 }
 
-func (v *microVec3) TestLength(length Micrometer) bool {
+func (v *microVec3) ShorterThanOrEqual(length Micrometer) bool {
 	return v.Size2() <= length*length
 }
 
@@ -181,19 +182,6 @@ func (v *microVec3) Size2() Micrometer {
 
 func (v *microVec3) Size() Micrometer {
 	return Micrometer(math.Sqrt(float64(v.Size2())))
-}
-
-func (v *microVec3) Normalized() MicroVec3 {
-	return v.Div(v.Size())
-}
-
-func (v *microVec3) Cross(p2 MicroVec3) MicroVec3 {
-	crossVec := NewMicroVec3(
-		v.y*p2.Z()-v.z*p2.Y(),
-		v.z*p2.X()-v.x*p2.Z(),
-		v.x*p2.Y()-v.y*p2.X(),
-	)
-	return crossVec
 }
 
 func (v *microVec3) Copy() MicroVec3 {
@@ -232,6 +220,11 @@ type MicroPoint interface {
 	//
 	// By convention it should never mutate the instance and instead return a new copy.
 	Div(value Micrometer) MicroPoint
+
+	// Rotate returns a new vector which is rotated around (0|0) by the given degree value.
+	//
+	// By convention it should never mutate the instance and instead return a new copy.
+	Rotate(degree float64) MicroPoint
 
 	// ShorterThanOrEqual checks if the length of the vector fits inside the given length.
 	// Returns true if the vector length is <= the given length.
@@ -306,6 +299,17 @@ func (p *microPoint) Div(value Micrometer) MicroPoint {
 	result := p.Copy()
 	result.SetX(result.X() / value)
 	result.SetY(result.Y() / value)
+	return result
+}
+
+func (p *microPoint) Rotate(degree float64) MicroPoint {
+	rad := ToRadians(degree)
+	sin := math.Sin(rad)
+	cos := math.Cos(rad)
+
+	result := p.Copy()
+	result.SetX(Micrometer(math.RoundToEven(float64(p.x)*cos - float64(p.y)*sin)))
+	result.SetY(Micrometer(math.RoundToEven(float64(p.x)*sin + float64(p.y)*cos)))
 	return result
 }
 

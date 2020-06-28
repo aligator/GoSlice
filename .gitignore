@@ -3,3 +3,7 @@
 *.stl
 *.html
 *.gcode
+\#*#
+GoSlice
+coverage.out
+!test_stl/*.stl

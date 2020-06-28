@@ -12,7 +12,7 @@ import (
 type Millimeter float32
 
 func (m Millimeter) ToMicrometer() Micrometer {
-	return Micrometer(m * 1000)
+	return Micrometer(math.RoundToEven(float64(m * 1000)))
 }
 
 // Micrometer represents a value in 0.001 mm
@@ -22,5 +22,5 @@ const MaxMicrometer = Micrometer(math.MaxInt64)
 const MinMicrometer = Micrometer(math.MinInt64)
 
 func (m Micrometer) ToMillimeter() Millimeter {
-	return Millimeter(m) * 0.001
+	return Millimeter(float64(m) / 1000)
 }
