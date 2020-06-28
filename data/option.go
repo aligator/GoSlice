@@ -250,7 +250,6 @@ func DefaultOptions() Options {
 			InfillRotationDegree:                   45,
 			NumberBottomLayers:                     3,
 			NumberTopLayers:                        4,
-			FanSpeed:                               NewDefaultFanSpeedOptions(),
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
@@ -261,6 +260,7 @@ func DefaultOptions() Options {
 			InitialTemeratureLayerCount: 3,
 			RetractionSpeed:             30,
 			RetractionLength:            Millimeter(2),
+			FanSpeed:                    NewDefaultFanSpeedOptions(),
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
