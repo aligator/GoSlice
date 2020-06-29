@@ -16,7 +16,7 @@ Supported features:
 * simple retraction on crossing perimeters
 * several options to customize slicing output
 
-Example:
+Example:  
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/docs/GoSlice-print.png">
 
 ## Run
