@@ -25,7 +25,7 @@ func NewInfillModifier(options *data.Options) handler.LayerModifier {
 // If it doesn't exist, (nil, nil) is returned.
 // If it exists, the infill is returned.
 func BottomInfill(layer data.PartitionedLayer) ([]data.LayerPart, error) {
-	return InfillParts(layer, "bottom")
+	return PartsAttribute(layer, "bottom")
 }
 
 // TopInfill extracts the attribute "top" from the layer.
@@ -33,24 +33,7 @@ func BottomInfill(layer data.PartitionedLayer) ([]data.LayerPart, error) {
 // If it doesn't exist, (nil, nil) is returned.
 // If it exists, the infill is returned.
 func TopInfill(layer data.PartitionedLayer) ([]data.LayerPart, error) {
-	return InfillParts(layer, "top")
-}
-
-// TopInfill extracts the given attribute" from the layer.
-// If it has the wrong type, a error is returned.
-// If it doesn't exist, (nil, nil) is returned.
-// If it exists, the infill is returned.
-func InfillParts(layer data.PartitionedLayer, typ string) ([]data.LayerPart, error) {
-	if attr, ok := layer.Attributes()[typ]; ok {
-		parts, ok := attr.([]data.LayerPart)
-		if !ok {
-			return nil, errors.New("the attribute " + typ + " has the wrong datatype")
-		}
-
-		return parts, nil
-	}
-
-	return nil, nil
+	return PartsAttribute(layer, "top")
 }
 
 func (m infillModifier) Modify(layers []data.PartitionedLayer) error {

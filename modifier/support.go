@@ -62,7 +62,6 @@ func (m supportDetectorModifier) Modify(layers []data.PartitionedLayer) error {
 		cl := clip.NewClipper()
 		var offsetLayer []data.LayerPart
 
-		fmt.Println(data.Micrometer(-math.Round(distance)))
 		for _, part := range cl.InsetLayer(layers[layerNr].LayerParts(), data.Micrometer(-math.Round(distance)), 1) {
 			for _, wall := range part {
 				offsetLayer = append(offsetLayer, wall...)
@@ -101,22 +100,58 @@ func NewSupportGeneratorModifier(options *data.Options) handler.LayerModifier {
 }
 
 func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
+	var lastSupport []data.LayerPart
+
 	// for each layer starting at the top layer
 	for layerNr := len(layers) - 1; layerNr >= 0; layerNr-- {
-
 		if !m.options.Print.Support.Enabled || layerNr == 0 {
 			return nil
 		}
 
 		// load support for the current layer (or use the result from the last round to avoid loading it again??)
+		currentSupport := lastSupport
+		if layerNr == len(layers)-1 {
+			var err error
+			currentSupport, err = PartsAttribute(layers[layerNr], "support")
+			if err != nil {
+				return err
+			}
+		}
 
 		// load support needed for the layer below
+		belowSupport, err := PartsAttribute(layers[layerNr-1], "support")
+		if err != nil {
+			return err
+		}
 
+		if len(currentSupport) == 0 && len(belowSupport) == 0 {
+			continue
+		}
 		// union them
+		cl := clip.NewClipper()
+		result, ok := cl.Union(currentSupport, belowSupport)
+		if !ok {
+			return errors.New(fmt.Sprintf("could not union the supports for layer %d to generate support", layerNr))
+		}
 
 		// subtract the (exset) model from the result
+		// - exset below
+		//exset := cl.InsetLayer(layers[layerNr-1].LayerParts(), data.Millimeter(0.5).ToMicrometer(), -1)
+		// - subtract
+		actualSupport, ok := cl.Difference(result, layers[layerNr-1].LayerParts())
+		if !ok {
+			return errors.New(fmt.Sprintf("could not subtract the model from the supports for layer %d", layerNr))
+		}
 
 		// save the support as actual support to render for the layer below
+		newLayer := newExtendedLayer(layers[layerNr-1])
+		if len(actualSupport) > 0 {
+			newLayer.attributes["support"] = actualSupport
+		} else {
+			// remove maybe existing support from the detection modifier
+			newLayer.attributes["support"] = []data.LayerPart{}
+		}
+		layers[layerNr-1] = newLayer
 	}
 	return nil
 }
