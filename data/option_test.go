@@ -85,16 +85,37 @@ func TestSetFanSpeed(t *testing.T) {
 	}
 }
 
-func TestFanSpeedStringMultipleGood(t *testing.T) {
-	fanSpeedText := "1=20,5=100"
-	fanSpeedOptions := data.FanSpeedOptions{}
-	fanSpeedOptions.Set(fanSpeedText)
-	test.Equals(t, fanSpeedOptions.String(), fanSpeedText)
+// fanSpeedOptionsStringComparer returns a cmp.Comparer which can handle generated strings.
+func fanSpeedOptionsStringComparer() cmp.Option {
+	return cmp.Comparer(func(p1, p2 string) bool {
+		return p1 == p2
+	})
 }
 
-func TestFanSpeedStringSingleGood(t *testing.T) {
-	fanSpeedText := "1=20"
-	fanSpeedOptions := data.FanSpeedOptions{}
-	fanSpeedOptions.Set(fanSpeedText)
-	test.Equals(t, fanSpeedOptions.String(), fanSpeedText)
+func TestSetFanSpeedString(t *testing.T) {
+	var testCases = map[string]struct {
+		optionString  string
+		expectedError string
+		expected      string
+	}{
+		"TestFanSpeedStringMultipleGood": {
+			optionString: "1=20,5=100",
+			expected:     "1=20,5=100",
+		},
+		"TestFanSpeedStringSingleGood": {
+			optionString: "1=20",
+			expected:     "1=20",
+		},
+		"TestFanSpeedStringSingleBad": {
+			optionString: "1=-20",
+			expected:     "", // expect default value for string to be returned in bad case.
+		},
+	}
+
+	for testName, testCase := range testCases {
+		t.Log("testCase:", testName)
+		actual := data.FanSpeedOptions{}
+		actual.Set(testCase.optionString)
+		test.Equals(t, actual.String(), testCase.expected, fanSpeedOptionsStringComparer())
+	}
 }
