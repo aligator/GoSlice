@@ -5,7 +5,6 @@ package renderer
 import (
 	"GoSlice/data"
 	"GoSlice/gcode"
-	"fmt"
 )
 
 // PreLayer adds starting gcode, resets the extrude speeds on each layer and enables the fan above a specific layer.
@@ -56,7 +55,7 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 		if fanSpeed == 0 {
 			b.AddCommand("M107 ; disable fan")
 		} else {
-			b.AddCommand(fmt.Sprintf("M106 S%d; change fan speed", fanSpeed))
+			b.AddCommand("M106 S%d; change fan speed", fanSpeed)
 		}
 	}
 

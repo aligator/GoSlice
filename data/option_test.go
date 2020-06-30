@@ -3,63 +3,98 @@ package data_test
 import (
 	"GoSlice/data"
 	"GoSlice/util/test"
+	"github.com/google/go-cmp/cmp"
 	"strings"
 	"testing"
 )
 
-func TestFanSpeedDefaults(t *testing.T) {
-	opts := data.DefaultOptions()
-	test.Equals(t, opts.Filament.FanSpeed.LayerToSpeedLUT[2], 255)
+// fanSpeedOptionsComparer returns a cmp.Comparer which can handle data.FanSpeedOptions.
+func fanSpeedOptionsComparer() cmp.Option {
+	return cmp.Comparer(func(p1, p2 data.FanSpeedOptions) bool {
+		for layer, speed := range p1.LayerToSpeedLUT {
+			if p2.LayerToSpeedLUT[layer] != speed {
+				return false
+			}
+		}
+		return true
+	})
 }
 
-func TestFanSpeedNegative(t *testing.T) {
-	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set("1=-5")
-	test.Assert(t, strings.Contains(err.Error(), "fan control needs to be in format"), "fan speed error expected")
-}
+func TestSetFanSpeed(t *testing.T) {
+	var testCases = map[string]struct {
+		optionString  string
+		expectedError string
+		expected      *data.FanSpeedOptions
+	}{
+		"FanSpeedNegative": {
+			optionString:  "1=-5",
+			expectedError: "fan control needs to be in format",
+			expected:      nil,
+		},
+		"FanSpeedOneSuccessful": {
+			optionString:  "1=10",
+			expectedError: "",
+			expected: &data.FanSpeedOptions{LayerToSpeedLUT: map[int]int{
+				1: 10,
+			}},
+		},
+		"TestFanSpeedLayerNegative": {
+			optionString:  "-1=5",
+			expectedError: "fan control needs to be in format",
+			expected:      nil,
+		},
+		"TestFanSpeedGreaterThan255": {
+			optionString:  "1=256",
+			expectedError: "fan control needs to be in format",
+			expected:      nil,
+		},
+		"TestFanSpeedSingleGood": {
+			optionString:  "1=20",
+			expectedError: "",
+			expected: &data.FanSpeedOptions{LayerToSpeedLUT: map[int]int{
+				1: 20,
+			}},
+		},
+		"TestFanSpeedMultipleGood": {
+			optionString:  "1=20,5=100",
+			expectedError: "",
+			expected: &data.FanSpeedOptions{LayerToSpeedLUT: map[int]int{
+				1: 20,
+				5: 100,
+			}},
+		},
+		"TestFanSpeedMultipleOneBadOneGood": {
+			optionString:  "1=-20,5=100",
+			expectedError: "fan control needs to be in format",
+			expected:      nil,
+		},
+	}
 
-func TestFanSpeedLayerNegative(t *testing.T) {
-	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set("-1=5")
-	test.Assert(t, strings.Contains(err.Error(), "fan control needs to be in format"), "fan speed error expected")
-}
+	for testName, testCase := range testCases {
+		t.Log("testCase:", testName)
+		actual := data.FanSpeedOptions{}
+		err := actual.Set(testCase.optionString)
 
-func TestFanSpeedGreaterThan255(t *testing.T) {
-	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set("1=256")
-	test.Assert(t, strings.Contains(err.Error(), "fan control needs to be in format"), "fan speed error expected")
-}
-
-func TestFanSpeedSingleGood(t *testing.T) {
-	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set("1=20")
-	test.Assert(t, err == nil, "unsuccessfully set single fan speed")
-}
-
-func TestFanSpeedMultipleGood(t *testing.T) {
-	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set("1=20,5=100")
-	test.Assert(t, err == nil, "unsuccessfully set multiple fan speed")
-}
-
-func TestFanSpeedMultipleOneBadOneGood(t *testing.T) {
-	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set("1=-20,5=100")
-	test.Assert(t, strings.Contains(err.Error(), "fan control needs to be in format"), "fan speed error expected")
+		// negative cases
+		if testCase.expectedError != "" {
+			test.Assert(t, strings.Contains(err.Error(), testCase.expectedError), "error expected")
+		} else {
+			// positive cases
+			test.Equals(t, testCase.expected, &actual, fanSpeedOptionsComparer())
+		}
+	}
 }
 
 func TestFanSpeedStringMultipleGood(t *testing.T) {
 	fanSpeedText := "1=20,5=100"
 	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set(fanSpeedText)
-	test.Assert(t, err == nil, "unsuccessfully set multiple fan speed")
+	fanSpeedOptions.Set(fanSpeedText)
 	test.Equals(t, fanSpeedOptions.String(), fanSpeedText)
 }
 
 func TestFanSpeedStringSingleGood(t *testing.T) {
 	fanSpeedText := "1=20"
 	fanSpeedOptions := data.FanSpeedOptions{}
-	err := fanSpeedOptions.Set(fanSpeedText)
-	test.Assert(t, err == nil, "unsuccessfully set single fan speed")
+	fanSpeedOptions.Set(fanSpeedText)
 	test.Equals(t, fanSpeedOptions.String(), fanSpeedText)
 }
