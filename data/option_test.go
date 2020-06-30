@@ -77,7 +77,7 @@ func TestSetFanSpeed(t *testing.T) {
 
 		// negative cases
 		if testCase.expectedError != "" {
-			test.Assert(t, strings.Contains(err.Error(), testCase.expectedError), "error expected")
+			test.Assert(t, err != nil && strings.Contains(err.Error(), testCase.expectedError), "error expected")
 		} else {
 			// positive cases
 			test.Equals(t, testCase.expected, &actual, fanSpeedOptionsComparer())
@@ -85,37 +85,45 @@ func TestSetFanSpeed(t *testing.T) {
 	}
 }
 
-// fanSpeedOptionsStringComparer returns a cmp.Comparer which can handle generated strings.
-func fanSpeedOptionsStringComparer() cmp.Option {
-	return cmp.Comparer(func(p1, p2 string) bool {
-		return p1 == p2
-	})
-}
-
 func TestSetFanSpeedString(t *testing.T) {
 	var testCases = map[string]struct {
-		optionString  string
-		expectedError string
-		expected      string
+		optionString string
+		expected     []string // use slice as the order is not guaranteed in maps
 	}{
 		"TestFanSpeedStringMultipleGood": {
 			optionString: "1=20,5=100",
-			expected:     "1=20,5=100",
+			expected: []string{
+				"1=20",
+				"5=100",
+			},
 		},
 		"TestFanSpeedStringSingleGood": {
 			optionString: "1=20",
-			expected:     "1=20",
+			expected: []string{
+				"1=20",
+			},
 		},
 		"TestFanSpeedStringSingleBad": {
 			optionString: "1=-20",
-			expected:     "", // expect default value for string to be returned in bad case.
+			expected:     []string{}, // expect empty value for string to be returned in bad case.
 		},
 	}
 
 	for testName, testCase := range testCases {
 		t.Log("testCase:", testName)
-		actual := data.FanSpeedOptions{}
-		actual.Set(testCase.optionString)
-		test.Equals(t, actual.String(), testCase.expected, fanSpeedOptionsStringComparer())
+
+		option := data.FanSpeedOptions{}
+		_ = option.Set(testCase.optionString) // ignore error
+		actual := option.String()
+
+		// It is a bit tricky to check the string as the order is not guaranteed in maps.
+		// So this checks first if the string split by ',' is the same length as the expected values,
+		// or if the expected length is 0 and the actual string is "" (as split of "" results in length 1).
+		test.Assert(t, len(strings.Split(actual, ",")) == len(testCase.expected) ||
+			len(testCase.expected) == 0 && actual == "", "actual: %v, expected: %d", actual, testCase.expected)
+
+		for _, expected := range testCase.expected {
+			test.Assert(t, strings.Contains(actual, expected), "actual '%s' should contain '%s'", actual, expected)
+		}
 	}
 }
