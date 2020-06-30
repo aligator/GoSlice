@@ -51,8 +51,12 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
 	}
 
-	if layerNr == 2 {
-		b.AddCommand("M106 ; enable fan")
+	if fanSpeed, ok := options.Filament.FanSpeed.LayerToSpeedLUT[layerNr]; ok {
+		if fanSpeed == 0 {
+			b.AddCommand("M107 ; disable fan")
+		} else {
+			b.AddCommand("M106 S%d; change fan speed", fanSpeed)
+		}
 	}
 
 	if layerNr == options.Filament.InitialTemeratureLayerCount {
