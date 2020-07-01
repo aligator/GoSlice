@@ -4,6 +4,7 @@ package data
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -88,6 +89,57 @@ type SupportOptions struct {
 	TopGapLayers int
 }
 
+// FanSpeedOptions used to control fan speed at given layers.
+type FanSpeedOptions struct {
+	LayerToSpeedLUT map[int]int
+}
+
+// NewDefaultFanSpeedOptions Creates instance FanSpeedOptions
+// and sets a of full fan (255) at layer 3.
+func NewDefaultFanSpeedOptions() FanSpeedOptions {
+	fo := FanSpeedOptions{}
+	fo.LayerToSpeedLUT = make(map[int]int)
+	fo.LayerToSpeedLUT[2] = 255
+	return fo
+}
+
+func (f FanSpeedOptions) Type() string {
+	return "FanSpeedOptions"
+}
+
+func (f FanSpeedOptions) String() string {
+	var s []string
+	for k, v := range f.LayerToSpeedLUT {
+		s = append(s, fmt.Sprintf("%d=%d", k, v))
+	}
+	return strings.Join(s, ",")
+}
+
+// Set takes string in format layerNo2=FanSpeed2,LayerNo2=FanSpeed2
+// Checks fan speed is within allowed range 0-255.
+// Also confirms layer is at at least 0 or above.
+func (f *FanSpeedOptions) Set(s string) error {
+	errMessage := "fan control needs to be in format layernum=fanspeed<0-255>,layernum=fanspeed<0-255>"
+	sp := strings.Split(s, ",")
+	lut := make(map[int]int, len(sp))
+	for _, kvp := range sp {
+		kv := strings.Split(kvp, "=")
+		if len(kv) == 2 {
+			layer, layerErr := strconv.Atoi(kv[0])
+			speed, speedErr := strconv.Atoi(kv[1])
+			if layerErr != nil || speedErr != nil || layer < 0 || speed < 0 || speed > 255 {
+				return errors.New(errMessage)
+			}
+			lut[layer] = speed
+		} else {
+			return errors.New(errMessage)
+		}
+	}
+
+	f.LayerToSpeedLUT = lut
+	return nil
+}
+
 // PrintOptions contains all Print specific GoSlice options.
 type PrintOptions struct {
 	// InitialLayerSpeed is the speed only for the first layer in mm per second.
@@ -159,6 +211,9 @@ type FilamentOptions struct {
 
 	// RetractionLength is the amount to retract in millimeter.
 	RetractionLength Millimeter
+
+	// Primary (fan 0) speed, at given layers
+	FanSpeed FanSpeedOptions
 }
 
 // PrinterOptions contains all Printer specific GoSlice options.
@@ -224,6 +279,7 @@ func DefaultOptions() Options {
 			InitialTemeratureLayerCount: 3,
 			RetractionSpeed:             30,
 			RetractionLength:            Millimeter(2),
+			FanSpeed:                    NewDefaultFanSpeedOptions(),
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
@@ -280,6 +336,7 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
 	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
+	flag.Var(&options.Filament.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40. Fan speed can range from 0-255.")
 
 	// printer options
 	flag.Var(&options.Printer.ExtrusionWidth, "extrusion-width", "The diameter of your nozzle.")
