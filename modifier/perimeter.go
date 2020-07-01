@@ -40,10 +40,10 @@ func OverlapPerimeters(layer data.PartitionedLayer) ([][]data.LayerPart, error) 
 // Perimeters extracts the attribute "perimeters" from the layer.
 // If it has the wrong type, a error is returned.
 // If it doesn't exist, (nil, nil) is returned.
-// If it exists, the perimeters are returned as [part][insetNr][insetParts]data.LayerPart.
-func Perimeters(layer data.PartitionedLayer) ([][][]data.LayerPart, error) {
+// If it exists, the perimeters are returned.
+func Perimeters(layer data.PartitionedLayer) (clip.OffsetResult, error) {
 	if attr, ok := layer.Attributes()["perimeters"]; ok {
-		perimeters, ok := attr.([][][]data.LayerPart)
+		perimeters, ok := attr.(clip.OffsetResult)
 		if !ok {
 			return nil, errors.New("the attribute perimeters has the wrong datatype")
 		}
@@ -54,7 +54,7 @@ func Perimeters(layer data.PartitionedLayer) ([][][]data.LayerPart, error) {
 	return nil, nil
 }
 
-func (m perimeterModifier) Init(model data.OptimizedModel) {}
+func (m perimeterModifier) Init(_ data.OptimizedModel) {}
 
 func (m perimeterModifier) Modify(layers []data.PartitionedLayer) error {
 	for layerNr := range layers {
