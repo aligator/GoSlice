@@ -35,6 +35,9 @@ go run . --help
 You are welcome to help.  
 [Just look for open issues](https://github.com/aligator/GoSlice/issues) and pick one, create new issues or create new pull requests.
 
+For debugging of the GCode I suggest you to use Cura to open the resulting GCode.
+Cura can open it without any problem and I try to add the markings into the GCode which Cura understands (e.g. mark what is infill, perimeter, etc.).
+
 ## Credits
 * CuraEngine for the great first commit, which was a very good starting point for research.
 * https://www.thingiverse.com/thing:3413597 for the great Gopher model used as logo. (Original Gopher designed by [Renee French CC BY 3.0](http://reneefrench.blogspot.com/))

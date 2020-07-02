@@ -142,8 +142,12 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 			return errors.New(fmt.Sprintf("could not union the supports for layer %d to generate support", layerNr))
 		}
 
+		// make the layer a bit bigger to create a gap between the support and the model
+		// TODO: configurable gap size
+		biggerLayer := cl.InsetLayer(layers[layerNr-1].LayerParts(), -data.Millimeter(0.5).ToMicrometer(), 1).ToOneDimension()
+
 		// subtract the model from the result
-		actualSupport, ok := cl.Difference(result, layers[layerNr-1].LayerParts())
+		actualSupport, ok := cl.Difference(result, biggerLayer)
 		if !ok {
 			return errors.New(fmt.Sprintf("could not subtract the model from the supports for layer %d", layerNr))
 		}

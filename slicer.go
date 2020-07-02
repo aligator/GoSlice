@@ -35,7 +35,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 	// create handlers
 	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree)
+		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree, true)
 	}
 
 	s.reader = reader.Reader(&options)
@@ -56,7 +56,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		// debug support generation
 		gcode.WithRenderer(&renderer.Infill{
 			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, data.Millimeter(0.5).ToMicrometer(), min, max, 0)
+				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, data.Millimeter(1).ToMicrometer(), min, max, 90, false)
 			},
 			AttrName: "support",
 			Comments: []string{"TYPE:SUPPORT"},
@@ -83,7 +83,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 					lineWidth := data.Micrometer(float64(mm10) / linesPer10mmForInfillPercent)
 
-					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, min, max, options.Print.InfillRotationDegree)
+					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, min, max, options.Print.InfillRotationDegree, true)
 				}
 
 				return nil
