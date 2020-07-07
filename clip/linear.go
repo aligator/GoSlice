@@ -16,17 +16,20 @@ type linear struct {
 	lineWidth    data.Micrometer
 	degree       int
 	min, max     data.MicroPoint
+	rectlinear   bool
+	zigZag       bool
 }
 
 // NewLinearPattern provides a simple linear infill pattern consisting of simple parallel lines.
 // The direction of the lines is switching for each layer by 90°.
-func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, min data.MicroPoint, max data.MicroPoint, degree int) Pattern {
+func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, min data.MicroPoint, max data.MicroPoint, degree int, zigZag bool) Pattern {
 	return linear{
 		lineDistance: lineDistance,
 		lineWidth:    lineWidth,
 		degree:       degree,
 		min:          min,
 		max:          max,
+		zigZag:       zigZag,
 	}
 }
 
@@ -63,8 +66,14 @@ func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
 	bounds.Rotate(rotation)
 	min, max := bounds.Bounds()
 
-	resultInfill := p.getInfill(min, max, clipperPath(outline), clipperPaths(holes), 0)
-	result := p.sortInfill(microPaths(resultInfill, false))
+	smallerLines := data.Micrometer(0)
+	if p.zigZag {
+		smallerLines = p.lineWidth
+	}
+
+	resultInfill := p.getInfill(min, max, clipperPath(outline), clipperPaths(holes), 0, smallerLines)
+
+	result := p.sortInfill(microPaths(resultInfill, false), p.zigZag, data.NewBasicLayerPart(outline, holes))
 
 	result.Rotate(-rotation)
 
@@ -72,26 +81,31 @@ func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
 }
 
 // sortInfill optimizes the order of the infill lines.
-func (p linear) sortInfill(unsorted data.Paths) data.Paths {
+func (p linear) sortInfill(unsorted data.Paths, zigZag bool, part data.LayerPart) data.Paths {
 	if len(unsorted) == 0 {
 		return unsorted
 	}
 
+	cl := NewClipper()
+
 	// Save all sorted paths here.
 	sorted := data.Paths{unsorted[0]}
+
+	// save the amount of lines already saved without the extra zigZag lines
+	savedPointsNum := 1
 
 	// Saves already used indices.
 	isUsed := make([]bool, len(unsorted))
 	isUsed[0] = true
 
 	// Saves the last path to know where to continue.
-	lastindex := 0
+	lastIndex := 0
 
-	// Save if the first or second point from the lastPath was the last point.
+	// Save if the first(0) or second(1) point from the lastPath was the last point.
 	lastPoint := 0
 
-	for len(sorted) < len(unsorted) {
-		point := unsorted[lastindex][lastPoint]
+	for savedPointsNum < len(unsorted) {
+		point := unsorted[lastIndex][lastPoint]
 
 		bestIndex := -1
 		bestDiff := data.Micrometer(-1)
@@ -113,13 +127,36 @@ func (p linear) sortInfill(unsorted data.Paths) data.Paths {
 		}
 
 		if bestIndex > -1 {
-			lastindex = bestIndex
-			sorted = append(sorted, unsorted[lastindex])
+			lastIndex = bestIndex
+
+			if zigZag {
+				p1 := sorted[len(sorted)-1][1]
+				p2 := unsorted[lastIndex][1-lastPoint]
+
+				if p1.Sub(p2).ShorterThanOrEqual(p.lineWidth + p.lineDistance*2) {
+
+					connectionLine := []data.MicroPoint{p1, p2}
+
+					isCrossing, ok := cl.IsCrossingPerimeter([]data.LayerPart{part}, connectionLine)
+
+					if !ok {
+						// TODO: return error
+						panic("could not calculate the difference between the current layer and the non-extrusion-move")
+					}
+
+					if !isCrossing {
+						sorted = append(sorted, connectionLine)
+					}
+				}
+			}
+
+			sorted = append(sorted, unsorted[lastIndex])
+			savedPointsNum++
 			isUsed[bestIndex] = true
 			lastPoint = 1 - lastPoint
 		} else {
-			sorted = append(sorted, unsorted[lastindex])
-			isUsed[lastindex] = true
+			// should never go here
+			panic("there should always be a bestIndex > -1")
 		}
 
 		if lastPoint == 1 {
@@ -130,15 +167,11 @@ func (p linear) sortInfill(unsorted data.Paths) data.Paths {
 		}
 	}
 
-	if len(sorted) < len(unsorted) {
-		panic("the sorted lines should have the same amount as the unsorted lines")
-	}
-
 	return sorted
 }
 
 // getInfill fills a polygon (with holes)
-func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32) clipper.Paths {
+func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32, smallerLines data.Micrometer) clipper.Paths {
 	var result clipper.Paths
 
 	// clip the paths with the lines using intersection
@@ -189,7 +222,22 @@ func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clip
 	}
 
 	for _, c := range tree.Childs() {
-		result = append(result, c.Contour())
+		if smallerLines != 0 {
+			// shorten the lines if smallerLines is set
+			p1 := c.Contour()[0]
+			p2 := c.Contour()[1]
+
+			// shorten them by the half value on each side
+			// only do this if the line is bigger than the smallerLines value
+			if p1.Y-clipper.CInt(smallerLines)/2 > p2.Y {
+				p1.Y = p1.Y - clipper.CInt(smallerLines)/2
+				p2.Y = p2.Y + clipper.CInt(smallerLines)/2
+			}
+
+			result = append(result, []*clipper.IntPoint{p1, p2})
+		} else {
+			result = append(result, c.Contour())
+		}
 	}
 
 	return result

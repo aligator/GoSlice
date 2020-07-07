@@ -35,7 +35,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 	// create handlers
 	topBottomPatternFactory := func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree)
+		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree, false)
 	}
 
 	s.reader = reader.Reader(&options)
@@ -71,7 +71,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 					lineWidth := data.Micrometer(float64(mm10) / linesPer10mmForInfillPercent)
 
-					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, min, max, options.Print.InfillRotationDegree)
+					return clip.NewLinearPattern(options.Printer.ExtrusionWidth, lineWidth, min, max, options.Print.InfillRotationDegree, options.Print.InfillZigZag)
 				}
 
 				return nil
