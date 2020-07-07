@@ -263,8 +263,8 @@ func (c clipperClipper) runClipper(clipType clipper.ClipType, parts []data.Layer
 }
 
 func (c clipperClipper) IsCrossingPerimeter(parts []data.LayerPart, line data.Path) (result, ok bool) {
-	// TODO: iIs there a more performant way to detect this?
-	cl := clipper.NewClipper(clipper.IoNone)
+	// TODO: Is there a more performant way to detect this?
+	cl := clipper.NewClipper(clipper.IoReverseSolution) // inverse solution so that it is basically LINE - PARTS
 
 	for _, part := range parts {
 		cl.AddPaths(clipperPaths(part.Holes()), clipper.PtClip, true)
@@ -273,13 +273,13 @@ func (c clipperClipper) IsCrossingPerimeter(parts []data.LayerPart, line data.Pa
 
 	cl.AddPath(clipperPath(line), clipper.PtSubject, false)
 
-	// calculate the intersection of the line and the parts, then look if the result is split into more paths than one.
-	// If yes, the line crossed a perimeter.
-	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
+	// calculate the difference of the parts and the line, then look if the (inverted) result contains any left path which would be a line not inside of the parts.
+	// If any part is left, the line crossed a perimeter.
+	tree, ok := cl.Execute2(clipper.CtDifference, clipper.PftEvenOdd, clipper.PftEvenOdd)
 
 	if !ok {
 		return false, ok
 	}
 
-	return len(polyTreeToLayerParts(tree)) > 1, true
+	return tree.Total() > 0, true
 }

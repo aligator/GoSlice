@@ -170,6 +170,10 @@ func (p Path) Bounds() (MicroPoint, MicroPoint) {
 
 // Rotate rotates all points around (0|0) by the given degree.
 func (p Path) Rotate(degree float64) {
+	if degree == 0 {
+		return
+	}
+
 	for i, point := range p {
 		p[i] = point.Rotate(degree)
 	}
