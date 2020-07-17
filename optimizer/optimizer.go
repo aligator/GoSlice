@@ -1,4 +1,23 @@
 // Package optimizer contains the built in model optimizer.
+//
+// How it works:
+// Basically the model optimizer creates a data.OptimizedModel.
+// This model contains not only the model but also some additional data for each face and point.
+// So that each face knows what the touching faces are and which points it uses.
+// (Touching faces use always two points of the other face.)
+// Also each point knows to which faces it belongs.
+//
+// This information can be used in the next steps to slice the model.
+//
+// Beside creating the data.OptimizedModel it also fixes some errors in the model which would prevent printing.
+// 1. Fixing small holes:
+//    For this it snaps very similar points together to fix small holes.
+//    It does this by calculating a hash value which is (in most cases) the same for near points.
+// 2. Removing duplicates:
+//    This is simply done by running through all faces and check if any faces have the same points.
+//
+// At the end the count of open faces is printed (faces which do not have a touching face on one side -> still existing error).
+// Also the whole model is moved to the final place on the built plate.
 
 package optimizer
 
