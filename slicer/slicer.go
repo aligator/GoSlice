@@ -1,5 +1,16 @@
-// Package slicer provides an implementation for slicing a model into
-// 2d slices.
+// Package slicer provides an implementation for slicing a model into 2d slices.
+//
+// How it works:
+// For each face (always a triangle) it first fetches the min and max height (z) and then the face is sliced at each
+// needed layer height (taking into account the optionally different initial layer thickness).
+// For this it first determines which of the three points is below or above the current z height and then based on this
+// calls the SliceFace function which simply returns a segment which is one line (2 points) representing the slice of the triangle
+// at exactly the current height.
+// The segments are saved for each layer.
+// At the end it loops through all generated layers and
+// - creates polygons out of the segments (see documentation of the makePolygons method to learn how)
+// - generates the layer parts out of the polygons. This means it groups them together and calculates which polygons
+//   just represents holes of other polygons.
 
 package slicer
 
