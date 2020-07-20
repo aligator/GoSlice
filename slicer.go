@@ -56,7 +56,12 @@ func NewGoSlice(options data.Options) *GoSlice {
 		// debug support generation
 		gcode.WithRenderer(&renderer.Infill{
 			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
-				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, data.Millimeter(1).ToMicrometer(), min, max, 90, false, true)
+				// make bounding box bigger to allow generation of support which has always at least two lines
+				min.SetX(min.X() - options.Print.Support.PatternSpacing)
+				min.SetY(min.Y() - options.Print.Support.PatternSpacing)
+				max.SetX(max.X() + options.Print.Support.PatternSpacing)
+				max.SetY(max.Y() + options.Print.Support.PatternSpacing)
+				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Print.Support.PatternSpacing, min, max, 90, false, true)
 			},
 			AttrName: "support",
 			Comments: []string{"TYPE:SUPPORT"},

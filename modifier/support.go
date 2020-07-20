@@ -76,9 +76,8 @@ func (m supportDetectorModifier) Modify(layers []data.PartitionedLayer) error {
 			return errors.New("could not calculate the support parts")
 		}
 
-		// make the support a little bit bigger
-		// TODO: configurable exset size
-		support = cl.InsetLayer(support, -data.Millimeter(1).ToMicrometer(), 1).ToOneDimension()
+		// make the support a little bit bigger to provide at least two lines on most places
+		support = cl.InsetLayer(support, -m.options.Print.Support.PatternSpacing*3, 1).ToOneDimension()
 
 		// Save the result at the current layer minus TopGapLayers to skip the amount of TopGapLayers
 		newLayer := newExtendedLayer(layers[layerNr-m.options.Print.Support.TopGapLayers])

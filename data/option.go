@@ -87,6 +87,9 @@ type SupportOptions struct {
 
 	// TopGapLayers is the amount of layers without support.
 	TopGapLayers int
+
+	// PatternSpacing is the spacing used to create the support pattern.
+	PatternSpacing Micrometer
 }
 
 // FanSpeedOptions used to control fan speed at given layers.
@@ -205,9 +208,9 @@ type FilamentOptions struct {
 	// HotEndTemperature is the temperature for the hot end after the first layers.
 	HotEndTemperature int
 
-	// InitialTemeratureLayerCount is the number of layers which use the initial temperatures.
+	// InitialTemperatureLayerCount is the number of layers which use the initial temperatures.
 	// After this amount of layers, the normal temperatures are used.
-	InitialTemeratureLayerCount int
+	InitialTemperatureLayerCount int
 
 	// RetractionSpeed is the speed used for retraction in mm/s.
 	RetractionSpeed Millimeter
@@ -272,18 +275,19 @@ func DefaultOptions() Options {
 				Enabled:        false,
 				ThresholdAngle: 60,
 				TopGapLayers:   2,
+				PatternSpacing: Millimeter(1).ToMicrometer(),
 			},
 		},
 		Filament: FilamentOptions{
-			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
-			InitialBedTemperature:       60,
-			InitialHotEndTemperature:    205,
-			BedTemperature:              55,
-			HotEndTemperature:           200,
-			InitialTemeratureLayerCount: 3,
-			RetractionSpeed:             30,
-			RetractionLength:            Millimeter(2),
-			FanSpeed:                    NewDefaultFanSpeedOptions(),
+			FilamentDiameter:             Millimeter(1.75).ToMicrometer(),
+			InitialBedTemperature:        60,
+			InitialHotEndTemperature:     205,
+			BedTemperature:               55,
+			HotEndTemperature:            200,
+			InitialTemperatureLayerCount: 3,
+			RetractionSpeed:              30,
+			RetractionLength:             Millimeter(2),
+			FanSpeed:                     NewDefaultFanSpeedOptions(),
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
@@ -331,6 +335,7 @@ func ParseFlags() Options {
 	flag.BoolVar(&options.Print.Support.Enabled, "support-enabled", options.Print.Support.Enabled, "Enables the generation of support structures.")
 	flag.IntVar(&options.Print.Support.ThresholdAngle, "support-threshold-angle", options.Print.Support.ThresholdAngle, "The angle up to which no support is generated.")
 	flag.IntVar(&options.Print.Support.TopGapLayers, "support-top-gap-layers", options.Print.Support.TopGapLayers, "The amount of layers without support.")
+	flag.Var(&options.Print.Support.PatternSpacing, "support-pattern-spacing", "The spacing used to create the support pattern.")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")
@@ -338,7 +343,7 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Filament.InitialHotEndTemperature, "initial-hot-end-temperature", options.Filament.InitialHotEndTemperature, "The filament diameter used by the printer.")
 	flag.IntVar(&options.Filament.BedTemperature, "bed-temperature", options.Filament.BedTemperature, "The temperature for the heated bed after the first layers.")
 	flag.IntVar(&options.Filament.HotEndTemperature, "hot-end-temperature", options.Filament.HotEndTemperature, "The temperature for the hot end after the first layers.")
-	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
+	flag.IntVar(&options.Filament.InitialTemperatureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemperatureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
 	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
 	flag.Var(&options.Filament.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40. Fan speed can range from 0-255.")

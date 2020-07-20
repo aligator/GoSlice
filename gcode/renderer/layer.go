@@ -59,7 +59,7 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 		}
 	}
 
-	if layerNr == options.Filament.InitialTemeratureLayerCount {
+	if layerNr == options.Filament.InitialTemperatureLayerCount {
 		// set the normal temperature
 		// this is done without waiting
 		b.AddComment("SET_TEMP")
