@@ -30,16 +30,19 @@ func PerpendicularDistance2(a, b, point MicroPoint) Micrometer {
 
 // douglasPeucker accepts a list of points and epsilon as threshold, simplifies a path by dropping
 // points that do not pass threshold values.
-func douglasPeucker(points Path, ep Micrometer) Path {
-	if len(points) <= 2 {
+func douglasPeucker(points Path, ep Micrometer, depth int) Path {
+	// check depth to avoid stack overflow on some models
+	// TODO: I currently know no other way to avoid a stack overflow (beside avoiding recursion, read todo below)
+	// 		 For now it's ok...
+	if len(points) <= 2 || depth >= 200 {
 		return points
 	}
 
 	idx, maxDist := seekMostDistantPoint(points[0], points[len(points)-1], points)
 	if maxDist >= ep {
 		// TODO: check if implementation without recursion would be possible and if it is more performant
-		left := douglasPeucker(points[:idx+1], ep)
-		right := douglasPeucker(points[idx:], ep)
+		left := douglasPeucker(points[:idx+1], ep, depth+1)
+		right := douglasPeucker(points[idx:], ep, depth+1)
 		return append(left[:len(left)-1], right...)
 	}
 
@@ -69,7 +72,7 @@ func DouglasPeucker(points Path, epsilon Micrometer) Path {
 		// TODO: This value may need optimization
 		epsilon = 70
 	}
-	return douglasPeucker(points, epsilon)
+	return douglasPeucker(points, epsilon, 0)
 }
 
 func ToRadians(angle float64) float64 {
