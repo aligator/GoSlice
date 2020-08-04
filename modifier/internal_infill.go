@@ -20,54 +20,64 @@ func NewInternalInfillModifier(options *data.Options) handler.LayerModifier {
 	}
 }
 
-func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
-	overlappingPerimeters, err := OverlapPerimeters(layers[layerNr])
-	if err != nil || overlappingPerimeters == nil {
-		return err
-	}
+func (m internalInfillModifier) Modify(layers []data.PartitionedLayer) error {
+	return modifyConcurrently(layers, func(layerCh <-chan enumeratedPartitionedLayer, outputCh chan<- enumeratedPartitionedLayer, errCh chan<- error) {
+		for layer := range layerCh {
+			overlappingPerimeters, err := OverlapPerimeters(layer.layer)
+			if err != nil || overlappingPerimeters == nil {
+				errCh <- err
+				return
+			}
 
-	bottomInfill, err := BottomInfill(layers[layerNr])
-	if err != nil {
-		return err
-	}
+			bottomInfill, err := BottomInfill(layer.layer)
+			if err != nil {
+				errCh <- err
+				return
+			}
 
-	topInfill, err := TopInfill(layers[layerNr])
-	if err != nil {
-		return err
-	}
+			topInfill, err := TopInfill(layer.layer)
+			if err != nil {
+				errCh <- err
+				return
+			}
 
-	var internalInfill []data.LayerPart
+			var internalInfill []data.LayerPart
 
-	c := clip.NewClipper()
+			c := clip.NewClipper()
 
-	// calculate the bottom parts for each inner perimeter part
-	for _, overlappingPart := range overlappingPerimeters {
-		// Calculate the difference between the overlappingPerimeters and the final top/bottom infills
-		// to get the internal infill areas.
+			// calculate the bottom parts for each inner perimeter part
+			for _, overlappingPart := range overlappingPerimeters {
+				// Calculate the difference between the overlappingPerimeters and the final top/bottom infills
+				// to get the internal infill areas.
 
-		// if no infill, just ignore the generation
-		if m.options.Print.InfillPercent == 0 {
-			continue
+				// if no infill, just ignore the generation
+				if m.options.Print.InfillPercent == 0 {
+					continue
+				}
+
+				// calculating the difference would fail if both are nil so just ignore this
+				if overlappingPart == nil && bottomInfill == nil && topInfill == nil {
+					continue
+				}
+
+				if parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...)); !ok {
+					errCh <- errors.New("error while calculating the difference between the max overlap border and the bottom infill")
+					return
+				} else {
+					internalInfill = append(internalInfill, parts...)
+				}
+			}
+
+			newLayer := newExtendedLayer(layer.layer)
+			if len(internalInfill) > 0 {
+				newLayer.attributes["infill"] = internalInfill
+			}
+			outputCh <- enumeratedPartitionedLayer{
+				layer:   newLayer,
+				layerNr: layer.layerNr,
+			}
 		}
-
-		// calculating the difference would fail if both are nil so just ignore this
-		if overlappingPart == nil && bottomInfill == nil && topInfill == nil {
-			continue
-		}
-
-		if parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...)); !ok {
-			return errors.New("error while calculating the difference between the max overlap border and the bottom infill")
-		} else {
-			internalInfill = append(internalInfill, parts...)
-		}
-	}
-
-	newLayer := newExtendedLayer(layers[layerNr])
-	if len(internalInfill) > 0 {
-		newLayer.attributes["infill"] = internalInfill
-	}
-
-	return nil
+	})
 }
 
 func partDifference(part data.LayerPart, layerToRemove data.PartitionedLayer) ([]data.LayerPart, error) {

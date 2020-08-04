@@ -12,6 +12,7 @@ import (
 	"GoSlice/slicer"
 	"GoSlice/writer"
 	"fmt"
+	"reflect"
 	"time"
 )
 
@@ -121,14 +122,15 @@ func (s *GoSlice) Process() error {
 	// e.g. generate perimeter paths,
 	// generate the parts which should be filled in, ...
 	for _, m := range s.modifiers {
+		fmt.Println("modifier", reflect.TypeOf(m).Elem().Name())
 		m.Init(optimizedModel)
-		for layerNr := range layers {
-			err = m.Modify(layerNr, layers)
-			if err != nil {
-				return err
-			}
+		err = m.Modify(layers)
+		if err != nil {
+			return err
 		}
 	}
+
+	fmt.Println("finished modifiers")
 
 	// 5. generate gcode from the layers
 	s.generator.Init(optimizedModel)
