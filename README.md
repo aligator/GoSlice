@@ -31,7 +31,7 @@ linux / mac:
 
 windows:  
 ```
-./goslice.exe --file /path/to/stl/file.stl` 
+goslice.exe --file /path/to/stl/file.stl` 
 ```
 
 If you need the usage of all possible flags, run it with the `--help` flag:
