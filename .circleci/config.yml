@@ -134,12 +134,7 @@ workflows:
   version: 2
   goslice-ci:
     jobs:
-      - goslice-test:
-          filters:
-            tags:
-              only: /.*/
-            branches:
-              ignore: /.*/
+      - goslice-test
       - goslice-build-releases:
           requires:
             - goslice-test
