@@ -67,41 +67,39 @@ jobs:
           paths:
             - ".git"
       - run: mkdir -p /tmp/artifacts
-      - run: go get github.com/markbates/pkger/cmd/pkger
-      - run: go generate
       - run:
           name: Build and pack GoSlice Control for Linux
           command: |
             GOOS=linux GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-            -o .target/goslice main.go
+            -o .target/goslice .
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-amd64.tar.gz goslice
       - run:
           name: Build and pack GoSlice Control for Linux ARMv7
           command: |
             GOOS=linux GOARCH=arm GOARM=7 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-            -o .target/goslice main.go
+            -o .target/goslice .
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-armv7.tar.gz goslice
       - run:
           name: Build and pack GoSlice Control for Linux ARM64
           command: |
             GOOS=linux GOARCH=arm64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-            -o .target/goslice main.go
+            -o .target/goslice .
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-arm64.tar.gz goslice
       - run:
           name: Build and pack GoSlice Control for macOS
           command: |
             GOOS=darwin GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-              -o .target/goslice main.go
+              -o .target/goslice .
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-macos-amd64.tar.gz goslice
       - run:
           name: Build and pack GoSlice Control for Windows
           command: |
             GOOS=windows GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-              -o .target/goslice.exe main.go
+              -o .target/goslice.exe .
             cp .target/goslice.exe goslice.exe
             zip /tmp/artifacts/goslice-windows-amd64.zip goslice.exe
       - persist_to_workspace:
