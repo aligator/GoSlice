@@ -98,13 +98,10 @@ func (s *GoSlice) Process() error {
 	// 2. Optimize model
 	var optimizedModel data.OptimizedModel
 
-	// TODO: support several model processing
-	//for i, model := range models {
-	optimizedModel, err = s.optimizer.Optimize(models[0])
+	optimizedModel, err = s.optimizer.Optimize(models)
 	if err != nil {
 		return err
 	}
-	//}
 
 	err = optimizedModel.SaveDebugSTL("test.stl")
 	if err != nil {
