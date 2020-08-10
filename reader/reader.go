@@ -3,9 +3,6 @@ package reader
 import (
 	"GoSlice/data"
 	"GoSlice/handler"
-	"errors"
-	"strings"
-
 	"github.com/hschendel/stl"
 )
 
@@ -20,6 +17,30 @@ func (f face) Points() [3]data.MicroVec3 {
 
 type model struct {
 	faces []data.Face
+}
+
+func (m *model) SetName(name string) {
+	// not used yet
+	return
+}
+
+func (m *model) SetBinaryHeader(header []byte) {
+	// not used yet
+	return
+}
+
+func (m *model) SetASCII(isASCII bool) {
+	// not used yet
+	return
+}
+
+func (m *model) SetTriangleCount(n uint32) {
+	// not used yet
+	return
+}
+
+func (m *model) AppendTriangle(t stl.Triangle) {
+	m.faces = append(m.faces, stlTriangleToFace(t))
 }
 
 func newModel(faces []data.Face) data.Model {
@@ -87,30 +108,10 @@ func Reader(options *data.Options) handler.ModelReader {
 	return &reader{}
 }
 
-func (r reader) Read(filename string) ([]data.Model, error) {
-	var faces = []data.Face{}
-
-	splitted := strings.Split(filename, ".")
-	if len(splitted) <= 1 {
-		return nil, errors.New("the file has no extension")
-	}
-
-	extension := splitted[len(splitted)-1]
-
-	if extension != "stl" {
-		return nil, errors.New("the file is not a stl file")
-	}
-
-	solid, err := stl.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, triangle := range solid.Triangles {
-		faces = append(faces, stlTriangleToFace(triangle))
-	}
-
-	return []data.Model{newModel(faces)}, nil
+func (r reader) Read(filename string) (data.Model, error) {
+	model := &model{}
+	stl.CopyFile(filename, model)
+	return model, nil
 }
 
 // stlTriangleToFace converts a triangle from the stl package

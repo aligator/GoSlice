@@ -6,7 +6,7 @@ import "GoSlice/data"
 
 // ModelReader reads a model from a file.
 type ModelReader interface {
-	Read(filename string) ([]data.Model, error)
+	Read(filename string) (data.Model, error)
 }
 
 // ModelOptimizer can optimize a model and generates an optimized model out of it.
