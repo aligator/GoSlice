@@ -49,6 +49,8 @@ func NewGoSlice(options data.Options) *GoSlice {
 		modifier.NewSupportGeneratorModifier(&options),
 	}
 
+	patternSpacing := options.Print.Support.PatternSpacing.ToMicrometer()
+
 	s.generator = gcode.NewGenerator(
 		&options,
 		gcode.WithRenderer(renderer.PreLayer{}),
@@ -58,11 +60,11 @@ func NewGoSlice(options data.Options) *GoSlice {
 		gcode.WithRenderer(&renderer.Infill{
 			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
 				// make bounding box bigger to allow generation of support which has always at least two lines
-				min.SetX(min.X() - options.Print.Support.PatternSpacing)
-				min.SetY(min.Y() - options.Print.Support.PatternSpacing)
-				max.SetX(max.X() + options.Print.Support.PatternSpacing)
-				max.SetY(max.Y() + options.Print.Support.PatternSpacing)
-				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Print.Support.PatternSpacing, min, max, 90, false, true)
+				min.SetX(min.X() - patternSpacing)
+				min.SetY(min.Y() - patternSpacing)
+				max.SetX(max.X() + patternSpacing)
+				max.SetY(max.Y() + patternSpacing)
+				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, patternSpacing, min, max, 90, false, true)
 			},
 			AttrName: "support",
 			Comments: []string{"TYPE:SUPPORT"},
@@ -71,10 +73,10 @@ func NewGoSlice(options data.Options) *GoSlice {
 		gcode.WithRenderer(&renderer.Infill{
 			PatternSetup: func(min data.MicroPoint, max data.MicroPoint) clip.Pattern {
 				// make bounding box bigger to allow generation of support which has always at least two lines
-				min.SetX(min.X() - options.Print.Support.PatternSpacing)
-				min.SetY(min.Y() - options.Print.Support.PatternSpacing)
-				max.SetX(max.X() + options.Print.Support.PatternSpacing)
-				max.SetY(max.Y() + options.Print.Support.PatternSpacing)
+				min.SetX(min.X() - patternSpacing)
+				min.SetY(min.Y() - patternSpacing)
+				max.SetX(max.X() + patternSpacing)
+				max.SetY(max.Y() + patternSpacing)
 				return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, 0, false, true)
 			},
 			AttrName: "supportInterface",

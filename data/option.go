@@ -28,11 +28,11 @@ func (m Micrometer) Type() string {
 }
 
 func (m Millimeter) String() string {
-	return strconv.FormatInt(int64(m), 10)
+	return strconv.FormatFloat(float64(m), 'f', 3, 32)
 }
 
 func (m *Millimeter) Set(s string) error {
-	v, err := strconv.ParseInt(s, 0, 32)
+	v, err := strconv.ParseFloat(s, 32)
 	*m = Millimeter(v)
 	return err
 }
@@ -92,7 +92,10 @@ type SupportOptions struct {
 	InterfaceLayers int
 
 	// PatternSpacing is the spacing used to create the support pattern.
-	PatternSpacing Micrometer
+	PatternSpacing Millimeter
+
+	// Gap is the gap between the model and the support.
+	Gap Millimeter
 }
 
 // FanSpeedOptions used to control fan speed at given layers.
@@ -279,7 +282,8 @@ func DefaultOptions() Options {
 				ThresholdAngle:  60,
 				TopGapLayers:    2,
 				InterfaceLayers: 2,
-				PatternSpacing:  Millimeter(1).ToMicrometer(),
+				PatternSpacing:  Millimeter(1),
+				Gap:             Millimeter(0.5),
 			},
 		},
 		Filament: FilamentOptions{
@@ -341,6 +345,7 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Print.Support.TopGapLayers, "support-top-gap-layers", options.Print.Support.TopGapLayers, "The amount of layers without support.")
 	flag.IntVar(&options.Print.Support.InterfaceLayers, "support-interface-layers", options.Print.Support.InterfaceLayers, "The amount of layers which are filled differently as interface to the object.")
 	flag.Var(&options.Print.Support.PatternSpacing, "support-pattern-spacing", "The spacing used to create the support pattern.")
+	flag.Var(&options.Print.Support.Gap, "support-gap", "The gap between the model and the support.")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")

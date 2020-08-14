@@ -77,7 +77,7 @@ func (m supportDetectorModifier) Modify(layers []data.PartitionedLayer) error {
 		}
 
 		// make the support a little bit bigger to provide at least two lines on most places
-		support = cl.InsetLayer(support, -m.options.Print.Support.PatternSpacing*3, 1).ToOneDimension()
+		support = cl.InsetLayer(support, -m.options.Print.Support.PatternSpacing.ToMicrometer()*3, 1).ToOneDimension()
 
 		// Save the result at the current layer minus TopGapLayers to skip the amount of TopGapLayers
 		newLayer := newExtendedLayer(layers[layerNr-m.options.Print.Support.TopGapLayers])
@@ -98,6 +98,8 @@ func (m supportGeneratorModifier) Init(_ data.OptimizedModel) {}
 
 // NewSupportGeneratorModifier generates the actual areas for the support out of the areas which need support.
 // It grows these areas down till the first layer or till it touches the model.
+// It also generates the interface parts (the most top support layers which are filled differently)
+// and removes them from the normal support areas.
 func NewSupportGeneratorModifier(options *data.Options) handler.LayerModifier {
 	return &supportGeneratorModifier{
 		options: options,
@@ -142,8 +144,7 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 		}
 
 		// make the layer a bit bigger to create a gap between the support and the model
-		// TODO: configurable gap size
-		biggerLayer := cl.InsetLayer(layers[layerNr-1].LayerParts(), -data.Millimeter(0.5).ToMicrometer(), 1).ToOneDimension()
+		biggerLayer := cl.InsetLayer(layers[layerNr-1].LayerParts(), -m.options.Print.Support.Gap.ToMicrometer(), 1).ToOneDimension()
 
 		// subtract the model from the result
 		actualSupport, ok := cl.Difference(result, biggerLayer)
