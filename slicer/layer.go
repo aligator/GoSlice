@@ -25,6 +25,19 @@ func (l *layer) Polygons() data.Paths {
 	return l.polygons
 }
 
+// makePolygons is responsible for creating polygons out of the list of loose segments received through slicing the faces.
+// For this it loops through all segments (which are not already part of a polygon) and then tries to build the whole polygon
+// by iterating through all touching faces of the face the segment comes from. If a segment is found it is done again the same
+// for this segment also. This is done as long as the polygon could not be fully closed or all segments are checked.
+// It takes care of the configured MeldDistance and just "snaps" very near segments together. This can fix small holes.
+//
+// After creating all polygons there are often still not closed ones.
+// - Some of them can be connected together to one big polygon. (So each unfinished one is a small part of the full polygon)
+//   In this case they are just connected together. It always snaps together the nearest matching polygons.
+//   If the full polygon can be finished after that it get's closed.
+// - Some polygons are already nearly finished (start and end point is near together). These just get closed.
+//
+// If there are still not closed polygons, just remove them. Also remove very small polygons.
 func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, finishPolygonSnapDistance data.Micrometer) {
 	// try for each segment to generate a slicePolygon with other segments
 	// if the segment is not already assigned to another slicePolygon

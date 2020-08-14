@@ -1,23 +1,152 @@
-# Golang CircleCI 2.0 configuration file
 #
-# Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
-jobs:
-  build:
+# GoSlice CircleCI 2.1 Configuration
+# (based on https://github.com/dominikbraun/espresso/blob/master/.circleci/config.yml)
+#
+version: 2.1
+
+executors:
+  go-container:
     docker:
-      # specify the version
       - image: circleci/golang:1.14
+        environment:
+          CGO_ENABLED: 0
+          G111MODULE: "on"
+
+jobs:
+  goslice-test:
+    executor: go-container
     steps:
       - checkout
-      # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
+      - restore_cache:
+          keys:
+            - dependency-cache-v1-{{ .Branch }}-{{ checksum "go.mod" }}
+            - dependency-cache-v1-{{ .Branch }}-
+            - dependency-cache-v1-
+            - repository-cache-v1-{{ .Branch }}-{{ .Revision }}
+            - repository-cache-v1-{{ .Branch }}-
+            - repository-cache-v1-
+      - run: go mod download
+      - save_cache:
+          key: dependency-cache-v1-{{ .Branch }}-{{ checksum "go.mod" }}
+          paths:
+            - /go/pkg
+      - save_cache:
+          key: repository-cache-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ".git"
       - run: go test -coverprofile=c.out -v ./...
       - run: go tool cover -html=c.out -o coverage.html
       - run: gotestsum --junitfile unit-tests.xml
-      - run: mkdir /tmp/test-results /tmp/artifacts
-      - run: mv coverage.html /tmp/artifacts/coverage.html
+      - run: mkdir /tmp/test-results /tmp/coverage
+      - run: mv coverage.html /tmp/coverage/coverage.html
       - run: mv unit-tests.xml /tmp/test-results/unit-tests.xml
       - store_artifacts:
-          path: /tmp/artifacts
+          path: /tmp/coverage
       - store_test_results:
           path: /tmp/test-results
+
+  goslice-build-releases:
+    executor: go-container
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - dependency-cache-v1-{{ .Branch }}-{{ checksum "go.mod" }}
+            - dependency-cache-v1-{{ .Branch }}-
+            - dependency-cache-v1-
+            - repository-cache-v1-{{ .Branch }}-{{ .Revision }}
+            - repository-cache-v1-{{ .Branch }}-
+            - repository-cache-v1-
+      - run: go mod download
+      - save_cache:
+          key: dependency-cache-v1-{{ .Branch }}-{{ checksum "go.mod" }}
+          paths:
+            - /go/pkg
+      - save_cache:
+          key: repository-cache-v1-{{ .Branch }}-{{ .Revision }}
+          paths:
+            - ".git"
+      - run: mkdir -p /tmp/artifacts
+      - run:
+          name: Build and pack GoSlice Control for Linux
+          command: |
+            GOOS=linux GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
+            -o .target/goslice .
+            cp .target/goslice goslice
+            tar -czf /tmp/artifacts/goslice-linux-amd64.tar.gz goslice
+      - run:
+          name: Build and pack GoSlice Control for Linux ARMv7
+          command: |
+            GOOS=linux GOARCH=arm GOARM=7 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
+            -o .target/goslice .
+            cp .target/goslice goslice
+            tar -czf /tmp/artifacts/goslice-linux-armv7.tar.gz goslice
+      - run:
+          name: Build and pack GoSlice Control for Linux ARM64
+          command: |
+            GOOS=linux GOARCH=arm64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
+            -o .target/goslice .
+            cp .target/goslice goslice
+            tar -czf /tmp/artifacts/goslice-linux-arm64.tar.gz goslice
+      - run:
+          name: Build and pack GoSlice Control for macOS
+          command: |
+            GOOS=darwin GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
+              -o .target/goslice .
+            cp .target/goslice goslice
+            tar -czf /tmp/artifacts/goslice-macos-amd64.tar.gz goslice
+      - run:
+          name: Build and pack GoSlice Control for Windows
+          command: |
+            GOOS=windows GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
+              -o .target/goslice.exe .
+            cp .target/goslice.exe goslice.exe
+            zip /tmp/artifacts/goslice-windows-amd64.zip goslice.exe
+      - persist_to_workspace:
+          root: /tmp/artifacts
+          paths:
+            - goslice-linux-amd64.tar.gz
+            - goslice-linux-armv7.tar.gz
+            - goslice-linux-arm64.tar.gz
+            - goslice-macos-amd64.tar.gz
+            - goslice-windows-amd64.zip
+
+  goslice-release-gh:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: /tmp/artifacts
+      - run: mkdir artifacts && cp /tmp/artifacts/* artifacts/
+      - run:
+          name: Publish GitHub release
+          command: |
+            ghr -t "${GITHUB_TOKEN}" \
+                -u "${CIRCLE_PROJECT_USERNAME}" \
+                -r "${CIRCLE_PROJECT_REPONAME}" \
+                -c "${CIRCLE_SHA1}" \
+                -delete "${CIRCLE_TAG}" \
+                artifacts/
+
+workflows:
+  version: 2
+  goslice-ci:
+    jobs:
+      - goslice-test:
+          filters:
+            tags:
+              only: /.*/
+      - goslice-build-releases:
+          requires:
+            - goslice-test
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
+      - goslice-release-gh:
+          requires:
+            - goslice-build-releases
+          filters:
+            tags:
+              only: /.*/

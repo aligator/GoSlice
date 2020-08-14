@@ -19,7 +19,27 @@ Supported features:
 Example:  
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/docs/GoSlice-print.png">
 
-## Run
+## Try it out - for users
+Download latest release matching your platform from here:
+https://github.com/aligator/GoSlice/releases
+
+Unpack the executable and run it in the commandline.  
+linux / mac:  
+```
+./goslice --file /path/to/stl/file.stl
+```
+
+windows:  
+```
+goslice.exe --file /path/to/stl/file.stl` 
+```
+
+If you need the usage of all possible flags, run it with the `--help` flag:
+```
+./goslice --help
+```
+
+## Try it out - for developers
 Minimal usage:
 ```
 go run . --file /path/to/stl/file.stl
