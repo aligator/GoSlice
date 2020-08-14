@@ -25,7 +25,10 @@ const (
 )
 
 func TestWholeSlicer(t *testing.T) {
-	s := NewGoSlice(data.DefaultOptions())
+	o := data.DefaultOptions()
+	// enable support so that it is tested also
+	o.Print.Support.Enabled = true
+	s := NewGoSlice(o)
 
 	var tests = []struct {
 		path string
