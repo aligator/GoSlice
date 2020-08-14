@@ -151,13 +151,51 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 			return errors.New(fmt.Sprintf("could not subtract the model from the supports for layer %d", layerNr))
 		}
 
+		var interfaceParts []data.LayerPart
+		var actualWithoutInterfaceParts []data.LayerPart
+
+		if actualSupport != nil {
+
+			// Get the top support parts to calculate the areas where the support-interface pattern should be generated.
+			// It takes into account the configuration for the amount of interface layers.
+			layerNrAboveInterface := layerNr + m.options.Print.Support.InterfaceLayers - 1 // -1 because we always calculate the support for the layer below
+			if layerNrAboveInterface >= len(layers) {
+				layerNrAboveInterface = len(layers) - 1
+			}
+
+			c := clip.NewClipper()
+
+			supportAboveInterface, err := PartsAttribute(layers[layerNrAboveInterface], "fullSupport")
+			if err != nil {
+				return err
+			}
+
+			interfaceParts, ok = c.Difference(actualSupport, supportAboveInterface)
+			if !ok {
+				return errors.New("error while calculating interface parts")
+			}
+
+			actualWithoutInterfaceParts, ok = c.Difference(actualSupport, interfaceParts)
+			if !ok {
+				return errors.New("error while calculating the actual support without the interface parts")
+			}
+		}
+
 		lastSupport = actualSupport
 
 		// save the support as actual support to render for the layer below
 		newLayer := newExtendedLayer(layers[layerNr-1])
 		if len(actualSupport) > 0 {
+			// this attribute is not used for rendering but instead for calculating the interface parts for the next layers.
+			newLayer.attributes["fullSupport"] = actualSupport
+		}
+		if len(interfaceParts) > 0 {
+			newLayer.attributes["supportInterface"] = interfaceParts
+		}
+
+		if len(actualWithoutInterfaceParts) > 0 {
 			// replace support from the detection modifier
-			newLayer.attributes["support"] = actualSupport
+			newLayer.attributes["support"] = actualWithoutInterfaceParts
 		} else {
 			// remove maybe existing support from the detection modifier
 			newLayer.attributes["support"] = []data.LayerPart{}

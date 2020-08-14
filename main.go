@@ -9,14 +9,6 @@ import (
 func main() {
 	o := data.ParseFlags()
 
-	// remove infills to debug support
-	o.Print.InfillPercent = 0
-	o.Print.NumberBottomLayers = 0
-	o.Print.NumberTopLayers = 0
-
-	// enable support to debug it
-	o.Print.Support.Enabled = true
-
 	p := NewGoSlice(o)
 	err := p.Process()
 

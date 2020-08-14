@@ -88,6 +88,9 @@ type SupportOptions struct {
 	// TopGapLayers is the amount of layers without support.
 	TopGapLayers int
 
+	// InterfaceLayers is the amount of layers which are filled differently as interface to the object.
+	InterfaceLayers int
+
 	// PatternSpacing is the spacing used to create the support pattern.
 	PatternSpacing Micrometer
 }
@@ -272,10 +275,11 @@ func DefaultOptions() Options {
 			NumberBottomLayers:                     3,
 			NumberTopLayers:                        4,
 			Support: SupportOptions{
-				Enabled:        false,
-				ThresholdAngle: 60,
-				TopGapLayers:   2,
-				PatternSpacing: Millimeter(1).ToMicrometer(),
+				Enabled:         false,
+				ThresholdAngle:  60,
+				TopGapLayers:    2,
+				InterfaceLayers: 2,
+				PatternSpacing:  Millimeter(1).ToMicrometer(),
 			},
 		},
 		Filament: FilamentOptions{
@@ -335,6 +339,7 @@ func ParseFlags() Options {
 	flag.BoolVar(&options.Print.Support.Enabled, "support-enabled", options.Print.Support.Enabled, "Enables the generation of support structures.")
 	flag.IntVar(&options.Print.Support.ThresholdAngle, "support-threshold-angle", options.Print.Support.ThresholdAngle, "The angle up to which no support is generated.")
 	flag.IntVar(&options.Print.Support.TopGapLayers, "support-top-gap-layers", options.Print.Support.TopGapLayers, "The amount of layers without support.")
+	flag.IntVar(&options.Print.Support.InterfaceLayers, "support-interface-layers", options.Print.Support.InterfaceLayers, "The amount of layers which are filled differently as interface to the object.")
 	flag.Var(&options.Print.Support.PatternSpacing, "support-pattern-spacing", "The spacing used to create the support pattern.")
 
 	// filament options
