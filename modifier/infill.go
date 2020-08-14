@@ -121,9 +121,10 @@ func (m infillModifier) Modify(layers []data.PartitionedLayer) error {
 				}
 
 				// 2. Exset the area which needs infill to generate the internal overlap of top and bottom layer.
+				fullOverlapPercentage := m.options.Print.InfillOverlapPercent + m.options.Print.AdditionalInternalInfillOverlapPercent
 				var internalOverlappingBottomParts, internalOverlappingTopParts []data.LayerPart
 				for _, bottomPart := range bottomInfillParts {
-					overlappingParts, err := calculateOverlapPerimeter(bottomPart, m.options.Print.InfillOverlapPercent+m.options.Print.AdditionalInternalInfillOverlapPercent, m.options.Printer.ExtrusionWidth)
+					overlappingParts, err := calculateOverlapPerimeter(bottomPart, fullOverlapPercentage, m.options.Printer.ExtrusionWidth)
 					if err != nil {
 						return err
 					}
@@ -132,7 +133,7 @@ func (m infillModifier) Modify(layers []data.PartitionedLayer) error {
 				}
 
 				for _, topPart := range topInfillParts {
-					overlappingParts, err := calculateOverlapPerimeter(topPart, m.options.Print.InfillOverlapPercent+m.options.Print.AdditionalInternalInfillOverlapPercent, m.options.Printer.ExtrusionWidth)
+					overlappingParts, err := calculateOverlapPerimeter(topPart, fullOverlapPercentage, m.options.Printer.ExtrusionWidth)
 					if err != nil {
 						return err
 					}
