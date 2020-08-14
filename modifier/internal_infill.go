@@ -56,11 +56,12 @@ func (m internalInfillModifier) Modify(layers []data.PartitionedLayer) error {
 				continue
 			}
 
-			if parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...)); !ok {
+			parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...))
+			if !ok {
 				return errors.New("error while calculating the difference between the max overlap border and the bottom infill")
-			} else {
-				internalInfill = append(internalInfill, parts...)
 			}
+
+			internalInfill = append(internalInfill, parts...)
 		}
 
 		newLayer := newExtendedLayer(layers[layerNr])

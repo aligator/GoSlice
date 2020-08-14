@@ -140,7 +140,7 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 		// union them
 		result, ok := cl.Union(currentSupport, belowSupport)
 		if !ok {
-			return errors.New(fmt.Sprintf("could not union the supports for layer %d to generate support", layerNr))
+			return fmt.Errorf("could not union the supports for layer %d to generate support", layerNr)
 		}
 
 		// make the layer a bit bigger to create a gap between the support and the model
@@ -149,7 +149,7 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 		// subtract the model from the result
 		actualSupport, ok := cl.Difference(result, biggerLayer)
 		if !ok {
-			return errors.New(fmt.Sprintf("could not subtract the model from the supports for layer %d", layerNr))
+			return fmt.Errorf("could not subtract the model from the supports for layer %d", layerNr)
 		}
 
 		var interfaceParts []data.LayerPart
