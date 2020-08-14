@@ -20,51 +20,54 @@ func NewInternalInfillModifier(options *data.Options) handler.LayerModifier {
 	}
 }
 
-func (m internalInfillModifier) Modify(layerNr int, layers []data.PartitionedLayer) error {
-	overlappingPerimeters, err := OverlapPerimeters(layers[layerNr])
-	if err != nil || overlappingPerimeters == nil {
-		return err
-	}
-
-	bottomInfill, err := BottomInfill(layers[layerNr])
-	if err != nil {
-		return err
-	}
-
-	topInfill, err := TopInfill(layers[layerNr])
-	if err != nil {
-		return err
-	}
-
-	var internalInfill []data.LayerPart
-
-	c := clip.NewClipper()
-
-	// calculate the bottom parts for each inner perimeter part
-	for _, overlappingPart := range overlappingPerimeters {
-		// Calculate the difference between the overlappingPerimeters and the final top/bottom infills
-		// to get the internal infill areas.
-
-		// if no infill, just ignore the generation
-		if m.options.Print.InfillPercent == 0 {
-			continue
+func (m internalInfillModifier) Modify(layers []data.PartitionedLayer) error {
+	for layerNr := range layers {
+		overlappingPerimeters, err := OverlapPerimeters(layers[layerNr])
+		if err != nil || overlappingPerimeters == nil {
+			return err
 		}
 
-		// calculating the difference would fail if both are nil so just ignore this
-		if overlappingPart == nil && bottomInfill == nil && topInfill == nil {
-			continue
+		bottomInfill, err := BottomInfill(layers[layerNr])
+		if err != nil {
+			return err
 		}
 
-		if parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...)); !ok {
-			return errors.New("error while calculating the difference between the max overlap border and the bottom infill")
-		} else {
+		topInfill, err := TopInfill(layers[layerNr])
+		if err != nil {
+			return err
+		}
+
+		var internalInfill []data.LayerPart
+
+		c := clip.NewClipper()
+
+		// calculate the bottom parts for each inner perimeter part
+		for _, overlappingPart := range overlappingPerimeters {
+			// Calculate the difference between the overlappingPerimeters and the final top/bottom infills
+			// to get the internal infill areas.
+
+			// if no infill, just ignore the generation
+			if m.options.Print.InfillPercent == 0 {
+				continue
+			}
+
+			// calculating the difference would fail if both are nil so just ignore this
+			if overlappingPart == nil && bottomInfill == nil && topInfill == nil {
+				continue
+			}
+
+			parts, ok := c.Difference(overlappingPart, append(bottomInfill, topInfill...))
+			if !ok {
+				return errors.New("error while calculating the difference between the max overlap border and the bottom infill")
+			}
+
 			internalInfill = append(internalInfill, parts...)
 		}
-	}
 
-	newLayer := newExtendedLayer(layers[layerNr])
-	if len(internalInfill) > 0 {
-		newLayer.attributes["infill"] = internalInfill
+		newLayer := newExtendedLayer(layers[layerNr])
+		if len(internalInfill) > 0 {
+			newLayer.attributes["infill"] = internalInfill
+		}
 	}
 
 	return nil

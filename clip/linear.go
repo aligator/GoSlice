@@ -22,7 +22,7 @@ type linear struct {
 
 // NewLinearPattern provides a simple linear infill pattern consisting of simple parallel lines.
 // The direction of the lines is switching for each layer by 90°.
-func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, min data.MicroPoint, max data.MicroPoint, degree int, zigZag bool) Pattern {
+func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, min data.MicroPoint, max data.MicroPoint, degree int, rectlinear bool, zigZag bool) Pattern {
 	return linear{
 		lineDistance: lineDistance,
 		lineWidth:    lineWidth,
@@ -30,6 +30,7 @@ func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, m
 		min:          min,
 		max:          max,
 		zigZag:       zigZag,
+		rectlinear:   rectlinear,
 	}
 }
 
@@ -37,7 +38,8 @@ func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, m
 func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
 	rotation := float64(p.degree)
 
-	if layerNr%2 == 0 {
+	// for rectlinear fill patterns rotate each 2nd layer by 90 degree.
+	if p.rectlinear && layerNr%2 == 0 {
 		rotation += 90
 	}
 

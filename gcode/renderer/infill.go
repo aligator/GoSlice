@@ -34,7 +34,7 @@ func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		return nil
 	}
 
-	infillParts, err := modifier.InfillParts(layers[layerNr], i.AttrName)
+	infillParts, err := modifier.PartsAttribute(layers[layerNr], i.AttrName)
 	if err != nil {
 		return err
 	}

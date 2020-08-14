@@ -8,6 +8,7 @@ import (
 
 func main() {
 	o := data.ParseFlags()
+
 	p := NewGoSlice(o)
 	err := p.Process()
 

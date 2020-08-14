@@ -28,11 +28,11 @@ func (m Micrometer) Type() string {
 }
 
 func (m Millimeter) String() string {
-	return strconv.FormatInt(int64(m), 10)
+	return strconv.FormatFloat(float64(m), 'f', 3, 32)
 }
 
 func (m *Millimeter) Set(s string) error {
-	v, err := strconv.ParseInt(s, 0, 32)
+	v, err := strconv.ParseFloat(s, 32)
 	*m = Millimeter(v)
 	return err
 }
@@ -75,6 +75,27 @@ func (v *microVec3) Set(s string) error {
 
 func (v microVec3) Type() string {
 	return "Micrometer"
+}
+
+// SupportOptions contains all Support specific GoSlice options.
+type SupportOptions struct {
+	// Enabled enables the generation of support structures.
+	Enabled bool
+
+	// ThresholdAngle is the angle up to which no support is generated.
+	ThresholdAngle int
+
+	// TopGapLayers is the amount of layers without support.
+	TopGapLayers int
+
+	// InterfaceLayers is the amount of layers which are filled differently as interface to the object.
+	InterfaceLayers int
+
+	// PatternSpacing is the spacing used to create the support pattern.
+	PatternSpacing Millimeter
+
+	// Gap is the gap between the model and the support.
+	Gap Millimeter
 }
 
 // FanSpeedOptions used to control fan speed at given layers.
@@ -172,6 +193,8 @@ type PrintOptions struct {
 
 	// NumberBottomLayers is the amount of layers the bottom layers should grow into the model.
 	NumberTopLayers int
+
+	Support SupportOptions
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
@@ -191,9 +214,9 @@ type FilamentOptions struct {
 	// HotEndTemperature is the temperature for the hot end after the first layers.
 	HotEndTemperature int
 
-	// InitialTemeratureLayerCount is the number of layers which use the initial temperatures.
+	// InitialTemperatureLayerCount is the number of layers which use the initial temperatures.
 	// After this amount of layers, the normal temperatures are used.
-	InitialTemeratureLayerCount int
+	InitialTemperatureLayerCount int
 
 	// RetractionSpeed is the speed used for retraction in mm/s.
 	RetractionSpeed Millimeter
@@ -254,17 +277,25 @@ func DefaultOptions() Options {
 			InfillZigZag:                           false,
 			NumberBottomLayers:                     3,
 			NumberTopLayers:                        4,
+			Support: SupportOptions{
+				Enabled:         false,
+				ThresholdAngle:  60,
+				TopGapLayers:    2,
+				InterfaceLayers: 2,
+				PatternSpacing:  Millimeter(1),
+				Gap:             Millimeter(0.5),
+			},
 		},
 		Filament: FilamentOptions{
-			FilamentDiameter:            Millimeter(1.75).ToMicrometer(),
-			InitialBedTemperature:       60,
-			InitialHotEndTemperature:    205,
-			BedTemperature:              55,
-			HotEndTemperature:           200,
-			InitialTemeratureLayerCount: 3,
-			RetractionSpeed:             30,
-			RetractionLength:            Millimeter(2),
-			FanSpeed:                    NewDefaultFanSpeedOptions(),
+			FilamentDiameter:             Millimeter(1.75).ToMicrometer(),
+			InitialBedTemperature:        60,
+			InitialHotEndTemperature:     205,
+			BedTemperature:               55,
+			HotEndTemperature:            200,
+			InitialTemperatureLayerCount: 3,
+			RetractionSpeed:              30,
+			RetractionLength:             Millimeter(2),
+			FanSpeed:                     NewDefaultFanSpeedOptions(),
 		},
 		Printer: PrinterOptions{
 			ExtrusionWidth: 400,
@@ -308,13 +339,21 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Print.NumberBottomLayers, "number-bottom-layers", options.Print.NumberBottomLayers, "The amount of layers the bottom layers should grow into the model.")
 	flag.IntVar(&options.Print.NumberTopLayers, "number-top-layers", options.Print.NumberTopLayers, "The amount of layers the bottom layers should grow into the model.")
 
+	// support options
+	flag.BoolVar(&options.Print.Support.Enabled, "support-enabled", options.Print.Support.Enabled, "Enables the generation of support structures.")
+	flag.IntVar(&options.Print.Support.ThresholdAngle, "support-threshold-angle", options.Print.Support.ThresholdAngle, "The angle up to which no support is generated.")
+	flag.IntVar(&options.Print.Support.TopGapLayers, "support-top-gap-layers", options.Print.Support.TopGapLayers, "The amount of layers without support.")
+	flag.IntVar(&options.Print.Support.InterfaceLayers, "support-interface-layers", options.Print.Support.InterfaceLayers, "The amount of layers which are filled differently as interface to the object.")
+	flag.Var(&options.Print.Support.PatternSpacing, "support-pattern-spacing", "The spacing used to create the support pattern.")
+	flag.Var(&options.Print.Support.Gap, "support-gap", "The gap between the model and the support.")
+
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")
 	flag.IntVar(&options.Filament.InitialBedTemperature, "initial-bed-temperature", options.Filament.InitialBedTemperature, "The temperature for the heated bed for the first layers.")
 	flag.IntVar(&options.Filament.InitialHotEndTemperature, "initial-hot-end-temperature", options.Filament.InitialHotEndTemperature, "The filament diameter used by the printer.")
 	flag.IntVar(&options.Filament.BedTemperature, "bed-temperature", options.Filament.BedTemperature, "The temperature for the heated bed after the first layers.")
 	flag.IntVar(&options.Filament.HotEndTemperature, "hot-end-temperature", options.Filament.HotEndTemperature, "The temperature for the hot end after the first layers.")
-	flag.IntVar(&options.Filament.InitialTemeratureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemeratureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
+	flag.IntVar(&options.Filament.InitialTemperatureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemperatureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
 	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
 	flag.Var(&options.Filament.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40. Fan speed can range from 0-255.")

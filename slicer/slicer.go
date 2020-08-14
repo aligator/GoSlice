@@ -18,7 +18,6 @@ import (
 	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/handler"
-	"errors"
 	"fmt"
 )
 
@@ -117,7 +116,7 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 		lp, ok := c.GenerateLayerParts(layer)
 
 		if !ok {
-			return nil, errors.New(fmt.Sprintf("partitioning failed at layer %v", i))
+			return nil, fmt.Errorf("partitioning failed at layer %v", i)
 		}
 
 		retLayers[i] = lp

@@ -15,6 +15,7 @@ Supported features:
 * simple speed control
 * simple retraction on crossing perimeters
 * several options to customize slicing output
+* simple support generation
 
 Example:  
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/docs/GoSlice-print.png">
@@ -54,6 +55,9 @@ go run . --help
 ## Contribution
 You are welcome to help.  
 [Just look for open issues](https://github.com/aligator/GoSlice/issues) and pick one, create new issues or create new pull requests.
+
+For debugging of the GCode I suggest you to use Cura to open the resulting GCode.
+Cura can open it without any problem and I try to add the markings into the GCode which Cura understands (e.g. mark what is infill, perimeter, etc.).
 
 ## Credits
 * CuraEngine for the great first commit, which was a very good starting point for research.
