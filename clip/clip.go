@@ -4,8 +4,10 @@ package clip
 
 import (
 	"GoSlice/data"
+	"fmt"
 
 	clipper "github.com/aligator/go.clipper"
+	go_convex_hull_2d "github.com/furstenheim/go-convex-hull-2d"
 )
 
 // Pattern is an interface for all infill types which can be used to fill layer parts.
@@ -71,6 +73,8 @@ type Clipper interface {
 
 	// IsCrossingPerimeter checks if the given line crosses any perimeter of the given parts. If yes, the result is true.
 	IsCrossingPerimeter(parts []data.LayerPart, line data.Path) (result, ok bool)
+
+	Hull(parts []data.LayerPart) (hull data.Path)
 }
 
 // clipperClipper implements Clipper using the external clipper library.
@@ -282,4 +286,19 @@ func (c clipperClipper) IsCrossingPerimeter(parts []data.LayerPart, line data.Pa
 	}
 
 	return tree.Total() > 0, true
+}
+
+func (c clipperClipper) Hull(parts []data.LayerPart) (hull data.Path) {
+	var allPoints data.Path
+	for _, part := range parts {
+		allPoints = append(allPoints, part.Outline()...)
+	}
+
+	convexHull := go_convex_hull_2d.New(allPoints)
+	fmt.Println(convexHull)
+	hullPath, ok := convexHull.(data.Path)
+	if !ok {
+		panic("lol")
+	}
+	return hullPath
 }

@@ -3,6 +3,7 @@
 package renderer
 
 import (
+	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/gcode"
 )
@@ -28,9 +29,6 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 		// starting gcode
 		b.AddComment("START_GCODE")
-		b.AddCommand("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
-		b.AddCommand("G92 E0 ; reset extrusion distance")
-		b.AddCommand("G1 X200 E20 F600 ; prime nozzle")
 		b.AddCommand("G1 Z5 F5000 ; lift nozzle")
 		b.AddCommand("G92 E0 ; reset extrusion distance")
 
@@ -46,6 +44,15 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
+
+		// draw skirt
+		c := clip.NewClipper()
+		skirt := c.Inset(data.NewBasicLayerPart(c.Hull(layers[0].LayerParts()), nil), data.Millimeter(-5).ToMicrometer(), 1)
+
+		// should only be one
+		if len(skirt) > 0 && len(skirt[0]) > 0 {
+			b.AddPolygon(nil, skirt[0][0].Outline(), z, false)
+		}
 	} else {
 		b.DisableExtrudeSpeedOverride()
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
@@ -85,6 +92,10 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		// disable heaters
 		b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
 		b.AddCommand("M140 S0 ; Set bed to 0C (off)")
+
+		b.AddCommand("G28 X0  ; home X axis to get head out of the way")
+		b.AddCommand("M84 ;steppers off")
+
 	}
 
 	return nil
