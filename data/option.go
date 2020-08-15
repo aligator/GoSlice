@@ -280,10 +280,10 @@ func DefaultOptions() Options {
 			Support: SupportOptions{
 				Enabled:         false,
 				ThresholdAngle:  60,
-				TopGapLayers:    2,
+				TopGapLayers:    3,
 				InterfaceLayers: 2,
-				PatternSpacing:  Millimeter(1),
-				Gap:             Millimeter(0.5),
+				PatternSpacing:  Millimeter(2.5),
+				Gap:             Millimeter(0.6),
 			},
 		},
 		Filament: FilamentOptions{
