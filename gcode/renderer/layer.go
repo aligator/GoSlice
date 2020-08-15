@@ -3,7 +3,6 @@
 package renderer
 
 import (
-	"GoSlice/clip"
 	"GoSlice/data"
 	"GoSlice/gcode"
 )
@@ -44,15 +43,6 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
-
-		// draw skirt
-		c := clip.NewClipper()
-		skirt := c.Inset(data.NewBasicLayerPart(c.Hull(layers[0].LayerParts()), nil), data.Millimeter(-5).ToMicrometer(), 1)
-
-		// should only be one
-		if len(skirt) > 0 && len(skirt[0]) > 0 {
-			b.AddPolygon(nil, skirt[0][0].Outline(), z, false)
-		}
 	} else {
 		b.DisableExtrudeSpeedOverride()
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
