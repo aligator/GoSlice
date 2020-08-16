@@ -7,6 +7,7 @@ import (
 	"GoSlice/data"
 	"GoSlice/gcode"
 	"GoSlice/modifier"
+	"errors"
 )
 
 // Skirt generates the skirt lines.
@@ -19,8 +20,10 @@ func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLaye
 		return nil
 	}
 
-	b.AddComment("LAYER:%v", layerNr)
+	// TODO: add comment used by cura
+	//b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
+		// get the perimeters to base the hull on them
 		perimeters, err := modifier.Perimeters(layers[layerNr])
 		if err != nil {
 			return err
@@ -29,25 +32,21 @@ func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLaye
 			return nil
 		}
 
-		// skirt distance + 1/2 extrusion with of the model side + 1/2 extrusion width of the most inner brim line is the distance between the perimeter (or brim) and skirt.
-		distance := options.Print.BrimSkirt.SkirtDistance.ToMicrometer() + (options.Printer.ExtrusionWidth)
+		// Skirt distance + (1/2 extrusion with of the model side + 1/2 extrusion width of the most inner brim line) + the brim width
+		// is the distance between the perimeter (or brim) and skirt.
+		distance := options.Print.BrimSkirt.SkirtDistance.ToMicrometer() + (options.Printer.ExtrusionWidth * data.Micrometer(options.Print.BrimSkirt.BrimCount)) + options.Printer.ExtrusionWidth
 
 		// draw skirt
 		c := clip.NewClipper()
-		skirtMostInner := c.Inset(data.NewBasicLayerPart(c.Hull(perimeters.ToOneDimension()), nil), -distance, 1)
-
-		if len(skirtMostInner) == 0 || len(skirtMostInner[0]) == 0 {
-			return nil
+		// generate the hull around all perimeters
+		hull, ok := c.Hull(perimeters.ToOneDimension())
+		if !ok {
+			return errors.New("could not generate hull around all perimeters to create the skirt")
 		}
 
-		// there should only be one line, so just use it
-		if options.Print.BrimSkirt.SkirtCount <= 1 {
-			return nil
-		}
-		// and generate the other skirt lines from it
-		skirt := c.Inset(skirtMostInner[0][0], -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.SkirtCount)
+		// generate all skirt lines by exsetting the hull
+		skirt := c.Inset(data.NewBasicLayerPart(hull, nil), -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.SkirtCount, distance)
 
-		// as we have only one hull there should be always only one "wall"...
 		for _, wall := range skirt {
 			for _, loopPart := range wall {
 				// as we use the hull around the whole object there shouldn't be any collision with the model -> currentLayer is nil

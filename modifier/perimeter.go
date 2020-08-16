@@ -60,7 +60,7 @@ func (m perimeterModifier) Modify(layers []data.PartitionedLayer) error {
 	for layerNr := range layers {
 		// Generate the perimeters.
 		c := clip.NewClipper()
-		insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount)
+		insetParts := c.InsetLayer(layers[layerNr].LayerParts(), m.options.Printer.ExtrusionWidth, m.options.Print.InsetCount, -m.options.Printer.ExtrusionWidth/2)
 
 		// Also generate the overlapping perimeter, which helps with calculating the infill.
 		// This is derived from the most inner perimeters and offset by the options.Print.InfillOverlapPercent option.
@@ -99,7 +99,7 @@ func calculateOverlapPerimeter(part data.LayerPart, overlapPercent int, extrusio
 	if perimeterOverlap != 0 {
 		c := clip.NewClipper()
 		// As we use only one inset, just return index 0.
-		return c.Inset(part, perimeterOverlap, 1)[0], nil
+		return c.Inset(part, perimeterOverlap, 1, -perimeterOverlap/2)[0], nil
 	} else {
 		// If no overlap needed, just return the input part.
 		return []data.LayerPart{part}, nil

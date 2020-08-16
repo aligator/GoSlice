@@ -55,6 +55,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		&options,
 		gcode.WithRenderer(renderer.PreLayer{}),
 		gcode.WithRenderer(renderer.Skirt{}),
+		gcode.WithRenderer(renderer.Brim{}),
 		gcode.WithRenderer(renderer.Perimeter{}),
 
 		// Add infill for support generation.

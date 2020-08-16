@@ -68,7 +68,7 @@ func (m supportDetectorModifier) Modify(layers []data.PartitionedLayer) error {
 
 		// offset layer by d
 		cl := clip.NewClipper()
-		offsetLayer := cl.InsetLayer(layers[layerNr].LayerParts(), data.Micrometer(-math.Round(distance)), 1).ToOneDimension()
+		offsetLayer := cl.InsetLayer(layers[layerNr].LayerParts(), data.Micrometer(-math.Round(distance)), 1, -data.Micrometer(-math.Round(distance))/2).ToOneDimension()
 
 		// subtract result from the next layer
 		support, ok := cl.Difference(layers[layerNr+1].LayerParts(), offsetLayer)
@@ -77,7 +77,7 @@ func (m supportDetectorModifier) Modify(layers []data.PartitionedLayer) error {
 		}
 
 		// make the support a little bit bigger to provide at least two lines on most places
-		support = cl.InsetLayer(support, -m.options.Print.Support.PatternSpacing.ToMicrometer()*3, 1).ToOneDimension()
+		support = cl.InsetLayer(support, -m.options.Print.Support.PatternSpacing.ToMicrometer()*3, 1, m.options.Print.Support.PatternSpacing.ToMicrometer()*3/2).ToOneDimension()
 
 		// Save the result at the current layer minus TopGapLayers to skip the amount of TopGapLayers
 		newLayer := newExtendedLayer(layers[layerNr-m.options.Print.Support.TopGapLayers])
@@ -144,7 +144,7 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 		}
 
 		// make the layer a bit bigger to create a gap between the support and the model
-		biggerLayer := cl.InsetLayer(layers[layerNr-1].LayerParts(), -m.options.Print.Support.Gap.ToMicrometer(), 1).ToOneDimension()
+		biggerLayer := cl.InsetLayer(layers[layerNr-1].LayerParts(), -m.options.Print.Support.Gap.ToMicrometer(), 1, m.options.Print.Support.Gap.ToMicrometer()/2).ToOneDimension()
 
 		// subtract the model from the result
 		actualSupport, ok := cl.Difference(result, biggerLayer)
