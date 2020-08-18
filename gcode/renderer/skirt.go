@@ -15,19 +15,19 @@ type Skirt struct{}
 
 func (Skirt) Init(model data.OptimizedModel) {}
 
-func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (Skirt) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	if options.Print.BrimSkirt.SkirtCount == 0 {
 		return nil
 	}
 
 	if layerNr == 0 {
 		// Get the perimeters and support to base the hull (line around everything) on them.
-		perimeters, err := modifier.Perimeters(layers[layerNr])
+		perimeters, err := modifier.Perimeters(layer)
 		if err != nil {
 			return err
 		}
 
-		support, err := modifier.FullSupport(layers[layerNr])
+		support, err := modifier.FullSupport(layer)
 		if err != nil {
 			return err
 		}

@@ -45,6 +45,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		modifier.NewPerimeterModifier(&options),
 		modifier.NewInfillModifier(&options),
 		modifier.NewInternalInfillModifier(&options),
+		modifier.NewBrimModifier(&options),
 		modifier.NewSupportDetectorModifier(&options),
 		modifier.NewSupportGeneratorModifier(&options),
 	}

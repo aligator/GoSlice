@@ -29,12 +29,12 @@ func (i *Infill) Init(model data.OptimizedModel) {
 	i.pattern = i.PatternSetup(model.Min().PointXY(), model.Max().PointXY())
 }
 
-func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (i *Infill) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	if i.pattern == nil {
 		return nil
 	}
 
-	infillParts, err := modifier.PartsAttribute(layers[layerNr], i.AttrName)
+	infillParts, err := modifier.PartsAttribute(layer, i.AttrName)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (i *Infill) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		}
 
 		for _, path := range i.pattern.Fill(layerNr, part) {
-			err := b.AddPolygon(layers[layerNr], path, z, true)
+			err := b.AddPolygon(layer, path, z, true)
 			if err != nil {
 				return err
 			}

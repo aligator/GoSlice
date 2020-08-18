@@ -26,9 +26,9 @@ func (f *fakeRenderer) Init(model data.OptimizedModel) {
 	f.c.c["init"]++
 }
 
-func (f *fakeRenderer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (f *fakeRenderer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	f.c.c["render"]++
-	test.Assert(f.t, len(layers) > layerNr, "the number of layers should be more than the current layer number")
+	test.Assert(f.t, maxLayer >= layerNr, "the number of layers should be more or equal than the current layer number")
 	b.AddCommand("number %v", layerNr)
 	return nil
 }

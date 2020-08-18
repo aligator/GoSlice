@@ -10,11 +10,11 @@ import (
 // Several renderers can be provided to the generator.
 type Renderer interface {
 	// Init is called once at the beginning and can be used to set up the renderer.
-	// For example the infill patterns can be instanciated int this method.
+	// For example the infill patterns can be instantiated int this method.
 	Init(model data.OptimizedModel)
 
 	// Render is called for each layer and the provided Builder can be used to add gcode.
-	Render(b *Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error
+	Render(b *Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error
 }
 
 type generator struct {
@@ -62,10 +62,12 @@ func (g *generator) init() {
 func (g *generator) Generate(layers []data.PartitionedLayer) (string, error) {
 	g.init()
 
+	maxLayer := len(layers) - 1
+
 	for layerNr := range layers {
 		for _, renderer := range g.renderers {
 			z := g.options.Print.InitialLayerThickness + data.Micrometer(layerNr)*g.options.Print.LayerThickness
-			err := renderer.Render(g.builder, layerNr, layers, z, g.options)
+			err := renderer.Render(g.builder, layerNr, maxLayer, layers[layerNr], z, g.options)
 			if err != nil {
 				return "", err
 			}

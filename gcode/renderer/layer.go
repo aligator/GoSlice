@@ -12,7 +12,7 @@ type PreLayer struct{}
 
 func (PreLayer) Init(model data.OptimizedModel) {}
 
-func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
 		b.AddComment("Generated with GoSlice")
@@ -72,9 +72,9 @@ type PostLayer struct{}
 
 func (PostLayer) Init(model data.OptimizedModel) {}
 
-func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (PostLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	// ending gcode
-	if layerNr == len(layers)-1 {
+	if layerNr == maxLayer {
 		b.AddComment("END_GCODE")
 		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
 		b.AddCommand("M107 ; disable fan")
