@@ -50,8 +50,14 @@ func (Brim) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer
 
 		cl := clip.NewClipper()
 
+		// Combine the outerPerimeters with the support area.
+		objectArea, ok := cl.Union(allOuterPerimeters, support)
+		if !ok {
+			return errors.New("could not union the outer perimeters with the support")
+		}
+
 		// Get the top level polys e.g. the polygons which are not inside another.
-		topLevelPerimeters, _ := cl.TopLevelPolygons(allOuterPerimeters)
+		topLevelPerimeters, _ := cl.TopLevelPolygons(objectArea)
 		allOuterPerimeters = nil
 		for _, p := range topLevelPerimeters {
 			allOuterPerimeters = append(allOuterPerimeters, data.NewBasicLayerPart(p, nil))
@@ -62,22 +68,25 @@ func (Brim) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer
 			return nil
 		}
 
-		// Combine the outerPerimeters with the support area.
-		objectArea, ok := cl.Union(allOuterPerimeters, support)
-		if !ok {
-			return errors.New("could not union the outer perimeters with the support")
-		}
-
 		// Generate the brim.
 		brim := cl.InsetLayer(objectArea, -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.BrimCount, options.Printer.ExtrusionWidth)
 
 		for _, part := range brim {
 			for _, wall := range part {
 				for _, path := range wall {
-					err := b.AddPolygon(nil, path.Outline(), z, false)
-					if err != nil {
-						return err
+					res, ok := cl.Difference([]data.LayerPart{path}, support)
+
+					if !ok {
+						return errors.New("d")
 					}
+
+					for _, r := range res {
+						err := b.AddPolygon(nil, r.Outline(), z, false)
+						if err != nil {
+							return err
+						}
+					}
+
 				}
 			}
 		}
