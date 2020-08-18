@@ -20,8 +20,6 @@ func (Brim) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer
 		return nil
 	}
 
-	// TODO: add comment used by cura
-	//b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
 		// Get the perimeters and support to base the brim on them.
 		perimeters, err := modifier.Perimeters(layers[layerNr])
@@ -69,28 +67,46 @@ func (Brim) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer
 		}
 
 		// Generate the brim.
-		brim := cl.InsetLayer(objectArea, -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.BrimCount, options.Printer.ExtrusionWidth)
+		brim := cl.InsetLayer(allOuterPerimeters, -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.BrimCount, options.Printer.ExtrusionWidth)
 
+		var outerBrimLines []data.LayerPart
 		for _, part := range brim {
 			for _, wall := range part {
-				for _, path := range wall {
-					// Remove support from the brim at the same location to avoid overlapping of them
-					res, ok := cl.Difference([]data.LayerPart{path}, support)
-
-					if !ok {
-						return errors.New("could not remove the support from the brim line")
+				for exsetNr, path := range wall {
+					if exsetNr == len(wall)-1 {
+						outerBrimLines = append(outerBrimLines, path)
 					}
-
-					for _, r := range res {
-						err := b.AddPolygon(nil, r.Outline(), z, false)
-						if err != nil {
-							return err
-						}
-					}
-
 				}
 			}
 		}
+
+		outerBrimLines, ok = cl.Union(outerBrimLines, nil)
+
+		brim2, ok := cl.Difference(outerBrimLines, allOuterPerimeters)
+
+		b.AddComment("TYPE:SKIRT")
+
+		for _, part := range brim2 {
+			err := b.AddPolygon(nil, part.Outline(), z, false)
+			if err != nil {
+				return err
+			}
+		}
+		/*
+			for _, part := range brim {
+			for _, wall := range part {
+				for _, path := range wall {
+					// Remove support and the whole layer from the brim at the same location to avoid overlapping of them
+
+
+						err := b.AddPolygon(nil, path.Outline(), z, false)
+						if err != nil {
+							return err
+						}
+
+				}
+			}
+		}*/
 	}
 
 	return nil

@@ -20,8 +20,6 @@ func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLaye
 		return nil
 	}
 
-	// TODO: add comment used by cura
-	//b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
 		// Get the perimeters and support to base the hull (line around everything) on them.
 		perimeters, err := modifier.Perimeters(layers[layerNr])
@@ -51,6 +49,8 @@ func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLaye
 
 		// Generate all skirt lines by exsetting the hull.
 		skirt := c.Inset(data.NewBasicLayerPart(hull, nil), -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.SkirtCount, distance)
+
+		b.AddComment("TYPE:SKIRT")
 
 		for _, wall := range skirt {
 			for _, loopPart := range wall {
