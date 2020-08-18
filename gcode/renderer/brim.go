@@ -74,10 +74,11 @@ func (Brim) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer
 		for _, part := range brim {
 			for _, wall := range part {
 				for _, path := range wall {
+					// Remove support from the brim at the same location to avoid overlapping of them
 					res, ok := cl.Difference([]data.LayerPart{path}, support)
 
 					if !ok {
-						return errors.New("d")
+						return errors.New("could not remove the support from the brim line")
 					}
 
 					for _, r := range res {
