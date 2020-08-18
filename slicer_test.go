@@ -28,6 +28,7 @@ func TestWholeSlicer(t *testing.T) {
 	o := data.DefaultOptions()
 	// enable support so that it is tested also
 	o.Print.Support.Enabled = true
+	o.Print.BrimSkirt.BrimCount = 3
 	s := NewGoSlice(o)
 
 	var tests = []struct {

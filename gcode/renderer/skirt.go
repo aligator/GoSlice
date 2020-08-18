@@ -23,12 +23,17 @@ func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLaye
 	// TODO: add comment used by cura
 	//b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
-		// get the perimeters to base the hull on them
+		// Get the perimeters and support to base the hull (line around everything) on them.
 		perimeters, err := modifier.Perimeters(layers[layerNr])
 		if err != nil {
 			return err
 		}
-		if perimeters == nil {
+
+		support, err := modifier.FullSupport(layers[layerNr])
+		if err != nil {
+			return err
+		}
+		if support == nil && perimeters == nil {
 			return nil
 		}
 
@@ -36,21 +41,24 @@ func (Skirt) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLaye
 		// is the distance between the perimeter (or brim) and skirt.
 		distance := options.Print.BrimSkirt.SkirtDistance.ToMicrometer() + (options.Printer.ExtrusionWidth * data.Micrometer(options.Print.BrimSkirt.BrimCount)) + options.Printer.ExtrusionWidth
 
-		// draw skirt
+		// Draw the skirt.
 		c := clip.NewClipper()
-		// generate the hull around all perimeters
-		hull, ok := c.Hull(perimeters.ToOneDimension())
+		// Generate the hull around everything.
+		hull, ok := c.Hull(append(support, perimeters.ToOneDimension()...))
 		if !ok {
 			return errors.New("could not generate hull around all perimeters to create the skirt")
 		}
 
-		// generate all skirt lines by exsetting the hull
+		// Generate all skirt lines by exsetting the hull.
 		skirt := c.Inset(data.NewBasicLayerPart(hull, nil), -options.Printer.ExtrusionWidth, options.Print.BrimSkirt.SkirtCount, distance)
 
 		for _, wall := range skirt {
 			for _, loopPart := range wall {
-				// as we use the hull around the whole object there shouldn't be any collision with the model -> currentLayer is nil
-				b.AddPolygon(nil, loopPart.Outline(), z, false)
+				// As we use the hull around the whole object there shouldn't be any collision with the model -> currentLayer is nil
+				err := b.AddPolygon(nil, loopPart.Outline(), z, false)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

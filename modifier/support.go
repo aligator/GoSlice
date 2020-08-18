@@ -13,6 +13,23 @@ import (
 	"math"
 )
 
+// FullSupport extracts the attribute "fullSupport" from the layer.
+// If it has the wrong type, a error is returned.
+// If it doesn't exist, (nil, nil) is returned.
+// If it exists, the support areas are returned.
+func FullSupport(layer data.PartitionedLayer) ([]data.LayerPart, error) {
+	if attr, ok := layer.Attributes()["fullSupport"]; ok {
+		fullSupport, ok := attr.([]data.LayerPart)
+		if !ok {
+			return nil, errors.New("the attribute fullSupport has the wrong datatype")
+		}
+
+		return fullSupport, nil
+	}
+
+	return nil, nil
+}
+
 type supportDetectorModifier struct {
 	options *data.Options
 }
