@@ -197,6 +197,16 @@ func (m supportGeneratorModifier) Modify(layers []data.PartitionedLayer) error {
 			if !ok {
 				return errors.New("error while calculating the actual support without the interface parts")
 			}
+
+			// If there is any brim in this layer, remove it from the support to avoid overlapping.
+			brimArea, err := BrimOuterDimension(layers[layerNr-1])
+			if err != nil {
+				return err
+			}
+			if brimArea != nil {
+				interfaceParts, ok = c.Difference(interfaceParts, brimArea)
+				actualWithoutInterfaceParts, ok = c.Difference(actualWithoutInterfaceParts, brimArea)
+			}
 		}
 
 		lastSupport = actualSupport
