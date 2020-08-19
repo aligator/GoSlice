@@ -16,13 +16,35 @@ type Pattern interface {
 	Fill(layerNr int, part data.LayerPart) data.Paths
 }
 
-// OffsetResult is built the following way: [part][insetNr][insetParts]data.LayerPart
+// OffsetResult is built the following way: [partNr][insetNr][insetPartsNr]data.LayerPart
 //
-//  * Part is the part number from the input-layer.
-//  * Wall is the wall of the part. The first wall is the outer perimeter. The others are for example the holes.
-//  * InsetNum is the number of the inset (starting by the outer walls with 0)
-//    and all following are from holes inside of the polygon.
-// The array for a part may be empty.
+//  * partNr is the part number from the input-layer.
+//  * insetNr is the number of the inset (so if the inset count is 5 this contains 5 insets with 0 the ounter one)
+//  * insetPartsNr: If the insetting of one line results in several polygons and not only one this is filled with them.
+//  For example if this polygon is inset (by one inset):
+//  ---------------------|    |-----------|
+//  |                    |    |           |
+//  |                    |----|           |
+//  |                                     |
+//  |                                     |
+//  ---------------------------------------
+//  It results in this: (the line is partNr 1, insetNr 1 and insetPartsNr 1)
+//  ---------------------|    |-----------|
+//  |11111111111111111111|    |11111111111|
+//  |1                  1|----|1         1|
+//  |1                  11111111         1|
+//  |1111111111111111111111111111111111111|
+//  ---------------------------------------
+//  If it is inset by another line the new resulting 2 lines are
+//  partNr 1, insetNr 2 and insetPartsNr 1 (left circle of 2ers)
+//  and
+//  partNr 1, insetNr 2 and insetPartsNr 2 (right circle of 2ers)
+//  ---------------------|    |-----------|
+//  |11111111111111111111|    |11111111111|
+//  |12222222222222222221|----|12222222221|
+//  |1222222222222222222111111112222222221|
+//  |1111111111111111111111111111111111111|
+//  ---------------------------------------
 type OffsetResult [][][]data.LayerPart
 
 func (or OffsetResult) ToOneDimension() []data.LayerPart {
@@ -50,11 +72,7 @@ type Clipper interface {
 
 	// Inset insets the given layer part.
 	// The result is built the following way: [insetNr][insetParts]data.LayerPart
-	//
-	//  * Wall is the wall of the part. The first wall is the outer perimeter
-	//  * InsetNum is the number of the inset (starting by the outer walls with 0)
-	//    and all following are from holes inside of the polygon.
-	// The array for a part may be empty.
+	// See also OffsetResult for a more specific description.
 	//
 	// If you need to ex-set a part, just provide a negative offset.
 	// The initialOffset is used for the first inset, so that the first inset can be a bit more or less offset.
