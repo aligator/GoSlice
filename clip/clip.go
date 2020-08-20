@@ -243,6 +243,10 @@ func (c clipperClipper) Union(parts []data.LayerPart, toMerge []data.LayerPart) 
 }
 
 func (c clipperClipper) runClipper(clipType clipper.ClipType, parts []data.LayerPart, toClip []data.LayerPart) (clippedParts []data.LayerPart, ok bool) {
+	if parts == nil && toClip == nil {
+		return nil, true
+	}
+
 	cl := clipper.NewClipper(clipper.IoNone)
 	for _, part := range parts {
 		cl.AddPath(clipperPath(part.Outline()), clipper.PtSubject, true)
