@@ -136,10 +136,10 @@ func (s *GoSlice) Process() error {
 		return err
 	}
 
-	err = optimizedModel.SaveDebugSTL("test.stl")
-	if err != nil {
-		return err
-	}
+	//err = optimizedModel.SaveDebugSTL("test.stl")
+	//if err != nil {
+	//	return err
+	//}
 
 	// 3. Slice model into layers
 	layers, err := s.slicer.Slice(optimizedModel)
