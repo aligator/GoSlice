@@ -59,6 +59,20 @@ func (or OffsetResult) ToOneDimension() []data.LayerPart {
 	return result
 }
 
+// ForEach just runs through everything and calls the callback cb for each element.
+// If the callback returns true, the whole looping just stops and ForEach returns immediately.
+func (or OffsetResult) ForEach(cb func(part data.LayerPart, partNr, insetNr, insetPartsNr int) (doBreak bool)) {
+	for partNr, part := range or {
+		for insetNr, inset := range part {
+			for insetPartsNr, insetParts := range inset {
+				if cb(insetParts, partNr, insetNr, insetPartsNr) {
+					return
+				}
+			}
+		}
+	}
+}
+
 // Clipper is an interface that provides methods needed by GoSlice to clip and alter polygons.
 type Clipper interface {
 	// GenerateLayerParts partitions the whole layer into several partition parts.
@@ -109,7 +123,7 @@ type Clipper interface {
 	// Then the top level polygons are only 1 and 2.
 	// This is also true if the polygons are stacked even deeper.
 	//
-	// Only the outlines are checked and returned!
+	// Only the outlines are checked and returned, the holes of the LayerParts are ignored!
 	TopLevelPolygons(parts []data.LayerPart) (topLevel data.Paths, ok bool)
 }
 
