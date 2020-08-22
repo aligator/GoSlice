@@ -71,6 +71,7 @@ jobs:
           name: Build and pack GoSlice for Linux
           command: |
             pwd
+            ls -la
             GOOS=linux GOARCH=amd64 make
             cp GoSlice/.target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-amd64.tar.gz goslice
