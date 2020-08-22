@@ -16,5 +16,9 @@ compile:
 ## clear the build folder
 clear:
 	@rm -R .target
+	@rm .test_stl/*.gcode
+
+test:
+	@go test ./...
 
 all: compile
