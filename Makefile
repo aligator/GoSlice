@@ -9,8 +9,8 @@ GOBIN := $(GOBASE)/.target
 # Use linker flags to provide version/build settings
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
-## compile: Compile the binary.
-compile:
+## build: Compile the binary.
+build:
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOARM=$(GOARM) CGO_CPPFLAGS=$(CGO_CPPFLAGS) CGO_CFLAGS=$(CGO_CFLAGS) CGO_CXXFLAGS=$(CGO_CXXFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build $(LDFLAGS) -o $(GOBIN)/$(PROJECTNAME) $(GOFILES)
 
 ## clear the build folder
@@ -21,4 +21,4 @@ clear:
 test:
 	@go test ./...
 
-all: compile
+all: build
