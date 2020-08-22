@@ -71,25 +71,25 @@ jobs:
           name: Build and pack GoSlice for Linux
           command: |
             GOOS=linux GOARCH=amd64 make
-            cp .target/goslice goslice
+            cp GoSlice/.target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-amd64.tar.gz goslice
       - run:
           name: Build and pack GoSlice for Linux ARMv7
           command: |
             GOOS=linux GOARCH=arm GOARM=7 make
-            cp .target/goslice goslice
+            cp GoSlice/.target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-armv7.tar.gz goslice
       - run:
           name: Build and pack GoSlice for Linux ARM64
           command: |
             GOOS=linux GOARCH=arm64 make
-            cp .target/goslice goslice
+            cp GoSlice/.target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-arm64.tar.gz goslice
       - run:
           name: Build and pack GoSlice for macOS
           command: |
             GOOS=darwin GOARCH=amd64 make
-            cp .target/goslice goslice
+            cp GoSlice/.target/goslice goslice
             tar -czf /tmp/artifacts/goslice-macos-amd64.tar.gz goslice
       - run:
           name: Build and pack GoSlice for Windows
