@@ -1,6 +1,6 @@
 VERSION := $(shell git describe --tags)
 BUILD := $(shell git rev-parse --short HEAD)
-PROJECTNAME := $(shell basename "$(PWD)" | awk '{print tolower($$0)}')
+PROJECTNAME := goslice
 TARGET := .target
 
 # Use linker flags to provide version/build settings
