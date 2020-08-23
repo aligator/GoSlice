@@ -60,7 +60,7 @@ FacesLoop:
 			currentPoint := face.Points()[j]
 			// create hash for the pos
 			// points which are within the meldDistance fall into the same category of the indices map
-			meldDistanceHash := pointHash(o.options.MeldDistance)
+			meldDistanceHash := pointHash(o.options.GoSlice.MeldDistance)
 			hash := ((pointHash(currentPoint.X()) + meldDistanceHash/2) / meldDistanceHash) ^
 				(((pointHash(currentPoint.Y()) + meldDistanceHash/2) / meldDistanceHash) << 10) ^
 				(((pointHash(currentPoint.Z()) + meldDistanceHash/2) / meldDistanceHash) << 20)
@@ -72,7 +72,7 @@ FacesLoop:
 			// is smaller (or same) than the currently tested pos
 			for _, index := range indices[hash] {
 				differenceVec := om.points[index].pos.Sub(currentPoint)
-				if differenceVec.ShorterThanOrEqual(o.options.MeldDistance) {
+				if differenceVec.ShorterThanOrEqual(o.options.GoSlice.MeldDistance) {
 					// if true for any of the points with the same hash,
 					// do not add the current pos to the indices map
 					// but save the indices of the already existing duplicate

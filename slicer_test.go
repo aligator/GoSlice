@@ -44,7 +44,7 @@ func TestWholeSlicer(t *testing.T) {
 
 	for _, testCase := range tests {
 		t.Log("slice " + testCase.path)
-		s.options.InputFilePath = folder + testCase.path
+		s.options.GoSlice.InputFilePath = folder + testCase.path
 		err := s.Process()
 		test.Ok(t, err)
 	}

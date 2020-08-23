@@ -8,7 +8,6 @@ LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 
 ## build: Compile the binary.
 build:
-	@echo compile
 	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) GOARM=$(GOARM) CGO_CPPFLAGS=$(CGO_CPPFLAGS) CGO_CFLAGS=$(CGO_CFLAGS) CGO_CXXFLAGS=$(CGO_CXXFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build $(LDFLAGS) -o $(TARGET)/$(PROJECTNAME) $(GOFILES)
 
 ## clear the build folder

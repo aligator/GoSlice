@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	flag "github.com/spf13/pflag"
 )
 
-var Version = "UNDEFINED"
+var Version = "unknown development version"
 
 func main() {
 	o := data.ParseFlags()
@@ -15,6 +17,12 @@ func main() {
 	if o.GoSlice.PrintVersion {
 		printVersion(os.Stdout)
 		os.Exit(0)
+	}
+
+	if o.GoSlice.InputFilePath == "" {
+		_, _ = fmt.Fprintf(os.Stderr, "the STL_FILE path has to be specified\n")
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	p := NewGoSlice(o)

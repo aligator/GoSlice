@@ -77,7 +77,7 @@ func (l *layer) makePolygons(om data.OptimizedModel, joinPolygonSnapDistance, fi
 					p1 := l.segments[touchingSegmentIndex].start
 					diff := p0.Sub(p1)
 
-					if diff.ShorterThanOrEqual(l.options.MeldDistance) {
+					if diff.ShorterThanOrEqual(l.options.GoSlice.MeldDistance) {
 						if touchingSegmentIndex == startSegmentIndex {
 							canClose = true
 						}

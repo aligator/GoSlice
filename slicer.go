@@ -126,7 +126,7 @@ func (s *GoSlice) Process() error {
 	startTime := time.Now()
 
 	// 1. Load model
-	models, err := s.reader.Read(s.options.InputFilePath)
+	models, err := s.reader.Read(s.options.GoSlice.InputFilePath)
 	if err != nil {
 		return err
 	}
@@ -168,7 +168,7 @@ func (s *GoSlice) Process() error {
 		return err
 	}
 
-	err = s.writer.Write(finalGcode, s.options.InputFilePath+".gcode")
+	err = s.writer.Write(finalGcode, s.options.GoSlice.InputFilePath+".gcode")
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
 	return err
