@@ -331,7 +331,6 @@ func ParseFlags() Options {
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(os.Stderr, "Usage of goslice: goslice STL_FILE [flags]\n")
 		flag.PrintDefaults()
-		os.Exit(1)
 	}
 
 	// GoSlice options
