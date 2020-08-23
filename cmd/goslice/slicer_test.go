@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	folder = "test_stl/"
+	folder = "../../test_stl/"
 
 	// The models are copied to the project just to avoid downloading them for each test.
 

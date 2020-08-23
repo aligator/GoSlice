@@ -4,7 +4,8 @@
 *.html
 *.gcode
 \#*#
-GoSlice
+goslice
+goslice.exe
 coverage.out
 !test_stl/*.stl
 .target

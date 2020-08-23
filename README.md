@@ -42,13 +42,25 @@ If you need the usage of all possible flags, run it with the `--help` flag:
 ```
 
 ## Try it out - for developers
-Minimal usage:
+Just running GoSlice:
 ```
-go run . /path/to/stl/file.stl
+go run ./cmd/goslice /path/to/stl/file.stl
 ```
 To get help for all possible flags take a look at /data/option.go or just run:
 ```
-go run . --help
+go run ./cmd/goslice --help
+```
+
+Building GoSlice:
+Ideally you should have make installed:
+```
+make
+```
+The resulting binary will be in the `.target` folder.
+
+If you do not have make, you can still run the build command manually, but it is not recommended:
+```
+go build -ldflags "-X=main.Version=$(git describe --tags) -X=main.Build=$(git rev-parse --short HEAD)" -o .target ./cmd/goslice
 ```
 ## How does it work
 [see here](docs/README.md)
