@@ -73,6 +73,7 @@ jobs:
             pwd
             ls -la
             GOOS=linux GOARCH=amd64 make
+            ls -la
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-amd64.tar.gz goslice
       - run:
