@@ -34,11 +34,9 @@ jobs:
           key: repository-cache-v1-{{ .Branch }}-{{ .Revision }}
           paths:
             - ".git"
-      - run: go test -coverprofile=c.out -v ./...
+      - run: gotestsum --junitfile unit-tests.xml -- -coverprofile=c.out
       - run: go tool cover -html=c.out -o coverage.html
-      - run: gotestsum --junitfile unit-tests.xml
-      - run: mkdir /tmp/test-results /tmp/coverage
-      - run: mv coverage.html /tmp/coverage/coverage.html
+      - run: mkdir /tmp/test-results
       - run: mv unit-tests.xml /tmp/test-results/unit-tests.xml
       - store_artifacts:
           path: /tmp/coverage
@@ -68,38 +66,33 @@ jobs:
             - ".git"
       - run: mkdir -p /tmp/artifacts
       - run:
-          name: Build and pack GoSlice Control for Linux
+          name: Build and pack GoSlice for Linux
           command: |
-            GOOS=linux GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-            -o .target/goslice .
+            GOOS=linux GOARCH=amd64 make
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-amd64.tar.gz goslice
       - run:
-          name: Build and pack GoSlice Control for Linux ARMv7
+          name: Build and pack GoSlice for Linux ARMv7
           command: |
-            GOOS=linux GOARCH=arm GOARM=7 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-            -o .target/goslice .
+            GOOS=linux GOARCH=arm GOARM=7 make
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-armv7.tar.gz goslice
       - run:
-          name: Build and pack GoSlice Control for Linux ARM64
+          name: Build and pack GoSlice for Linux ARM64
           command: |
-            GOOS=linux GOARCH=arm64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-            -o .target/goslice .
+            GOOS=linux GOARCH=arm64 make
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-linux-arm64.tar.gz goslice
       - run:
-          name: Build and pack GoSlice Control for macOS
+          name: Build and pack GoSlice for macOS
           command: |
-            GOOS=darwin GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-              -o .target/goslice .
+            GOOS=darwin GOARCH=amd64 make
             cp .target/goslice goslice
             tar -czf /tmp/artifacts/goslice-macos-amd64.tar.gz goslice
       - run:
-          name: Build and pack GoSlice Control for Windows
+          name: Build and pack GoSlice for Windows
           command: |
-            GOOS=windows GOARCH=amd64 go build -v -ldflags "-X main.version=${CIRCLE_TAG}" \
-              -o .target/goslice.exe .
+            GOOS=windows GOARCH=amd64 make
             cp .target/goslice.exe goslice.exe
             zip /tmp/artifacts/goslice-windows-amd64.zip goslice.exe
       - persist_to_workspace:

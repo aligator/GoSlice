@@ -7,3 +7,4 @@
 GoSlice
 coverage.out
 !test_stl/*.stl
+.target
