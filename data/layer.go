@@ -2,6 +2,8 @@
 
 package data
 
+import go_convex_hull_2d "github.com/furstenheim/go-convex-hull-2d"
+
 // Path is a simple list of points.
 // It can be used to represent polygons (if they are closed) or just lines.
 type Path []MicroPoint
@@ -177,6 +179,23 @@ func (p Path) Rotate(degree float64) {
 	for i, point := range p {
 		p[i] = point.Rotate(degree)
 	}
+}
+
+func (p Path) Take(i int) (x, y float64) {
+	point := p[i]
+	return float64(point.X()), float64(point.Y())
+}
+
+func (p Path) Len() int {
+	return len(p)
+}
+
+func (p Path) Swap(i, j int) {
+	p[j], p[i] = p[i], p[j]
+}
+
+func (p Path) Slice(i, j int) go_convex_hull_2d.Interface {
+	return p[i:j]
 }
 
 // Paths represents a group of Paths.

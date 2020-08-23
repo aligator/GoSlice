@@ -77,32 +77,6 @@ func (v microVec3) Type() string {
 	return "Micrometer"
 }
 
-// SupportOptions contains all Support specific GoSlice options.
-type SupportOptions struct {
-	// Enabled enables the generation of support structures.
-	Enabled bool
-
-	// ThresholdAngle is the angle up to which no support is generated.
-	ThresholdAngle int
-
-	// TopGapLayers is the amount of layers without support.
-	TopGapLayers int
-
-	// InterfaceLayers is the amount of layers which are filled differently as interface to the object.
-	InterfaceLayers int
-
-	// PatternSpacing is the spacing used to create the support pattern.
-	PatternSpacing Millimeter
-
-	// Gap is the gap between the model and the support.
-	Gap Millimeter
-}
-
-// FanSpeedOptions used to control fan speed at given layers.
-type FanSpeedOptions struct {
-	LayerToSpeedLUT map[int]int
-}
-
 // NewDefaultFanSpeedOptions Creates instance FanSpeedOptions
 // and sets a of full fan (255) at layer 3.
 func NewDefaultFanSpeedOptions() FanSpeedOptions {
@@ -195,6 +169,8 @@ type PrintOptions struct {
 	NumberTopLayers int
 
 	Support SupportOptions
+
+	BrimSkirt BrimSkirtOptions
 }
 
 // FilamentOptions contains all Filament specific GoSlice options.
@@ -226,6 +202,44 @@ type FilamentOptions struct {
 
 	// Primary (fan 0) speed, at given layers
 	FanSpeed FanSpeedOptions
+}
+
+// SupportOptions contains all Support specific GoSlice options.
+type SupportOptions struct {
+	// Enabled enables the generation of support structures.
+	Enabled bool
+
+	// ThresholdAngle is the angle up to which no support is generated.
+	ThresholdAngle int
+
+	// TopGapLayers is the amount of layers without support.
+	TopGapLayers int
+
+	// InterfaceLayers is the amount of layers which are filled differently as interface to the object.
+	InterfaceLayers int
+
+	// PatternSpacing is the spacing used to create the support pattern.
+	PatternSpacing Millimeter
+
+	// Gap is the gap between the model and the support.
+	Gap Millimeter
+}
+
+// BrimSkirtOptions contains all options for the brim and skirt generation.
+type BrimSkirtOptions struct {
+	// SkirtCount is the amount of skirt lines around the initial layer.
+	SkirtCount int
+
+	// SkirtDistance is the distance between the model (or the most outer brim lines) and the most inner skirt line.
+	SkirtDistance Millimeter
+
+	// BrimCount specifies the amount of brim lines around the parts of the initial layer.
+	BrimCount int
+}
+
+// FanSpeedOptions used to control fan speed at given layers.
+type FanSpeedOptions struct {
+	LayerToSpeedLUT map[int]int
 }
 
 // PrinterOptions contains all Printer specific GoSlice options.
@@ -292,6 +306,11 @@ func DefaultOptions() Options {
 				PatternSpacing:  Millimeter(2.5),
 				Gap:             Millimeter(0.6),
 			},
+			BrimSkirt: BrimSkirtOptions{
+				SkirtCount:    2,
+				SkirtDistance: Millimeter(5),
+				BrimCount:     0,
+			},
 		},
 		Filament: FilamentOptions{
 			FilamentDiameter:             Millimeter(1.75).ToMicrometer(),
@@ -354,6 +373,11 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Print.Support.InterfaceLayers, "support-interface-layers", options.Print.Support.InterfaceLayers, "The amount of layers which are filled differently as interface to the object.")
 	flag.Var(&options.Print.Support.PatternSpacing, "support-pattern-spacing", "The spacing used to create the support pattern.")
 	flag.Var(&options.Print.Support.Gap, "support-gap", "The gap between the model and the support.")
+
+	// brim & skirt options
+	flag.IntVar(&options.Print.BrimSkirt.SkirtCount, "skirt-count", options.Print.BrimSkirt.SkirtCount, "The amount of skirt lines around the initial layer.")
+	flag.Var(&options.Print.BrimSkirt.SkirtDistance, "skirt-distance", "The distance between the model (or the most outer brim lines) and the most inner skirt line.")
+	flag.IntVar(&options.Print.BrimSkirt.BrimCount, "brim-count", options.Print.BrimSkirt.BrimCount, "The amount of brim lines around the parts of the initial layer.")
 
 	// filament options
 	flag.Var(&options.Filament.FilamentDiameter, "filament-diameter", "The filament diameter used by the printer.")

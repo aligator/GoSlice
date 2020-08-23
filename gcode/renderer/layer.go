@@ -12,7 +12,7 @@ type PreLayer struct{}
 
 func (PreLayer) Init(model data.OptimizedModel) {}
 
-func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
 		b.AddComment("Generated with GoSlice")
@@ -28,9 +28,6 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedL
 
 		// starting gcode
 		b.AddComment("START_GCODE")
-		b.AddCommand("G1 X0 Y20 Z0.2 F3000 ; get ready to prime")
-		b.AddCommand("G92 E0 ; reset extrusion distance")
-		b.AddCommand("G1 X200 E20 F600 ; prime nozzle")
 		b.AddCommand("G1 Z5 F5000 ; lift nozzle")
 		b.AddCommand("G92 E0 ; reset extrusion distance")
 
@@ -75,9 +72,9 @@ type PostLayer struct{}
 
 func (PostLayer) Init(model data.OptimizedModel) {}
 
-func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
+func (PostLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
 	// ending gcode
-	if layerNr == len(layers)-1 {
+	if layerNr == maxLayer {
 		b.AddComment("END_GCODE")
 		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
 		b.AddCommand("M107 ; disable fan")
@@ -85,6 +82,10 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, layers []data.Partitioned
 		// disable heaters
 		b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
 		b.AddCommand("M140 S0 ; Set bed to 0C (off)")
+
+		b.AddCommand("G28 X0  ; home X axis to get head out of the way")
+		b.AddCommand("M84 ;steppers off")
+
 	}
 
 	return nil
