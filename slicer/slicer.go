@@ -112,7 +112,7 @@ func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 	c := clip.NewClipper()
 
 	for i, layer := range layers {
-		layer.makePolygons(m, s.options.JoinPolygonSnapDistance, s.options.FinishPolygonSnapDistance)
+		layer.makePolygons(m, s.options.GoSlice.JoinPolygonSnapDistance, s.options.GoSlice.FinishPolygonSnapDistance)
 		lp, ok := c.GenerateLayerParts(layer)
 
 		if !ok {

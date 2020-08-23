@@ -27,12 +27,12 @@ https://github.com/aligator/GoSlice/releases
 Unpack the executable and run it in the commandline.  
 linux / mac:  
 ```
-./goslice --file /path/to/stl/file.stl
+./goslice /path/to/stl/file.stl
 ```
 
 windows:  
 ```
-goslice.exe --file /path/to/stl/file.stl` 
+goslice.exe /path/to/stl/file.stl` 
 ```
 
 If you need the usage of all possible flags, run it with the `--help` flag:
@@ -43,7 +43,7 @@ If you need the usage of all possible flags, run it with the `--help` flag:
 ## Try it out - for developers
 Minimal usage:
 ```
-go run . --file /path/to/stl/file.stl
+go run . /path/to/stl/file.stl
 ```
 To get help for all possible flags take a look at /data/option.go or just run:
 ```

@@ -5,6 +5,7 @@ package data
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -241,14 +242,6 @@ type PrinterOptions struct {
 type GoSliceOptions struct {
 	// PrintVersion indicates if the GoSlice version should be printed.
 	PrintVersion bool
-}
-
-// Options contains all GoSlice options.
-type Options struct {
-	Printer  PrinterOptions
-	Filament FilamentOptions
-	Print    PrintOptions
-	GoSlice  GoSliceOptions
 
 	// MeldDistance is the distance which two points have to be
 	// within to count them as one point.
@@ -265,6 +258,14 @@ type Options struct {
 
 	// InputFilePath specifies the path to the input stl file.
 	InputFilePath string
+}
+
+// Options contains all GoSlice options.
+type Options struct {
+	Printer  PrinterOptions
+	Filament FilamentOptions
+	Print    PrintOptions
+	GoSlice  GoSliceOptions
 }
 
 func DefaultOptions() Options {
@@ -312,11 +313,13 @@ func DefaultOptions() Options {
 				0,
 			),
 		},
-		GoSlice: GoSliceOptions{},
-
-		MeldDistance:              30,
-		JoinPolygonSnapDistance:   160,
-		FinishPolygonSnapDistance: 1000,
+		GoSlice: GoSliceOptions{
+			PrintVersion:              false,
+			MeldDistance:              30,
+			JoinPolygonSnapDistance:   160,
+			FinishPolygonSnapDistance: 1000,
+			InputFilePath:             "",
+		},
 	}
 }
 
@@ -325,11 +328,17 @@ func DefaultOptions() Options {
 func ParseFlags() Options {
 	options := DefaultOptions()
 
-	flag.StringVar(&options.InputFilePath, "file", "", "The path to the input stl file.")
+	flag.Usage = func() {
+		_, _ = fmt.Fprintf(os.Stderr, "Usage of goslice: goslice STL_FILE [flags]\n")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
 
-	flag.Var(&options.MeldDistance, "meld-distance", "The distance which two points have to be within to count them as one point.")
-	flag.Var(&options.JoinPolygonSnapDistance, "join-polygon-snap-distance", "The distance used to check if two open polygons can be snapped together to one bigger polygon. Checked by the start and endpoints of the polygons.")
-	flag.Var(&options.FinishPolygonSnapDistance, "finish-polygon-snap-distance", "The max distance between start end endpoint of a polygon used to check if a open polygon can be closed.")
+	// GoSlice options
+	flag.BoolVarP(&options.GoSlice.PrintVersion, "version", "v", false, "Print the GoSlice version.")
+	flag.Var(&options.GoSlice.MeldDistance, "meld-distance", "The distance which two points have to be within to count them as one point.")
+	flag.Var(&options.GoSlice.JoinPolygonSnapDistance, "join-polygon-snap-distance", "The distance used to check if two open polygons can be snapped together to one bigger polygon. Checked by the start and endpoints of the polygons.")
+	flag.Var(&options.GoSlice.FinishPolygonSnapDistance, "finish-polygon-snap-distance", "The max distance between start end endpoint of a polygon used to check if a open polygon can be closed.")
 
 	// print options
 	flag.Var(&options.Print.IntialLayerSpeed, "initial-layer-speed", "The speed only for the first layer in mm per second.")
@@ -375,15 +384,13 @@ func ParseFlags() Options {
 	}
 	flag.Var(&center, "center", "The point where the model is finally placed.")
 
-	// GoSlice options
-	flag.BoolVarP(&options.GoSlice.PrintVersion, "version", "v", false, "Print the GoSlice version.")
-
 	flag.Parse()
 
 	options.Printer.Center = &center
 
-	if !options.GoSlice.PrintVersion && options.InputFilePath == "" {
-		panic("you have to pass a filename using the --file flag")
+	// Use the first arg as path.
+	if flag.NArg() > 0 {
+		options.GoSlice.InputFilePath = flag.Args()[0]
 	}
 
 	return options
