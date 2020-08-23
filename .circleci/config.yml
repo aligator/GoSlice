@@ -34,11 +34,9 @@ jobs:
           key: repository-cache-v1-{{ .Branch }}-{{ .Revision }}
           paths:
             - ".git"
-      - run: go test -coverprofile=c.out -v ./...
+      - run: gotestsum --junitfile unit-tests.xml -- -coverprofile=c.out
       - run: go tool cover -html=c.out -o coverage.html
-      - run: gotestsum --junitfile unit-tests.xml
-      - run: mkdir /tmp/test-results /tmp/coverage
-      - run: mv coverage.html /tmp/coverage/coverage.html
+      - run: mkdir /tmp/test-results
       - run: mv unit-tests.xml /tmp/test-results/unit-tests.xml
       - store_artifacts:
           path: /tmp/coverage
@@ -70,8 +68,6 @@ jobs:
       - run:
           name: Build and pack GoSlice for Linux
           command: |
-            pwd
-            ls -la
             GOOS=linux GOARCH=amd64 make
             ls -la .target
             cp .target/goslice goslice
