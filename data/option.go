@@ -237,11 +237,18 @@ type PrinterOptions struct {
 	Center MicroVec3
 }
 
+// GoSliceOptions contains all options related to GoSlice itself.
+type GoSliceOptions struct {
+	// PrintVersion indicates if the GoSlice version should be printed.
+	PrintVersion bool
+}
+
 // Options contains all GoSlice options.
 type Options struct {
 	Printer  PrinterOptions
 	Filament FilamentOptions
 	Print    PrintOptions
+	GoSlice  GoSliceOptions
 
 	// MeldDistance is the distance which two points have to be
 	// within to count them as one point.
@@ -305,6 +312,7 @@ func DefaultOptions() Options {
 				0,
 			),
 		},
+		GoSlice: GoSliceOptions{},
 
 		MeldDistance:              30,
 		JoinPolygonSnapDistance:   160,
@@ -367,11 +375,14 @@ func ParseFlags() Options {
 	}
 	flag.Var(&center, "center", "The point where the model is finally placed.")
 
+	// GoSlice options
+	flag.BoolVarP(&options.GoSlice.PrintVersion, "version", "v", false, "Print the GoSlice version.")
+
 	flag.Parse()
 
 	options.Printer.Center = &center
 
-	if options.InputFilePath == "" {
+	if !options.GoSlice.PrintVersion && options.InputFilePath == "" {
 		panic("you have to pass a filename using the --file flag")
 	}
 
