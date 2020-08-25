@@ -35,7 +35,8 @@ jobs:
           paths:
             - ".git"
       - run: gotestsum --junitfile unit-tests.xml -- -coverprofile=c.out ./...
-      - run: go tool cover -html=c.out -o coverage.html
+      - run: mkdir /tmp/coverage
+      - run: go tool cover -html=c.out -o /tmp/coverage/coverage.html
       - run: mkdir /tmp/test-results
       - run: mv unit-tests.xml /tmp/test-results/unit-tests.xml
       - store_artifacts:
