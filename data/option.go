@@ -361,7 +361,7 @@ func ParseFlags() Options {
 	flag.Var(&options.GoSlice.MeldDistance, "meld-distance", "The distance which two points have to be within to count them as one point.")
 	flag.Var(&options.GoSlice.JoinPolygonSnapDistance, "join-polygon-snap-distance", "The distance used to check if two open polygons can be snapped together to one bigger polygon. Checked by the start and endpoints of the polygons.")
 	flag.Var(&options.GoSlice.FinishPolygonSnapDistance, "finish-polygon-snap-distance", "The max distance between start end endpoint of a polygon used to check if a open polygon can be closed.")
-	flag.StringVarP(&options.GoSlice.OutputFilePath, "output", "o", "", "File path for the output gcode file. Default is the inout file path with .gcode as file ending.")
+	flag.StringVarP(&options.GoSlice.OutputFilePath, "output", "o", options.GoSlice.OutputFilePath, "File path for the output gcode file. Default is the inout file path with .gcode as file ending.")
 
 	// print options
 	flag.Var(&options.Print.IntialLayerSpeed, "initial-layer-speed", "The speed only for the first layer in mm per second.")
@@ -419,10 +419,6 @@ func ParseFlags() Options {
 	// Use the first arg as path.
 	if flag.NArg() > 0 {
 		options.GoSlice.InputFilePath = flag.Args()[0]
-	}
-
-	if options.GoSlice.OutputFilePath == "" {
-		options.GoSlice.OutputFilePath = options.GoSlice.InputFilePath + ".gcode"
 	}
 
 	return options
