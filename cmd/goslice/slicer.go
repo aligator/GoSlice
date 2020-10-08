@@ -168,7 +168,7 @@ func (s *GoSlice) Process() error {
 		return err
 	}
 
-	err = s.writer.Write(finalGcode, s.options.GoSlice.InputFilePath+".gcode")
+	err = s.writer.Write(finalGcode, s.options.GoSlice.OutputFilePath)
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
 	return err
