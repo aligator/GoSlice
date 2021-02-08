@@ -31,7 +31,7 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 		b.AddCommand("G1 Z5 F5000 ; lift nozzle")
 		b.AddCommand("G92 E0 ; reset extrusion distance")
 
-		b.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
+		b.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth)
 
 		// set speeds
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
@@ -76,7 +76,7 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.
 	// ending gcode
 	if layerNr == maxLayer {
 		b.AddComment("END_GCODE")
-		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth, options.Filament.FilamentDiameter)
+		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth)
 		b.AddCommand("M107 ; disable fan")
 
 		// disable heaters

@@ -168,11 +168,12 @@ func (s *GoSlice) Process() error {
 		return err
 	}
 
-	if s.options.GoSlice.OutputFilePath == "" {
-		s.options.GoSlice.OutputFilePath = s.options.GoSlice.InputFilePath + ".gcode"
+	outputPath := s.options.GoSlice.OutputFilePath
+	if outputPath == "" {
+		outputPath = s.options.GoSlice.InputFilePath + ".gcode"
 	}
 
-	err = s.writer.Write(finalGcode, s.options.GoSlice.OutputFilePath)
+	err = s.writer.Write(finalGcode, outputPath)
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
 	return err

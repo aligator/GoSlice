@@ -54,7 +54,7 @@ func NewGenerator(options *data.Options, generatorOptions ...option) handler.GCo
 }
 
 func (g *generator) init() {
-	g.builder = NewGCodeBuilder()
+	g.builder = NewGCodeBuilder(g.options)
 }
 
 // Generate generates the GCode by using the renderers added to the generator.

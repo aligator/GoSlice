@@ -8,9 +8,16 @@ import (
 )
 
 func TestGCodeBuilder(t *testing.T) {
+	overExtrusionOptions := data.DefaultOptions()
+	overExtrusionOptions.Filament.ExtrusionMultiplier = 150
+
+	underExtrusionOptions := data.DefaultOptions()
+	underExtrusionOptions.Filament.ExtrusionMultiplier = 50
+
 	var tests = map[string]struct {
 		exec     func(*gcode.Builder)
 		expected string
+		options  *data.Options
 	}{
 		"no commands": {
 			exec:     func(b *gcode.Builder) {},
@@ -152,7 +159,7 @@ func TestGCodeBuilder(t *testing.T) {
 
 		"set extrusion": {
 			exec: func(b *gcode.Builder) {
-				b.SetExtrusion(200, 400, 175)
+				b.SetExtrusion(200, 400)
 				err := b.AddPolygon(nil, []data.MicroPoint{
 					data.NewMicroPoint(0, 0),
 					data.NewMicroPoint(0, 10000),
@@ -162,11 +169,44 @@ func TestGCodeBuilder(t *testing.T) {
 			expected: "G0 X0.00 Y0.00\n" +
 				"G1 X0.00 Y10.00 E33.2601\n",
 		},
+
+		"set extrusion with over extrusion": {
+			options: &overExtrusionOptions,
+			exec: func(b *gcode.Builder) {
+				b.SetExtrusion(200, 400)
+				err := b.AddPolygon(nil, []data.MicroPoint{
+					data.NewMicroPoint(0, 0),
+					data.NewMicroPoint(0, 10000),
+				}, 0, true)
+				test.Ok(t, err)
+			},
+			expected: "G0 X0.00 Y0.00\n" +
+				"G1 X0.00 Y10.00 E49.8902\n",
+		},
+
+		"set extrusion with under extrusion": {
+			options: &underExtrusionOptions,
+			exec: func(b *gcode.Builder) {
+				b.SetExtrusion(200, 400)
+				err := b.AddPolygon(nil, []data.MicroPoint{
+					data.NewMicroPoint(0, 0),
+					data.NewMicroPoint(0, 10000),
+				}, 0, true)
+				test.Ok(t, err)
+			},
+			expected: "G0 X0.00 Y0.00\n" +
+				"G1 X0.00 Y10.00 E16.6301\n",
+		},
 	}
 
 	for desc, testCase := range tests {
 		t.Log(desc)
-		builder := gcode.NewGCodeBuilder()
+		options := data.DefaultOptions()
+		if testCase.options != nil {
+			options = *testCase.options
+		}
+		builder := gcode.NewGCodeBuilder(&options)
+
 		testCase.exec(builder)
 		test.Equals(t, testCase.expected, builder.String())
 	}

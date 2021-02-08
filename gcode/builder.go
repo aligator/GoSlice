@@ -21,11 +21,16 @@ type Builder struct {
 
 	retractionSpeed  int
 	retractionAmount data.Millimeter
+
+	filamentDiameter    data.Micrometer
+	extrusionMultiplier int
 }
 
-func NewGCodeBuilder() *Builder {
+func NewGCodeBuilder(options *data.Options) *Builder {
 	g := &Builder{
-		currentPosition: data.NewMicroVec3(0, 0, 0),
+		currentPosition:     data.NewMicroVec3(0, 0, 0),
+		filamentDiameter:    options.Filament.FilamentDiameter,
+		extrusionMultiplier: options.Filament.ExtrusionMultiplier,
 	}
 	g.buf = bytes.NewBuffer([]byte{})
 	return g
@@ -35,9 +40,9 @@ func (g *Builder) String() string {
 	return g.buf.String()
 }
 
-func (g *Builder) SetExtrusion(layerThickness, lineWidth, filamentDiameter data.Micrometer) {
-	filamentArea := math.Pi * (filamentDiameter.ToMillimeter() / 2.0) * (filamentDiameter.ToMillimeter() / 2.0)
-	g.extrusionPerMM = layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea
+func (g *Builder) SetExtrusion(layerThickness, lineWidth data.Micrometer) {
+	filamentArea := math.Pi * (g.filamentDiameter.ToMillimeter() / 2.0) * (g.filamentDiameter.ToMillimeter() / 2.0)
+	g.extrusionPerMM = (layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea) * (data.Millimeter(g.extrusionMultiplier))
 }
 
 func (g *Builder) SetMoveSpeed(moveSpeed data.Millimeter) {
