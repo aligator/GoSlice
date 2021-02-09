@@ -147,9 +147,9 @@ func clipperPoint(p data.MicroPoint) *clipper.IntPoint {
 // clipperPaths converts the GoSlice Paths representation
 // to the representation which is used by the external clipper lib.
 func clipperPaths(p data.Paths) clipper.Paths {
-	var result clipper.Paths
-	for _, path := range p {
-		result = append(result, clipperPath(path))
+	result := make(clipper.Paths, len(p))
+	for i, path := range p {
+		result[i] = clipperPath(path)
 	}
 
 	return result
@@ -158,9 +158,9 @@ func clipperPaths(p data.Paths) clipper.Paths {
 // clipperPath converts the GoSlice Path representation
 // to the representation which is used by the external clipper lib.
 func clipperPath(p data.Path) clipper.Path {
-	var result clipper.Path
-	for _, point := range p {
-		result = append(result, clipperPoint(point))
+	result := make(clipper.Path, len(p))
+	for i, point := range p {
+		result[i] = clipperPoint(point)
 	}
 
 	return result
@@ -177,9 +177,9 @@ func microPoint(p *clipper.IntPoint) data.MicroPoint {
 // The parameter simplify enables simplifying of the path using
 // the default simplification settings.
 func microPath(p clipper.Path, simplify bool) data.Path {
-	var result data.Path
-	for _, point := range p {
-		result = append(result, microPoint(point))
+	result := make(data.Path, len(p))
+	for i, point := range p {
+		result[i] = microPoint(point)
 	}
 
 	if simplify {
@@ -193,9 +193,9 @@ func microPath(p clipper.Path, simplify bool) data.Path {
 // The parameter simplify enables simplifying of the paths using
 // the default simplification settings.
 func microPaths(p clipper.Paths, simplify bool) data.Paths {
-	var result data.Paths
-	for _, path := range p {
-		result = append(result, microPath(path, simplify))
+	result := make(data.Paths, len(p))
+	for i, path := range p {
+		result[i] = microPath(path, simplify)
 	}
 	return result
 }
