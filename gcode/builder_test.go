@@ -167,7 +167,7 @@ func TestGCodeBuilder(t *testing.T) {
 				test.Ok(t, err)
 			},
 			expected: "G0 X0.00 Y0.00\n" +
-				"G1 X0.00 Y10.00 E33.2601\n",
+				"G1 X0.00 Y10.00 E0.3326\n",
 		},
 
 		"set extrusion with over extrusion": {
@@ -181,7 +181,7 @@ func TestGCodeBuilder(t *testing.T) {
 				test.Ok(t, err)
 			},
 			expected: "G0 X0.00 Y0.00\n" +
-				"G1 X0.00 Y10.00 E49.8902\n",
+				"G1 X0.00 Y10.00 E0.4989\n",
 		},
 
 		"set extrusion with under extrusion": {
@@ -195,7 +195,7 @@ func TestGCodeBuilder(t *testing.T) {
 				test.Ok(t, err)
 			},
 			expected: "G0 X0.00 Y0.00\n" +
-				"G1 X0.00 Y10.00 E16.6301\n",
+				"G1 X0.00 Y10.00 E0.1663\n",
 		},
 	}
 

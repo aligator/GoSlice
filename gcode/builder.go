@@ -42,7 +42,7 @@ func (g *Builder) String() string {
 
 func (g *Builder) SetExtrusion(layerThickness, lineWidth data.Micrometer) {
 	filamentArea := math.Pi * (g.filamentDiameter.ToMillimeter() / 2.0) * (g.filamentDiameter.ToMillimeter() / 2.0)
-	g.extrusionPerMM = (layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea) * (data.Millimeter(g.extrusionMultiplier))
+	g.extrusionPerMM = (layerThickness.ToMillimeter() * lineWidth.ToMillimeter() / filamentArea) * (data.Millimeter(g.extrusionMultiplier) / 100)
 }
 
 func (g *Builder) SetMoveSpeed(moveSpeed data.Millimeter) {
