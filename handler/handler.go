@@ -33,7 +33,7 @@ type GCodeGenerator interface {
 	Generate(layer []data.PartitionedLayer) (string, error)
 }
 
-// GCodeWriter writes the given GCode into the given file.
+// GCodeWriter writes the given GCode into the given destination.
 type GCodeWriter interface {
-	Write(gcode string, filename string) error
+	Write(gcode string, destination string) error
 }

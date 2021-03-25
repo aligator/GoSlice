@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoSlice/data"
+	"GoSlice/goslice"
 	"fmt"
 	"io"
 	"os"
@@ -25,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := NewGoSlice(o)
+	p := goslice.NewGoSlice(o)
 	err := p.Process()
 
 	if err != nil {
