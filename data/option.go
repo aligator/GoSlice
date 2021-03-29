@@ -260,6 +260,15 @@ type GoSliceOptions struct {
 	// PrintVersion indicates if the GoSlice version should be printed.
 	PrintVersion bool
 
+	// InputFilePath specifies the path to the input stl file.
+	InputFilePath string
+
+	// OutputFilePath specifies the path to the output gcode file.
+	OutputFilePath string
+}
+
+// SlicingOptions contains all options related to slice a model.
+type SlicingOptions struct {
 	// MeldDistance is the distance which two points have to be
 	// within to count them as one point.
 	MeldDistance Micrometer
@@ -272,16 +281,11 @@ type GoSliceOptions struct {
 	// FinishPolygonSnapDistance is the max distance between start end endpoint of
 	// a polygon used to check if a open polygon can be closed.
 	FinishPolygonSnapDistance Micrometer
-
-	// InputFilePath specifies the path to the input stl file.
-	InputFilePath string
-
-	// OutputFilePath specifies the path to the output gcode file.
-	OutputFilePath string
 }
 
 // Options contains all GoSlice options.
 type Options struct {
+	Slicing  SlicingOptions
 	Printer  PrinterOptions
 	Filament FilamentOptions
 	Print    PrintOptions
@@ -290,6 +294,11 @@ type Options struct {
 
 func DefaultOptions() Options {
 	return Options{
+		Slicing: SlicingOptions{
+			MeldDistance:              30,
+			JoinPolygonSnapDistance:   160,
+			FinishPolygonSnapDistance: 1000,
+		},
 		Print: PrintOptions{
 			IntialLayerSpeed:                       30,
 			LayerSpeed:                             60,
@@ -340,12 +349,9 @@ func DefaultOptions() Options {
 			),
 		},
 		GoSlice: GoSliceOptions{
-			PrintVersion:              false,
-			MeldDistance:              30,
-			JoinPolygonSnapDistance:   160,
-			FinishPolygonSnapDistance: 1000,
-			InputFilePath:             "",
-			OutputFilePath:            "",
+			PrintVersion:   false,
+			InputFilePath:  "",
+			OutputFilePath: "",
 		},
 	}
 }
@@ -362,10 +368,12 @@ func ParseFlags() Options {
 
 	// GoSlice options
 	flag.BoolVarP(&options.GoSlice.PrintVersion, "version", "v", false, "Print the GoSlice version.")
-	flag.Var(&options.GoSlice.MeldDistance, "meld-distance", "The distance which two points have to be within to count them as one point.")
-	flag.Var(&options.GoSlice.JoinPolygonSnapDistance, "join-polygon-snap-distance", "The distance used to check if two open polygons can be snapped together to one bigger polygon. Checked by the start and endpoints of the polygons.")
-	flag.Var(&options.GoSlice.FinishPolygonSnapDistance, "finish-polygon-snap-distance", "The max distance between start end endpoint of a polygon used to check if a open polygon can be closed.")
 	flag.StringVarP(&options.GoSlice.OutputFilePath, "output", "o", options.GoSlice.OutputFilePath, "File path for the output gcode file. Default is the inout file path with .gcode as file ending.")
+
+	// Slicing options
+	flag.Var(&options.Slicing.MeldDistance, "meld-distance", "The distance which two points have to be within to count them as one point.")
+	flag.Var(&options.Slicing.JoinPolygonSnapDistance, "join-polygon-snap-distance", "The distance used to check if two open polygons can be snapped together to one bigger polygon. Checked by the start and endpoints of the polygons.")
+	flag.Var(&options.Slicing.FinishPolygonSnapDistance, "finish-polygon-snap-distance", "The max distance between start end endpoint of a polygon used to check if a open polygon can be closed.")
 
 	// print options
 	flag.Var(&options.Print.IntialLayerSpeed, "initial-layer-speed", "The speed only for the first layer in mm per second.")

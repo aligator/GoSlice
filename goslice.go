@@ -1,4 +1,4 @@
-package main
+package GoSlice
 
 import (
 	"GoSlice/clip"
@@ -18,19 +18,19 @@ import (
 // GoSlice combines all logic  needed to slice
 // a model and generate a GCode file.
 type GoSlice struct {
-	options   *data.Options
-	reader    handler.ModelReader
-	optimizer handler.ModelOptimizer
-	slicer    handler.ModelSlicer
-	modifiers []handler.LayerModifier
-	generator handler.GCodeGenerator
-	writer    handler.GCodeWriter
+	Options   data.GoSliceOptions
+	Reader    handler.ModelReader
+	Optimizer handler.ModelOptimizer
+	Slicer    handler.ModelSlicer
+	Modifiers []handler.LayerModifier
+	Generator handler.GCodeGenerator
+	Writer    handler.GCodeWriter
 }
 
 // NewGoSlice provides a GoSlice with all built in implementations.
 func NewGoSlice(options data.Options) *GoSlice {
 	s := &GoSlice{
-		options: &options,
+		Options: options.GoSlice,
 	}
 
 	// create handlers
@@ -38,10 +38,10 @@ func NewGoSlice(options data.Options) *GoSlice {
 		return clip.NewLinearPattern(options.Printer.ExtrusionWidth, options.Printer.ExtrusionWidth, min, max, options.Print.InfillRotationDegree, true, false)
 	}
 
-	s.reader = reader.Reader(&options)
-	s.optimizer = optimizer.NewOptimizer(&options)
-	s.slicer = slicer.NewSlicer(&options)
-	s.modifiers = []handler.LayerModifier{
+	s.Reader = reader.Reader(&options)
+	s.Optimizer = optimizer.NewOptimizer(&options)
+	s.Slicer = slicer.NewSlicer(&options)
+	s.Modifiers = []handler.LayerModifier{
 		modifier.NewPerimeterModifier(&options),
 		modifier.NewInfillModifier(&options),
 		modifier.NewInternalInfillModifier(&options),
@@ -52,7 +52,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 
 	patternSpacing := options.Print.Support.PatternSpacing.ToMicrometer()
 
-	s.generator = gcode.NewGenerator(
+	s.Generator = gcode.NewGenerator(
 		&options,
 		gcode.WithRenderer(renderer.PreLayer{}),
 		gcode.WithRenderer(renderer.Skirt{}),
@@ -117,7 +117,7 @@ func NewGoSlice(options data.Options) *GoSlice {
 		}),
 		gcode.WithRenderer(renderer.PostLayer{}),
 	)
-	s.writer = writer.Writer()
+	s.Writer = writer.Writer()
 
 	return s
 }
@@ -126,7 +126,7 @@ func (s *GoSlice) Process() error {
 	startTime := time.Now()
 
 	// 1. Load model
-	models, err := s.reader.Read(s.options.GoSlice.InputFilePath)
+	models, err := s.Reader.Read(s.Options.InputFilePath)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (s *GoSlice) Process() error {
 	// 2. Optimize model
 	var optimizedModel data.OptimizedModel
 
-	optimizedModel, err = s.optimizer.Optimize(models)
+	optimizedModel, err = s.Optimizer.Optimize(models)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (s *GoSlice) Process() error {
 	//}
 
 	// 3. Slice model into layers
-	layers, err := s.slicer.Slice(optimizedModel)
+	layers, err := s.Slicer.Slice(optimizedModel)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (s *GoSlice) Process() error {
 	// 4. Modify the layers
 	// e.g. generate perimeter paths,
 	// generate the parts which should be filled in, ...
-	for _, m := range s.modifiers {
+	for _, m := range s.Modifiers {
 		m.Init(optimizedModel)
 		err = m.Modify(layers)
 		if err != nil {
@@ -162,18 +162,18 @@ func (s *GoSlice) Process() error {
 	}
 
 	// 5. generate gcode from the layers
-	s.generator.Init(optimizedModel)
-	finalGcode, err := s.generator.Generate(layers)
+	s.Generator.Init(optimizedModel)
+	finalGcode, err := s.Generator.Generate(layers)
 	if err != nil {
 		return err
 	}
 
-	outputPath := s.options.GoSlice.OutputFilePath
+	outputPath := s.Options.OutputFilePath
 	if outputPath == "" {
-		outputPath = s.options.GoSlice.InputFilePath + ".gcode"
+		outputPath = s.Options.InputFilePath + ".gcode"
 	}
 
-	err = s.writer.Write(finalGcode, outputPath)
+	err = s.Writer.Write(finalGcode, outputPath)
 	fmt.Println("full processing time:", time.Now().Sub(startTime))
 
 	return err

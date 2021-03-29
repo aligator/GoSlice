@@ -1,4 +1,4 @@
-package main
+package GoSlice
 
 import (
 	"GoSlice/data"
@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	folder = "../../test_stl/"
+	folder = "./test_stl/"
 
 	// The models are copied to the project just to avoid downloading them for each test.
 
@@ -44,7 +44,7 @@ func TestWholeSlicer(t *testing.T) {
 
 	for _, testCase := range tests {
 		t.Log("slice " + testCase.path)
-		s.options.GoSlice.InputFilePath = folder + testCase.path
+		s.Options.InputFilePath = folder + testCase.path
 		err := s.Process()
 		test.Ok(t, err)
 	}
