@@ -43,7 +43,11 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
-	} else {
+	} else if layerNr == 1 {
+		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth)
+	}
+
+	if layerNr > 0 {
 		b.DisableExtrudeSpeedOverride()
 		b.SetExtrudeSpeed(options.Print.LayerSpeed)
 	}
