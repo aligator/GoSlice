@@ -1,7 +1,6 @@
 package writer
 
 import (
-	"fmt"
 	"github.com/aligator/goslice/handler"
 	"os"
 )
@@ -16,7 +15,7 @@ func Writer() handler.GCodeWriter {
 func (w writer) Write(gcode string, filename string) error {
 	buf, err := os.Create(filename)
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 
 	defer buf.Close()

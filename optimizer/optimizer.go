@@ -22,7 +22,6 @@
 package optimizer
 
 import (
-	"fmt"
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/handler"
 )
@@ -147,7 +146,7 @@ FacesLoop:
 		om.faces[i] = face
 	}
 
-	fmt.Printf("Number of open faces: %v\n", openFaces)
+	o.options.GoSlice.Logger.Printf("Number of open faces: %v\n", openFaces)
 
 	min := m.Min()
 	max := m.Max()

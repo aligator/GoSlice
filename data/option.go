@@ -5,6 +5,7 @@ package data
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -265,6 +266,8 @@ type GoSliceOptions struct {
 
 	// OutputFilePath specifies the path to the output gcode file.
 	OutputFilePath string
+
+	Logger *log.Logger
 }
 
 // SlicingOptions contains all options related to slice a model.
@@ -352,6 +355,7 @@ func DefaultOptions() Options {
 			PrintVersion:   false,
 			InputFilePath:  "",
 			OutputFilePath: "",
+			Logger:         log.New(os.Stdout, "", 0),
 		},
 	}
 }

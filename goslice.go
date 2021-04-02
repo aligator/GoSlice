@@ -1,7 +1,6 @@
 package goslice
 
 import (
-	"fmt"
 	"github.com/aligator/goslice/clip"
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
@@ -174,7 +173,7 @@ func (s *GoSlice) Process() error {
 	}
 
 	err = s.Writer.Write(finalGcode, outputPath)
-	fmt.Println("full processing time:", time.Now().Sub(startTime))
+	s.Options.Logger.Println("full processing time:", time.Now().Sub(startTime))
 
 	return err
 }

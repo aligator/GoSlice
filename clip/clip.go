@@ -13,7 +13,7 @@ import (
 type Pattern interface {
 	// Fill fills the given part.
 	// It returns the final infill pattern.
-	Fill(layerNr int, part data.LayerPart) data.Paths
+	Fill(layerNr int, part data.LayerPart) (data.Paths, error)
 }
 
 // OffsetResult is built the following way: [partNr][insetNr][insetPartsNr]data.LayerPart

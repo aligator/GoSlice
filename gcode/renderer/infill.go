@@ -47,7 +47,11 @@ func (i *Infill) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.
 			b.AddComment(c)
 		}
 
-		for _, path := range i.pattern.Fill(layerNr, part) {
+		infill, err := i.pattern.Fill(layerNr, part)
+		if err != nil {
+			return err
+		}
+		for _, path := range infill {
 			err := b.AddPolygon(layer, path, z, true)
 			if err != nil {
 				return err

@@ -3,7 +3,7 @@
 package clip
 
 import (
-	"fmt"
+	"errors"
 	"github.com/aligator/goslice/data"
 
 	clipper "github.com/aligator/go.clipper"
@@ -35,7 +35,7 @@ func NewLinearPattern(lineWidth data.Micrometer, lineDistance data.Micrometer, m
 }
 
 // Fill implements the Pattern interface by using simple linear lines as infill.
-func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
+func (p linear) Fill(layerNr int, part data.LayerPart) (data.Paths, error) {
 	rotation := float64(p.degree)
 
 	// for rectlinear fill patterns rotate each 2nd layer by 90 degree.
@@ -73,13 +73,16 @@ func (p linear) Fill(layerNr int, part data.LayerPart) data.Paths {
 		smallerLines = p.lineWidth
 	}
 
-	resultInfill := p.getInfill(min, max, clipperPath(outline), clipperPaths(holes), 0, smallerLines)
+	resultInfill, err := p.getInfill(min, max, clipperPath(outline), clipperPaths(holes), 0, smallerLines)
+	if err != nil {
+		return nil, err
+	}
 
 	result := p.sortInfill(microPaths(resultInfill, false), p.zigZag, data.NewBasicLayerPart(outline, holes))
 
 	result.Rotate(-rotation)
 
-	return result
+	return result, nil
 }
 
 // sortInfill optimizes the order of the infill lines.
@@ -173,7 +176,7 @@ func (p linear) sortInfill(unsorted data.Paths, zigZag bool, part data.LayerPart
 }
 
 // getInfill fills a polygon (with holes)
-func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32, smallerLines data.Micrometer) clipper.Paths {
+func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clipper.Path, holes clipper.Paths, overlap float32, smallerLines data.Micrometer) (clipper.Paths, error) {
 	var result clipper.Paths
 
 	// clip the paths with the lines using intersection
@@ -219,8 +222,7 @@ func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clip
 
 	tree, ok := cl.Execute2(clipper.CtIntersection, clipper.PftEvenOdd, clipper.PftEvenOdd)
 	if !ok {
-		fmt.Println("getLinearFill failed")
-		return nil
+		return nil, errors.New("getLinearFill failed")
 	}
 
 	for _, c := range tree.Childs() {
@@ -242,5 +244,5 @@ func (p linear) getInfill(min data.MicroPoint, max data.MicroPoint, outline clip
 		}
 	}
 
-	return result
+	return result, nil
 }
