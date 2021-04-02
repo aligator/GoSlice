@@ -1,7 +1,7 @@
 package slicer
 
 import (
-	"GoSlice/data"
+	"github.com/aligator/goslice/data"
 )
 
 type layer struct {

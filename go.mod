@@ -1,4 +1,4 @@
-module GoSlice
+module github.com/aligator/goslice
 
 go 1.14
 

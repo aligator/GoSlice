@@ -1,10 +1,10 @@
 package modifier
 
 import (
-	"GoSlice/clip"
-	"GoSlice/data"
-	"GoSlice/handler"
 	"errors"
+	"github.com/aligator/goslice/clip"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/handler"
 )
 
 type infillModifier struct {

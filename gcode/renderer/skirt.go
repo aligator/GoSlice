@@ -3,11 +3,11 @@
 package renderer
 
 import (
-	"GoSlice/clip"
-	"GoSlice/data"
-	"GoSlice/gcode"
-	"GoSlice/modifier"
 	"errors"
+	"github.com/aligator/goslice/clip"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/gcode"
+	"github.com/aligator/goslice/modifier"
 )
 
 // Skirt generates the skirt lines.

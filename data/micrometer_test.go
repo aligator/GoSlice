@@ -1,8 +1,8 @@
 package data_test
 
 import (
-	"GoSlice/data"
-	"GoSlice/util/test"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/util/test"
 	"github.com/google/go-cmp/cmp"
 	"testing"
 )

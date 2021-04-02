@@ -2,7 +2,7 @@
 
 package handler
 
-import "GoSlice/data"
+import "github.com/aligator/goslice/data"
 
 // ModelReader reads a model from a file.
 type ModelReader interface {

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"GoSlice"
-	"GoSlice/data"
 	"fmt"
+	"github.com/aligator/goslice"
+	"github.com/aligator/goslice/data"
 	"io"
 	"os"
 
@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	p := GoSlice.NewGoSlice(o)
+	p := goslice.NewGoSlice(o)
 	err := p.Process()
 
 	if err != nil {

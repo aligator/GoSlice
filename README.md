@@ -96,11 +96,10 @@ Here some brief explanation of the interfaces. For more detailed information jus
 
 * Optimizer handler.ModelOptimizer
   Is responsible for 
-  1. checking the model 
-  2. optimizing it by e.g. removing doubles 
-  3. calculating some additional information, 
-     like the touching vertices etc. which is needed for the next step.
-  The implementation of GoSlice is very currently basic and may have problems with some models.
+  1. checking the model
+  2. optimizing it by e.g. removing doubles
+  3. calculating some additional information, like the touching vertices etc. which is needed for the next step. The
+     implementation of GoSlice is currently very basic and may have problems with some models.
 
 * Slicer    handler.ModelSlicer
   Creates the slices (e.g. layers) out of the model. 

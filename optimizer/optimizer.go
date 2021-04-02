@@ -22,9 +22,9 @@
 package optimizer
 
 import (
-	"GoSlice/data"
-	"GoSlice/handler"
 	"fmt"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/handler"
 )
 
 type optimizer struct {

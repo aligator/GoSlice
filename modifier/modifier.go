@@ -1,8 +1,8 @@
 package modifier
 
 import (
-	"GoSlice/data"
 	"fmt"
+	"github.com/aligator/goslice/data"
 )
 
 // extendedLayer is a partitioned layer which supports types

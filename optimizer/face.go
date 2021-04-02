@@ -1,7 +1,7 @@
 package optimizer
 
 import (
-	"GoSlice/data"
+	"github.com/aligator/goslice/data"
 )
 
 type optimizedFace struct {

@@ -1,7 +1,7 @@
 package slicer
 
 import (
-	"GoSlice/data"
+	"github.com/aligator/goslice/data"
 )
 
 // segment is a line specified by two points.

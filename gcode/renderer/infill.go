@@ -3,10 +3,10 @@
 package renderer
 
 import (
-	"GoSlice/clip"
-	"GoSlice/data"
-	"GoSlice/gcode"
-	"GoSlice/modifier"
+	"github.com/aligator/goslice/clip"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/gcode"
+	"github.com/aligator/goslice/modifier"
 )
 
 // Infill is a renderer which can fill parts which are defined by a layer part attribute of a specific name.

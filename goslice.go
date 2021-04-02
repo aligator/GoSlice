@@ -1,17 +1,17 @@
-package GoSlice
+package goslice
 
 import (
-	"GoSlice/clip"
-	"GoSlice/data"
-	"GoSlice/gcode"
-	"GoSlice/gcode/renderer"
-	"GoSlice/handler"
-	"GoSlice/modifier"
-	"GoSlice/optimizer"
-	"GoSlice/reader"
-	"GoSlice/slicer"
-	"GoSlice/writer"
 	"fmt"
+	"github.com/aligator/goslice/clip"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/gcode"
+	"github.com/aligator/goslice/gcode/renderer"
+	"github.com/aligator/goslice/handler"
+	"github.com/aligator/goslice/modifier"
+	"github.com/aligator/goslice/optimizer"
+	"github.com/aligator/goslice/reader"
+	"github.com/aligator/goslice/slicer"
+	"github.com/aligator/goslice/writer"
 	"time"
 )
 

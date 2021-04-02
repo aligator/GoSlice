@@ -1,9 +1,9 @@
 package gcode_test
 
 import (
-	"GoSlice/data"
-	"GoSlice/gcode"
-	"GoSlice/util/test"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/gcode"
+	"github.com/aligator/goslice/util/test"
 	"testing"
 )
 

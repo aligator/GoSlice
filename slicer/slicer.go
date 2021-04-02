@@ -15,10 +15,10 @@
 package slicer
 
 import (
-	"GoSlice/clip"
-	"GoSlice/data"
-	"GoSlice/handler"
 	"fmt"
+	"github.com/aligator/goslice/clip"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/handler"
 )
 
 type slicer struct {

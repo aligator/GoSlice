@@ -1,11 +1,11 @@
 package gcode
 
 import (
-	"GoSlice/clip"
-	"GoSlice/data"
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/aligator/goslice/clip"
+	"github.com/aligator/goslice/data"
 	"math"
 )
 

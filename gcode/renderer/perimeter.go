@@ -3,9 +3,9 @@
 package renderer
 
 import (
-	"GoSlice/data"
-	"GoSlice/gcode"
-	"GoSlice/modifier"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/gcode"
+	"github.com/aligator/goslice/modifier"
 )
 
 // Perimeter is a renderer which generates the gcode for the attribute "perimeters".

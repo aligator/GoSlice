@@ -3,8 +3,8 @@
 package renderer
 
 import (
-	"GoSlice/data"
-	"GoSlice/gcode"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/gcode"
 )
 
 // PreLayer adds starting gcode, resets the extrude speeds on each layer and enables the fan above a specific layer.

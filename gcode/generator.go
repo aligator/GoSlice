@@ -2,8 +2,8 @@
 package gcode
 
 import (
-	"GoSlice/data"
-	"GoSlice/handler"
+	"github.com/aligator/goslice/data"
+	"github.com/aligator/goslice/handler"
 )
 
 // Renderer can be used to add GCodes based on the current layer and layer data.

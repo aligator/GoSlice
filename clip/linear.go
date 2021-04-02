@@ -3,8 +3,8 @@
 package clip
 
 import (
-	"GoSlice/data"
 	"fmt"
+	"github.com/aligator/goslice/data"
 
 	clipper "github.com/aligator/go.clipper"
 )

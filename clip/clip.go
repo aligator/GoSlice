@@ -3,10 +3,10 @@
 package clip
 
 import (
-	"GoSlice/data"
+	"github.com/aligator/goslice/data"
 
 	clipper "github.com/aligator/go.clipper"
-	go_convex_hull_2d "github.com/furstenheim/go-convex-hull-2d"
+	goconvexhull2d "github.com/furstenheim/go-convex-hull-2d"
 )
 
 // Pattern is an interface for all infill types which can be used to fill layer parts.
@@ -352,7 +352,7 @@ func (c clipperClipper) Hull(parts []data.LayerPart) (hull data.Path, ok bool) {
 		allPoints = append(allPoints, part.Outline()...)
 	}
 
-	convexHull := go_convex_hull_2d.New(allPoints)
+	convexHull := goconvexhull2d.New(allPoints)
 
 	hullPath, ok := convexHull.(data.Path)
 	if !ok {

@@ -1,8 +1,8 @@
 package writer
 
 import (
-	"GoSlice/handler"
 	"fmt"
+	"github.com/aligator/goslice/handler"
 	"os"
 )
 
