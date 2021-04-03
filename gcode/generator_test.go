@@ -5,6 +5,7 @@ import (
 	"github.com/aligator/goslice/gcode"
 	"github.com/aligator/goslice/util/test"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -41,7 +42,7 @@ func TestGCodeGenerator(t *testing.T) {
 
 	generator := gcode.NewGenerator(&data.Options{
 		GoSlice: data.GoSliceOptions{
-			Logger: log.Default(),
+			Logger: log.New(os.Stdout, "", 0),
 		},
 	}, gcode.WithRenderer(&fakeRenderer{t: t, c: rendererCounter}))
 	generator.Init(nil)
