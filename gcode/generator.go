@@ -65,6 +65,7 @@ func (g *generator) Generate(layers []data.PartitionedLayer) (string, error) {
 	maxLayer := len(layers) - 1
 
 	for layerNr := range layers {
+		g.options.GoSlice.Logger.Printf("Render layer %d/%d\n", layerNr, maxLayer)
 		for _, renderer := range g.renderers {
 			z := g.options.Print.InitialLayerThickness + data.Micrometer(layerNr)*g.options.Print.LayerThickness
 			err := renderer.Render(g.builder, layerNr, maxLayer, layers[layerNr], z, g.options)

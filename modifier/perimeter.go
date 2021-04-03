@@ -8,6 +8,7 @@ import (
 )
 
 type perimeterModifier struct {
+	handler.Named
 	options *data.Options
 }
 
@@ -16,6 +17,9 @@ type perimeterModifier struct {
 // The perimeters are saved as attribute in the LayerPart.
 func NewPerimeterModifier(options *data.Options) handler.LayerModifier {
 	return &perimeterModifier{
+		Named: handler.Named{
+			Name: "Perimeter",
+		},
 		options: options,
 	}
 }

@@ -4,6 +4,18 @@ package handler
 
 import "github.com/aligator/goslice/data"
 
+type Namer interface {
+	GetName() string
+}
+
+type Named struct {
+	Name string
+}
+
+func (n Named) GetName() string {
+	return n.Name
+}
+
 // ModelReader reads a model from a file.
 type ModelReader interface {
 	Read(filename string) (data.Model, error)
@@ -21,6 +33,7 @@ type ModelSlicer interface {
 
 // LayerModifier can add new attributes to the layers or even alter the layer directly.
 type LayerModifier interface {
+	Namer
 	Init(m data.OptimizedModel)
 	Modify(layers []data.PartitionedLayer) error
 }

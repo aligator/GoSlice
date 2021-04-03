@@ -8,6 +8,7 @@ import (
 )
 
 type brimModifier struct {
+	handler.Named
 	options *data.Options
 }
 
@@ -25,6 +26,9 @@ func (m brimModifier) Init(model data.OptimizedModel) {}
 // "outerBrim" just contains the outline of the brim (taking into account the line width also).
 func NewBrimModifier(options *data.Options) handler.LayerModifier {
 	return &brimModifier{
+		Named: handler.Named{
+			Name: "Brim",
+		},
 		options: options,
 	}
 }

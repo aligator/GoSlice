@@ -4,6 +4,7 @@ import (
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
 	"github.com/aligator/goslice/util/test"
+	"log"
 	"testing"
 )
 
@@ -38,7 +39,11 @@ func TestGCodeGenerator(t *testing.T) {
 
 	layers := make([]data.PartitionedLayer, 3)
 
-	generator := gcode.NewGenerator(&data.Options{}, gcode.WithRenderer(&fakeRenderer{t: t, c: rendererCounter}))
+	generator := gcode.NewGenerator(&data.Options{
+		GoSlice: data.GoSliceOptions{
+			Logger: log.Default(),
+		},
+	}, gcode.WithRenderer(&fakeRenderer{t: t, c: rendererCounter}))
 	generator.Init(nil)
 	result, err := generator.Generate(layers)
 

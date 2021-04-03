@@ -267,6 +267,8 @@ type GoSliceOptions struct {
 	// OutputFilePath specifies the path to the output gcode file.
 	OutputFilePath string
 
+	// Logger can be used to redirect the log output to anything you want.
+	// All output in GoSlice just calls this logger.
 	Logger *log.Logger
 }
 

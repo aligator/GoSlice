@@ -31,6 +31,7 @@ func FullSupport(layer data.PartitionedLayer) ([]data.LayerPart, error) {
 }
 
 type supportDetectorModifier struct {
+	handler.Named
 	options *data.Options
 }
 
@@ -63,6 +64,9 @@ func (m supportDetectorModifier) Init(_ data.OptimizedModel) {}
 //  All areas that remain have a higher angle than the threshold and need to be supported."
 func NewSupportDetectorModifier(options *data.Options) handler.LayerModifier {
 	return &supportDetectorModifier{
+		Named: handler.Named{
+			Name: "SupportDetector",
+		},
 		options: options,
 	}
 }
@@ -108,6 +112,7 @@ func (m supportDetectorModifier) Modify(layers []data.PartitionedLayer) error {
 }
 
 type supportGeneratorModifier struct {
+	handler.Named
 	options *data.Options
 }
 
@@ -119,6 +124,9 @@ func (m supportGeneratorModifier) Init(_ data.OptimizedModel) {}
 // and removes them from the normal support areas.
 func NewSupportGeneratorModifier(options *data.Options) handler.LayerModifier {
 	return &supportGeneratorModifier{
+		Named: handler.Named{
+			Name: "SupportGenerator",
+		},
 		options: options,
 	}
 }

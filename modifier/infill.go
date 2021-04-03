@@ -8,6 +8,7 @@ import (
 )
 
 type infillModifier struct {
+	handler.Named
 	options *data.Options
 }
 
@@ -16,6 +17,9 @@ func (m infillModifier) Init(model data.OptimizedModel) {}
 // NewInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
 func NewInfillModifier(options *data.Options) handler.LayerModifier {
 	return &infillModifier{
+		Named: handler.Named{
+			Name: "Infill",
+		},
 		options: options,
 	}
 }

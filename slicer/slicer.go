@@ -32,7 +32,6 @@ func NewSlicer(options *data.Options) handler.ModelSlicer {
 
 func (s slicer) Slice(m data.OptimizedModel) ([]data.PartitionedLayer, error) {
 	layerCount := (m.Size().Z()-s.options.Print.InitialLayerThickness)/s.options.Print.LayerThickness + 1
-	s.options.GoSlice.Logger.Println("layer count:", layerCount)
 
 	layers := make([]*layer, layerCount)
 

@@ -125,18 +125,20 @@ func (s *GoSlice) Process() error {
 	startTime := time.Now()
 
 	// 1. Load model
+	s.Options.Logger.Printf("Load model %v\n", s.Options.InputFilePath)
 	models, err := s.Reader.Read(s.Options.InputFilePath)
 	if err != nil {
 		return err
 	}
+	s.Options.Logger.Printf("Model loaded.\nFace count: %v\nSize: min: %v max %v\n", models.FaceCount(), models.Min(), models.Max())
 
 	// 2. Optimize model
 	var optimizedModel data.OptimizedModel
-
 	optimizedModel, err = s.Optimizer.Optimize(models)
 	if err != nil {
 		return err
 	}
+	s.Options.Logger.Printf("Model optimized\n")
 
 	//err = optimizedModel.SaveDebugSTL("test.stl")
 	//if err != nil {
@@ -148,6 +150,7 @@ func (s *GoSlice) Process() error {
 	if err != nil {
 		return err
 	}
+	s.Options.Logger.Printf("Model sliced to %v layers\n", len(layers))
 
 	// 4. Modify the layers
 	// e.g. generate perimeter paths,
@@ -158,7 +161,9 @@ func (s *GoSlice) Process() error {
 		if err != nil {
 			return err
 		}
+		s.Options.Logger.Printf("Modifier %s applied\n", m.GetName())
 	}
+	s.Options.Logger.Printf("Layers modified %v\n", len(layers))
 
 	// 5. generate gcode from the layers
 	s.Generator.Init(optimizedModel)
