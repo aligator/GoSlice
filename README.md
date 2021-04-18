@@ -123,6 +123,10 @@ Here some brief explanation of the interfaces. For more detailed information jus
   You could for example provide a writer which directly sends the gcode to OctoPrint.
   The default implementation just writes it to a gcode file.
 
+## Related Projects
+[tobychui](https://github.com/tobychui) created a GUI for the Web Desktop project [ArOZ](https://github.com/tobychui/arozos):  
+[SlicerA](https://github.com/tobychui/SlicerA) (ArOZ installation required)
+
 ## Contribution
 You are welcome to help.  
 [Just look for open issues](https://github.com/aligator/GoSlice/issues) and pick one, create new issues or create new pull requests.
