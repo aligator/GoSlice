@@ -86,7 +86,8 @@ You want to
 To do this you can copy the `goslice/slicer.go/NewGoSlice` function and just pass to GoSlice what you want.  
 You can add new logic by implementing one of the various handler interfaces used by it.  
 If you need even more control, you can even copy and modify the whole `goslice/slicer.go` file which allows you to
-control how the steps are called after each other.
+control how the steps are called after each other.  
+You can find an example [here](https://github.com/aligator/dev/blob/main/go/goslice/main.go) where I used that to make GoSlice runnable as Webassembly.
 
 ### Handler Interfaces
 Here some brief explanation of the interfaces. For more detailed information just look into the code...  
