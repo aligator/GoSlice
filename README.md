@@ -28,6 +28,10 @@ See __"Use as lib"__ bellow.
 Example:  
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/docs/GoSlice-print.png">
 
+## Related Projects
+[tobychui](https://github.com/tobychui) created a web frontend for GoSlice:  
+[SlicerA](https://github.com/tobychui/SlicerA) (also compatible with [ArOZ](https://github.com/tobychui/arozos))
+
 ## Try it out - for users
 Download the latest release matching your platform from here:
 https://github.com/aligator/GoSlice/releases
@@ -122,10 +126,6 @@ Here some brief explanation of the interfaces. For more detailed information jus
   This is the last part, and it basically just writes the gcode to somewhere.
   You could for example provide a writer which directly sends the gcode to OctoPrint.
   The default implementation just writes it to a gcode file.
-
-## Related Projects
-[tobychui](https://github.com/tobychui) created a GUI for the Web Desktop project [ArOZ](https://github.com/tobychui/arozos):  
-[SlicerA](https://github.com/tobychui/SlicerA) (ArOZ installation required)
 
 ## Contribution
 You are welcome to help.  
