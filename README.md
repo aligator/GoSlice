@@ -18,21 +18,12 @@ __Supported features:__
 * simple support generation
 * brim and skirt
 
-__For users - Use CLI:__  
-Provides a basic command line interface. Just run with `--help` and see the description bellow.
-
-__For developers - Use as Go library:__  
-You can use GoSlice as slicing lib, with support to inject custom slicing logic at any stage.
-See __"Use as lib"__ bellow.
-
-Example:  
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/docs/GoSlice-print.png">
 
-## Related Projects
-[tobychui](https://github.com/tobychui) created a web frontend for GoSlice:  
-[SlicerA](https://github.com/tobychui/SlicerA) (also compatible with [ArOZ](https://github.com/tobychui/arozos))
+## For users
+### Use CLI
+Provides a basic command line interface. Just run with `--help` and see the description bellow.
 
-## Try it out - for users
 Download the latest release matching your platform from here:
 https://github.com/aligator/GoSlice/releases
 
@@ -55,7 +46,21 @@ If you need the usage of all possible flags, run it with the `--help` flag:
 Note that some flags exist as --initial-... also which applies to the first layer only.
 The non-initial apply to all other layers, but not the first one.
 
-## Try it out - for developers
+### Use WebAssembly CLI + GCode viewer
+I created an experimental WebAssembly version.
+Just go to [aligator.dev](https://aligator.dev) and type 
+```
+goslice https://cdn.thingiverse.com/assets/7d/fc/6e/33/fe/3DBenchy.stl
+```
+It accepts any stl file as link. After slicing it opens a gcode viewer and provides a download link for the gcode in the terminal.  
+Note that the webassebly version is much slower than native.
+
+### Use Web UI (by tobychui)
+[tobychui](https://github.com/tobychui) created a web frontend for GoSlice:  
+[SlicerA](https://github.com/tobychui/SlicerA) (also compatible with [ArOZ](https://github.com/tobychui/arozos))
+
+## For developers
+### Compile
 Just running GoSlice:
 ```
 go run ./cmd/goslice /path/to/stl/file.stl
@@ -65,7 +70,7 @@ To get help for all possible flags take a look at /data/option.go or just run:
 go run ./cmd/goslice --help
 ```
 
-Building GoSlice:
+### Distriute
 Ideally you should have make installed:
 ```
 make
@@ -76,10 +81,10 @@ If you do not have make, you can still run the build command manually, but it is
 ```
 go build -ldflags "-X=main.Version=$(git describe --tags) -X=main.Build=$(git rev-parse --short HEAD)" -o .target ./cmd/goslice
 ```
-## How does it work
+### How does it work
 [see here](docs/README.md)
 
-## Use as lib
+### Use as lib
 You want to
 * Create a slicer but do not want to do everything of it?
 * Extend GoSlice functionality? (Please consider Pull Requests if you created a nice addition :-)
@@ -93,7 +98,7 @@ If you need even more control, you can even copy and modify the whole `goslice/s
 control how the steps are called after each other.  
 You can find an example [here](https://github.com/aligator/dev/blob/main/go/goslice/main.go) where I used that to make GoSlice runnable as Webassembly.
 
-### Handler Interfaces
+__Handler Interfaces:__  
 Here some brief explanation of the interfaces. For more detailed information just look into the code...  
 (And take a look at [the docs](docs/README.md) where I explained some aspects a bit deeper.)
 * Reader    handler.ModelReader
@@ -127,14 +132,14 @@ Here some brief explanation of the interfaces. For more detailed information jus
   You could for example provide a writer which directly sends the gcode to OctoPrint.
   The default implementation just writes it to a gcode file.
 
-## Contribution
+### Contribution
 You are welcome to help.  
 [Just look for open issues](https://github.com/aligator/GoSlice/issues) and pick one, create new issues or create new pull requests.
 
 For debugging of the GCode I suggest you to use Cura to open the resulting GCode.
 Cura can open it without any problem and I try to add the markings into the GCode which Cura understands (e.g. mark what is infill, perimeter, etc.).
 
-## Credits
+# Credits
 * CuraEngine for the great first commit, which was a very good starting point for research.
 * https://www.thingiverse.com/thing:3413597 for the great Gopher model used as logo. (Original Gopher designed by [Renee French CC BY 3.0](http://reneefrench.blogspot.com/))
 * Go for the great language.
