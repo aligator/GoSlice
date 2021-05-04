@@ -14,7 +14,7 @@ type internalInfillModifier struct {
 
 func (m internalInfillModifier) Init(model data.OptimizedModel) {}
 
-// NewInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
+// NewInternalInfillModifier calculates the areas which need infill and passes them as "bottom" attribute to the layer.
 func NewInternalInfillModifier(options *data.Options) handler.LayerModifier {
 	return &internalInfillModifier{
 		Named: handler.Named{

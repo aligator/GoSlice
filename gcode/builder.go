@@ -82,6 +82,11 @@ func (g *Builder) AddComment(comment string, args ...interface{}) {
 }
 
 func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
+	// Ignore moves which are of zero length.
+	if g.currentPosition.X() == p.X() && g.currentPosition.Y() == p.Y() && g.currentPosition.Z() == p.Z() {
+		return
+	}
+
 	var speed int
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
