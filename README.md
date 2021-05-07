@@ -24,16 +24,24 @@ __Supported features:__
 ### Use CLI
 Provides a basic command line interface. Just run with `--help` and see the description bellow.
 
-Download the latest release matching your platform from here:
+Arch Linux / Manjaro:
+[AUR](https://aur.archlinux.org/packages/goslice/)
+```
+yay -S goslice
+```
+
+All others:  
+
+Download the latest release matching your platform from here:  
 https://github.com/aligator/GoSlice/releases
 
 Unpack the executable and run it in the commandline.  
-linux / mac:  
+Linux / Mac:  
 ```
 ./goslice /path/to/stl/file.stl
 ```
 
-windows:  
+Windows:  
 ```
 goslice.exe /path/to/stl/file.stl` 
 ```
@@ -70,7 +78,7 @@ To get help for all possible flags take a look at /data/option.go or just run:
 go run ./cmd/goslice --help
 ```
 
-### Distriute
+### Distribute
 Ideally you should have make installed:
 ```
 make
@@ -105,29 +113,29 @@ Here some brief explanation of the interfaces. For more detailed information jus
   Is used to read a mesh file. GoSlice provides an implementation for stl files.
 
 * Optimizer handler.ModelOptimizer
-  Is responsible for 
+  Is responsible for  
   1. checking the model
   2. optimizing it by e.g. removing doubles
   3. calculating some additional information, like the touching vertices etc. which is needed for the next step. The
      implementation of GoSlice is currently very basic and may have problems with some models.
 
-* Slicer    handler.ModelSlicer
+* Slicer    handler.ModelSlicer  
   Creates the slices (e.g. layers) out of the model. 
   It then tries to combine all lines to several polygons per each layer.
   The implementation of GoSlice is again very basic, but it works.
 
-* Modifiers []handler.LayerModifier
+* Modifiers []handler.LayerModifier  
   This is the most interesting part: Modifiers are called after each other and 
   Calculate things like perimeters, infill, support, ...
   They add this information as "Attributes" which is basically just a map of interface{}.
   GoSlice already provides several basic modifiers.
 
-* Generator handler.GCodeGenerator
+* Generator handler.GCodeGenerator  
   The generator then generates the final gcode based on the data the modifiers added.
   The implementation of GoSlice is basically a collection of `Renderer` which often just match one modifier.
   You can provide your own, additional Renderers or even replace existing ones.
 
-* Writer    handler.GCodeWriter
+* Writer    handler.GCodeWriter  
   This is the last part, and it basically just writes the gcode to somewhere.
   You could for example provide a writer which directly sends the gcode to OctoPrint.
   The default implementation just writes it to a gcode file.
