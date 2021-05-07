@@ -1,8 +1,11 @@
-VERSION := $(shell git describe --tags)
-BUILD := $(shell git rev-parse --short HEAD)
+VERSION ?= $(shell git describe --tags)
+BUILD ?= $(shell git rev-parse --short HEAD)
 PROJECTNAME := goslice
 TARGET := .target
 GOFILES := ./cmd/goslice
+PREFIX := /usr/local
+DESTDIR :=
+BIN := goslice
 
 # Use linker flags to provide version/build settings
 LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
@@ -26,5 +29,13 @@ clean:
 
 test:
 	@go test ./...
+
+.PHONY: install
+install: build
+	install -Dm755 $(TARGET)/$(BIN) $(DESTDIR)$(PREFIX)/bin/${BIN}
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/${BIN}
 
 all: build
