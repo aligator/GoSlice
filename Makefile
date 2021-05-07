@@ -14,14 +14,9 @@ LDFLAGS=-ldflags "-X=main.Version=$(VERSION) -X=main.Build=$(BUILD)"
 build: clean
 	@mkdir -p $(TARGET)
 	@GOPATH=$(GOPATH) \
-	GOBIN=$(GOBIN) \
-	GOARM=$(GOARM) \
-	CGO_CPPFLAGS=$(CGO_CPPFLAGS) \
-	CGO_CFLAGS=$(CGO_CFLAGS) \
-	CGO_CXXFLAGS=$(CGO_CXXFLAGS) \
-	CGO_LDFLAGS=$(CGO_LDFLAGS) \
-	GOFLAGS=$(GOFLAGS) \
-	go build $(LDFLAGS) -o $(TARGET) $(GOFILES)
+		GOBIN=$(GOBIN) \
+		GOARM=$(GOARM) \
+		go build $(LDFLAGS) $(GOFLAGS) -o $(TARGET) $(GOFILES)
 
 ## clean the build folder
 clean:
