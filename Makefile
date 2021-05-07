@@ -20,6 +20,7 @@ build: clean
 	CGO_CFLAGS=$(CGO_CFLAGS) \
 	CGO_CXXFLAGS=$(CGO_CXXFLAGS) \
 	CGO_LDFLAGS=$(CGO_LDFLAGS) \
+	GOFLAGS=$(GOFLAGS) \
 	go build $(LDFLAGS) -o $(TARGET) $(GOFILES)
 
 ## clean the build folder
