@@ -254,6 +254,18 @@ type PrinterOptions struct {
 
 	// Center is the point where the model is finally placed.
 	Center MicroVec3
+
+	// ForceSafeStartStopGCode toggles enforcing setting temps at beginning/end of print
+	ForceSafeStartStopGCode bool
+
+	// HasHeatedBed toggles whether to add bed temperature settings to gcode
+	HasHeatedBed bool
+
+	// StartGCode contains an array of strings to prepend the generated gcode
+	StartGCode GCodeHunk
+
+	// EndGCode contains an array of strings to postpend the genreated gcode
+	EndGCode GCodeHunk
 }
 
 // GoSliceOptions contains all options related to GoSlice itself.
@@ -296,6 +308,67 @@ type Options struct {
 	Print    PrintOptions
 	GoSlice  GoSliceOptions
 }
+
+type GCodeHunk struct {
+	GCodeLines []string
+}
+
+func NewGCodeHunk(rows []string) GCodeHunk {
+	return GCodeHunk{GCodeLines: rows}
+}
+
+func (gch GCodeHunk) GetInstructionCode() []string {
+	var codes []string
+	for _, instruction := range gch.GCodeLines {
+		code := strings.Split(instruction," ")[0]
+		codes = append(codes, code)
+	}
+	return codes
+}
+
+func (gch GCodeHunk) DoesInstructionContainCodes(targetCodes []string) bool {
+	contained := false
+	for _, instruction := range gch.GCodeLines {
+		code := strings.Split(instruction," ")[0]
+		for _,targetCode := range targetCodes {
+			if strings.Contains(code, targetCode) {
+				contained = true
+				break
+			}
+		}
+		if contained == true {
+			break
+		}
+	}
+	return contained
+}
+
+func (gch GCodeHunk) Type() string {
+	return "gcode"
+}
+
+func (gch GCodeHunk) String() string {
+	return strings.Join(gch.GCodeLines, "\n")
+}
+
+func (gch *GCodeHunk) Set(s string) error {
+	const errorMsg = "the instructions should be separated by \\n"
+	parts := strings.Split(s, "\n")
+	var result []string
+	for _, row := range parts {
+		trimmedRow := strings.TrimSpace(row)
+		if len(trimmedRow) > 0 {
+			result = append(result, row)
+		}
+	}
+	gch.GCodeLines = result
+	return nil
+}
+
+func (o Options) SetHasHeatedBed(val bool) (Options) {
+	o.Printer.HasHeatedBed = val
+	return o
+} 
 
 func DefaultOptions() Options {
 	return Options{
@@ -352,6 +425,20 @@ func DefaultOptions() Options {
 				Millimeter(100).ToMicrometer(),
 				0,
 			),
+			ForceSafeStartStopGCode: true,
+			HasHeatedBed:            true,
+			StartGCode:              NewGCodeHunk(
+				[]string{
+					"M107 ; disable fan",
+					";START_GCODE",
+					"G1 Z5 F5000 ; lift nozzle",
+					}),
+			EndGCode:                NewGCodeHunk(
+				[]string{
+					"M107 ; disable fan",
+					"G28 X0  ; home X axis to get head out of the way",
+					"M84 ;steppers off",
+				}),
 		},
 		GoSlice: GoSliceOptions{
 			PrintVersion:   false,
@@ -430,6 +517,10 @@ func ParseFlags() Options {
 		options.Printer.Center.Z(),
 	}
 	flag.Var(&center, "center", "The point where the model is finally placed.")
+	flag.BoolVar(&options.Printer.ForceSafeStartStopGCode, "force-safe-gcode", options.Printer.ForceSafeStartStopGCode, "Enforce temp settings in start and end gcode hunks.")
+	flag.BoolVar(&options.Printer.HasHeatedBed, "has-heated-bed", options.Printer.HasHeatedBed, "Should the bed be heated?")
+	flag.Var(&options.Printer.StartGCode, "start-gcode", "Intructions to use for starting gcode hunk.")
+	flag.Var(&options.Printer.EndGCode, "end-gcode", "Instructions to use for end gcode hunk.")
 
 	flag.Parse()
 

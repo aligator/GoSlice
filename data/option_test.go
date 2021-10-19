@@ -1,11 +1,12 @@
 package data_test
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/util/test"
 	"github.com/google/go-cmp/cmp"
-	"strings"
-	"testing"
 )
 
 // fanSpeedOptionsComparer returns a cmp.Comparer which can handle data.FanSpeedOptions.
@@ -18,6 +19,35 @@ func fanSpeedOptionsComparer() cmp.Option {
 		}
 		return true
 	})
+}
+
+func TestDoesInstructionContainCodes(t *testing.T) {
+	var testCases = map[string]struct {
+		testFor        []string
+		testIn         data.GCodeHunk
+		outputExpected bool
+	}{
+		"happy path": {
+			[]string{"abc", "123"},
+			data.NewGCodeHunk([]string{"abc test", "123 test"}),
+			true,
+		},
+		"sad path": {
+			[]string{"abc", "123"},
+			data.NewGCodeHunk([]string{"test", "test"}),
+			false,
+		},
+		"contains one": {
+			[]string{"abc", "123"},
+			data.NewGCodeHunk([]string{"test", "abc test"}),
+			true,
+		},
+	}
+
+	for _, testCase := range testCases {
+		output := testCase.testIn.DoesInstructionContainCodes(testCase.testFor)
+		test.Equals(t, testCase.outputExpected, output, nil)
+	}
 }
 
 func TestSetFanSpeed(t *testing.T) {

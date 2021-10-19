@@ -1,6 +1,9 @@
 package goslice
 
 import (
+	"strings"
+	"time"
+
 	"github.com/aligator/goslice/clip"
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
@@ -11,19 +14,19 @@ import (
 	"github.com/aligator/goslice/reader"
 	"github.com/aligator/goslice/slicer"
 	"github.com/aligator/goslice/writer"
-	"time"
 )
 
 // GoSlice combines all logic  needed to slice
 // a model and generate a GCode file.
 type GoSlice struct {
-	Options   data.GoSliceOptions
-	Reader    handler.ModelReader
-	Optimizer handler.ModelOptimizer
-	Slicer    handler.ModelSlicer
-	Modifiers []handler.LayerModifier
-	Generator handler.GCodeGenerator
-	Writer    handler.GCodeWriter
+	Options    data.GoSliceOptions
+	Reader     handler.ModelReader
+	Optimizer  handler.ModelOptimizer
+	Slicer     handler.ModelSlicer
+	Modifiers  []handler.LayerModifier
+	Generator  handler.GCodeGenerator
+	Writer     handler.GCodeWriter
+	FinalGCode string
 }
 
 // NewGoSlice provides a GoSlice with all built in implementations.
@@ -121,6 +124,16 @@ func NewGoSlice(options data.Options) *GoSlice {
 	return s
 }
 
+func (s *GoSlice) GetGCode() ([]string, error) {
+	if len(s.FinalGCode) == 0 {
+		err := s.Process()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return strings.Split(s.FinalGCode, "\n"), nil
+}
+
 func (s *GoSlice) Process() error {
 	startTime := time.Now()
 
@@ -176,6 +189,7 @@ func (s *GoSlice) Process() error {
 	if outputPath == "" {
 		outputPath = s.Options.InputFilePath + ".gcode"
 	}
+	s.FinalGCode = finalGcode
 
 	err = s.Writer.Write(finalGcode, outputPath)
 	s.Options.Logger.Println("full processing time:", time.Now().Sub(startTime))
