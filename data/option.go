@@ -320,7 +320,7 @@ func NewGCodeHunk(rows []string) GCodeHunk {
 func (gch GCodeHunk) GetInstructionCode() []string {
 	var codes []string
 	for _, instruction := range gch.GCodeLines {
-		code := strings.Split(instruction," ")[0]
+		code := strings.Split(instruction, " ")[0]
 		codes = append(codes, code)
 	}
 	return codes
@@ -329,8 +329,8 @@ func (gch GCodeHunk) GetInstructionCode() []string {
 func (gch GCodeHunk) DoesInstructionContainCodes(targetCodes []string) bool {
 	contained := false
 	for _, instruction := range gch.GCodeLines {
-		code := strings.Split(instruction," ")[0]
-		for _,targetCode := range targetCodes {
+		code := strings.Split(instruction, " ")[0]
+		for _, targetCode := range targetCodes {
 			if strings.Contains(code, targetCode) {
 				contained = true
 				break
@@ -365,10 +365,10 @@ func (gch *GCodeHunk) Set(s string) error {
 	return nil
 }
 
-func (o Options) SetHasHeatedBed(val bool) (Options) {
+func (o Options) SetHasHeatedBed(val bool) Options {
 	o.Printer.HasHeatedBed = val
 	return o
-} 
+}
 
 func DefaultOptions() Options {
 	return Options{
@@ -427,13 +427,17 @@ func DefaultOptions() Options {
 			),
 			ForceSafeStartStopGCode: true,
 			HasHeatedBed:            true,
-			StartGCode:              NewGCodeHunk(
+			StartGCode: NewGCodeHunk(
 				[]string{
+					";SET BED TEMP",
+					"M190 S{print_bed_temperature} ; heat and wait for bed",
+					";SET HOTEND TEMP",
+					"M109 S{print_temperature} ; wait for hot end temperature",
 					"M107 ; disable fan",
 					";START_GCODE",
 					"G1 Z5 F5000 ; lift nozzle",
-					}),
-			EndGCode:                NewGCodeHunk(
+				}),
+			EndGCode: NewGCodeHunk(
 				[]string{
 					"M107 ; disable fan",
 					"G28 X0  ; home X axis to get head out of the way",

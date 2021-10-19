@@ -5,11 +5,15 @@ package renderer
 import (
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
+	"strings"
+	"fmt"
 )
 	
 var (
 	HotendTempCodes = []string{"M104", "M109"}
 	BedTempCodes = []string{"M140", "M190"}
+	BedTempTemplate = "{print_bed_temperature}"
+	HotendTempTemplate = "{print_temperature}"
 )
 
 // PreLayer adds starting gcode, resets the extrude speeds on each layer and enables the fan above a specific layer.
@@ -23,9 +27,6 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 		b.AddComment("______________________")
 
 		if options.Printer.ForceSafeStartStopGCode {
-
-			
-
 			if options.Printer.HasHeatedBed && !options.Printer.StartGCode.DoesInstructionContainCodes(BedTempCodes) {
 				b.AddComment("SET BED TEMP")
 				b.AddCommand("M190 S%d ; heat and wait for bed", options.Filament.InitialBedTemperature)
@@ -40,6 +41,12 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 		b.AddComment("START GCODE")
 		// starting gcode
 		for _, instruction := range options.Printer.StartGCode.GCodeLines {
+			if strings.Contains(instruction, BedTempTemplate) {
+				instruction = strings.Replace(instruction, BedTempTemplate, fmt.Sprint(options.Filament.InitialBedTemperature), -1)
+			}
+			if strings.Contains(instruction, HotendTempTemplate) {
+				instruction = strings.Replace(instruction, HotendTempTemplate, fmt.Sprint(options.Filament.InitialHotEndTemperature), -1)
+			}
 			b.AddCommand(instruction)
 		}
 		
