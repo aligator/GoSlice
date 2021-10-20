@@ -255,16 +255,16 @@ type PrinterOptions struct {
 	// Center is the point where the model is finally placed.
 	Center MicroVec3
 
-	// ForceSafeStartStopGCode toggles enforcing setting temps at beginning/end of print
+	// ForceSafeStartStopGCode toggles enforcing setting temps at beginning/end of print.
 	ForceSafeStartStopGCode bool
 
-	// HasHeatedBed toggles whether to add bed temperature settings to gcode
+	// HasHeatedBed toggles whether to add bed temperature settings to gcode.
 	HasHeatedBed bool
 
-	// StartGCode contains an array of strings to prepend the generated gcode
+	// StartGCode contains an array of strings to prepend the generated gcode.
 	StartGCode GCodeHunk
 
-	// EndGCode contains an array of strings to postpend the genreated gcode
+	// EndGCode contains an array of strings to postpend the genreated gcode.
 	EndGCode GCodeHunk
 }
 

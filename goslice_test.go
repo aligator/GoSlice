@@ -51,7 +51,14 @@ func TestWholeSlicer(t *testing.T) {
 		test.Ok(t, err)
 	}
 }
+type fakeWriter struct {
+	finalGcode []string
+}
 
+func (w *fakeWriter) Write(gcode string, destination string) error  {
+	w.finalGcode = strings.Split(gcode, "\n")
+	return nil
+}
 func TestStartGCode(t *testing.T) {
 	var tests = []struct {
 		Name       string
@@ -81,8 +88,10 @@ func TestStartGCode(t *testing.T) {
 		o.Printer.StartGCode = testCase.StartGCode
 		s := NewGoSlice(o)
 		s.Options.InputFilePath = folder + benchy
-		gcode, err := s.GetGCode()
-		test.Ok(t, err)
+		w := fakeWriter{}
+		s.Writer = &w
+		test.Ok(t, s.Process())
+		gcode := w.finalGcode
 		test.Assert(t, strings.Contains(strings.Join(gcode, "\n"), testCase.expected),
 			"final gcode does not contain the expected gcode.\nexpected:"+
 				testCase.expected+
