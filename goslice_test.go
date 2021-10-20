@@ -138,8 +138,11 @@ func TestEndGCode(t *testing.T) {
 		t.Log(testCase.Name)
 		s := NewGoSlice(testCase.Options)
 		s.Options.InputFilePath = folder + benchy
-		gcode, err := s.GetGCode()
+		w := fakeWriter{}
+		s.Writer = &w
+		err := s.Process()
 		test.Ok(t, err)
+		gcode := w.finalGcode
 		test.Assert(t, strings.Contains(strings.Join(gcode, "\n"), testCase.expected),
 			"final gcode does not contain the expected gcode.\nexpected:"+
 				testCase.expected+

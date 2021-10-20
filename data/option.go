@@ -125,6 +125,76 @@ func (f *FanSpeedOptions) Set(s string) error {
 	return nil
 }
 
+// GCodeHunk stores a hunk of gcode as an array of strings.
+type GCodeHunk struct {
+	GCodeLines []string
+}
+
+// NewGCodeHunk instantiates a new GCodeHunk with the provided array of strings.
+func NewGCodeHunk(rows []string) GCodeHunk {
+	return GCodeHunk{GCodeLines: rows}
+}
+
+// GetInstructionCode parses the provided strings for retrieve the first part of the line 
+// and creates an array of ones that are M or G codes.
+func (gch GCodeHunk) GetInstructionCode() []string {
+	var codes []string
+	for _, instruction := range gch.GCodeLines {
+		code := strings.Split(strings.TrimSpace(instruction), " ")[0]
+		if code[0] == 'G' || code[0] == 'M' {
+			codes = append(codes, code)
+		}
+	}
+	return codes
+}
+
+// DoesInstructionContainCodes looks at the codes retrieved from the provided gcodes strings and determines if the expected codes are contained in it.
+// Check is for any, not all, and succeeds fast, ie. on first instance will return true.
+func (gch GCodeHunk) DoesInstructionContainCodes(targetCodes []string) bool {
+	contained := false
+	for _, instruction := range gch.GCodeLines {
+		code := strings.Split(strings.TrimSpace(instruction), " ")[0]
+		for _, targetCode := range targetCodes {
+			if strings.Contains(code, targetCode) {
+				contained = true
+				break
+			}
+		}
+		if contained == true {
+			break
+		}
+	}
+	return contained
+}
+
+// Type is used by pflag for building the help text
+func (gch GCodeHunk) Type() string {
+	return "gcode"
+}
+
+// String is used by pflag to show example based on default settings
+func (gch GCodeHunk) String() string {
+	return strings.Join(gch.GCodeLines, "\n")
+}
+
+// Set is used by pflag to set the value based on the command line input
+func (gch *GCodeHunk) Set(s string) error {
+	const errorMsg = "the instructions should be separated by \\n"
+	if !strings.Contains(s, "\n") {
+		return errors.New(errorMsg)
+	}
+	parts := strings.Split(s, "\n")
+	var result []string
+	for _, row := range parts {
+		trimmedRow := strings.TrimSpace(row)
+		if len(trimmedRow) > 0 {
+			result = append(result, row)
+		}
+	}
+	gch.GCodeLines = result
+	return nil
+}
+
 // PrintOptions contains all Print specific GoSlice options.
 type PrintOptions struct {
 	// InitialLayerSpeed is the speed only for the first layer in mm per second.
@@ -309,62 +379,6 @@ type Options struct {
 	GoSlice  GoSliceOptions
 }
 
-type GCodeHunk struct {
-	GCodeLines []string
-}
-
-func NewGCodeHunk(rows []string) GCodeHunk {
-	return GCodeHunk{GCodeLines: rows}
-}
-
-func (gch GCodeHunk) GetInstructionCode() []string {
-	var codes []string
-	for _, instruction := range gch.GCodeLines {
-		code := strings.Split(instruction, " ")[0]
-		codes = append(codes, code)
-	}
-	return codes
-}
-
-func (gch GCodeHunk) DoesInstructionContainCodes(targetCodes []string) bool {
-	contained := false
-	for _, instruction := range gch.GCodeLines {
-		code := strings.Split(instruction, " ")[0]
-		for _, targetCode := range targetCodes {
-			if strings.Contains(code, targetCode) {
-				contained = true
-				break
-			}
-		}
-		if contained == true {
-			break
-		}
-	}
-	return contained
-}
-
-func (gch GCodeHunk) Type() string {
-	return "gcode"
-}
-
-func (gch GCodeHunk) String() string {
-	return strings.Join(gch.GCodeLines, "\n")
-}
-
-func (gch *GCodeHunk) Set(s string) error {
-	const errorMsg = "the instructions should be separated by \\n"
-	parts := strings.Split(s, "\n")
-	var result []string
-	for _, row := range parts {
-		trimmedRow := strings.TrimSpace(row)
-		if len(trimmedRow) > 0 {
-			result = append(result, row)
-		}
-	}
-	gch.GCodeLines = result
-	return nil
-}
-
 func (o Options) SetHasHeatedBed(val bool) Options {
 	o.Printer.HasHeatedBed = val
 	return o
@@ -434,7 +448,6 @@ func DefaultOptions() Options {
 					";SET HOTEND TEMP",
 					"M109 S{print_temperature} ; wait for hot end temperature",
 					"M107 ; disable fan",
-					";START_GCODE",
 					"G1 Z5 F5000 ; lift nozzle",
 				}),
 			EndGCode: NewGCodeHunk(
