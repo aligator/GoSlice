@@ -1,6 +1,8 @@
 package goslice
 
 import (
+	"time"
+
 	"github.com/aligator/goslice/clip"
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
@@ -11,7 +13,6 @@ import (
 	"github.com/aligator/goslice/reader"
 	"github.com/aligator/goslice/slicer"
 	"github.com/aligator/goslice/writer"
-	"time"
 )
 
 // GoSlice combines all logic  needed to slice

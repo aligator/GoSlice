@@ -5,6 +5,15 @@ package renderer
 import (
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
+	"strings"
+	"fmt"
+)
+	
+var (
+	HotendTempCodes = []string{"M104", "M109"}
+	BedTempCodes = []string{"M140", "M190"}
+	BedTempTemplate = "{print_bed_temperature}"
+	HotendTempTemplate = "{print_temperature}"
 )
 
 // PreLayer adds starting gcode, resets the extrude speeds on each layer and enables the fan above a specific layer.
@@ -13,22 +22,34 @@ type PreLayer struct{}
 func (PreLayer) Init(model data.OptimizedModel) {}
 
 func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.PartitionedLayer, z data.Micrometer, options *data.Options) error {
-	b.AddComment("LAYER:%v", layerNr)
 	if layerNr == 0 {
 		b.AddComment("Generated with GoSlice")
 		b.AddComment("______________________")
 
-		b.AddCommand("M107 ; disable fan")
+		if options.Printer.ForceSafeStartStopGCode {
+			if options.Printer.HasHeatedBed && !options.Printer.StartGCode.DoesInstructionContainCodes(BedTempCodes) {
+				b.AddComment("SET BED TEMP")
+				b.AddCommand("M190 S%d ; heat and wait for bed", options.Filament.InitialBedTemperature)
+			}
 
-		// set and wait for the initial temperature
-		b.AddComment("SET_INITIAL_TEMP")
-		b.AddCommand("M104 S%d ; start heating hot end", options.Filament.InitialHotEndTemperature)
-		b.AddCommand("M190 S%d ; heat and wait for bed", options.Filament.InitialBedTemperature)
-		b.AddCommand("M109 S%d ; wait for hot end temperature", options.Filament.InitialHotEndTemperature)
-
+			if !options.Printer.StartGCode.DoesInstructionContainCodes(HotendTempCodes) {	
+				b.AddComment("SET HOTEND TEMP")
+				b.AddCommand("M109 S%d ; wait for hot end temperature", options.Filament.InitialHotEndTemperature)
+			}
+			
+		}
+		b.AddComment("START GCODE")
 		// starting gcode
-		b.AddComment("START_GCODE")
-		b.AddCommand("G1 Z5 F5000 ; lift nozzle")
+		for _, instruction := range options.Printer.StartGCode.GCodeLines {
+			if strings.Contains(instruction, BedTempTemplate) {
+				instruction = strings.Replace(instruction, BedTempTemplate, fmt.Sprint(options.Filament.InitialBedTemperature), -1)
+			}
+			if strings.Contains(instruction, HotendTempTemplate) {
+				instruction = strings.Replace(instruction, HotendTempTemplate, fmt.Sprint(options.Filament.InitialHotEndTemperature), -1)
+			}
+			b.AddCommand(instruction)
+		}
+		
 		b.AddCommand("G92 E0 ; reset extrusion distance")
 
 		b.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth)
@@ -46,6 +67,8 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 	} else if layerNr == 1 {
 		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth)
 	}
+
+	b.AddComment("LAYER:%v", layerNr)
 
 	if layerNr > 0 {
 		b.DisableExtrudeSpeedOverride()
@@ -81,14 +104,21 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.
 	if layerNr == maxLayer {
 		b.AddComment("END_GCODE")
 		b.SetExtrusion(options.Print.LayerThickness, options.Printer.ExtrusionWidth)
-		b.AddCommand("M107 ; disable fan")
 
-		// disable heaters
-		b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
-		b.AddCommand("M140 S0 ; Set bed to 0C (off)")
-
-		b.AddCommand("G28 X0  ; home X axis to get head out of the way")
-		b.AddCommand("M84 ;steppers off")
+		if options.Printer.ForceSafeStartStopGCode {
+			// disable heaters
+			if !options.Printer.EndGCode.DoesInstructionContainCodes(HotendTempCodes) {	
+				b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
+			}
+			
+			if options.Printer.HasHeatedBed && !options.Printer.EndGCode.DoesInstructionContainCodes(BedTempCodes){
+				b.AddCommand("M140 S0 ; Set bed to 0C (off)")
+			}
+		}
+		for _, instruction := range options.Printer.EndGCode.GCodeLines {
+			b.AddCommand(instruction)
+		}
+		
 
 	}
 

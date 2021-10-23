@@ -125,6 +125,76 @@ func (f *FanSpeedOptions) Set(s string) error {
 	return nil
 }
 
+// GCodeHunk stores a hunk of gcode as an array of strings.
+type GCodeHunk struct {
+	GCodeLines []string
+}
+
+// NewGCodeHunk instantiates a new GCodeHunk with the provided array of strings.
+func NewGCodeHunk(rows []string) GCodeHunk {
+	return GCodeHunk{GCodeLines: rows}
+}
+
+// GetInstructionCode parses the provided strings for retrieve the first part of the line 
+// and creates an array of ones that are M or G codes.
+func (gch GCodeHunk) GetInstructionCode() []string {
+	var codes []string
+	for _, instruction := range gch.GCodeLines {
+		code := strings.Split(strings.TrimSpace(instruction), " ")[0]
+		if code[0] == 'G' || code[0] == 'M' {
+			codes = append(codes, code)
+		}
+	}
+	return codes
+}
+
+// DoesInstructionContainCodes looks at the codes retrieved from the provided gcodes strings and determines if the expected codes are contained in it.
+// Check is for any, not all, and succeeds fast, ie. on first instance will return true.
+func (gch GCodeHunk) DoesInstructionContainCodes(targetCodes []string) bool {
+	contained := false
+	for _, instruction := range gch.GCodeLines {
+		code := strings.Split(strings.TrimSpace(instruction), " ")[0]
+		for _, targetCode := range targetCodes {
+			if strings.Contains(code, targetCode) {
+				contained = true
+				break
+			}
+		}
+		if contained == true {
+			break
+		}
+	}
+	return contained
+}
+
+// Type is used by pflag for building the help text
+func (gch GCodeHunk) Type() string {
+	return "gcode"
+}
+
+// String is used by pflag to show example based on default settings
+func (gch GCodeHunk) String() string {
+	return strings.Join(gch.GCodeLines, "\n")
+}
+
+// Set is used by pflag to set the value based on the command line input
+func (gch *GCodeHunk) Set(s string) error {
+	const errorMsg = "the instructions should be separated by \\n"
+	if !strings.Contains(s, "\n") {
+		return errors.New(errorMsg)
+	}
+	parts := strings.Split(s, "\n")
+	var result []string
+	for _, row := range parts {
+		trimmedRow := strings.TrimSpace(row)
+		if len(trimmedRow) > 0 {
+			result = append(result, row)
+		}
+	}
+	gch.GCodeLines = result
+	return nil
+}
+
 // PrintOptions contains all Print specific GoSlice options.
 type PrintOptions struct {
 	// InitialLayerSpeed is the speed only for the first layer in mm per second.
@@ -254,6 +324,18 @@ type PrinterOptions struct {
 
 	// Center is the point where the model is finally placed.
 	Center MicroVec3
+
+	// ForceSafeStartStopGCode toggles enforcing setting temps at beginning/end of print.
+	ForceSafeStartStopGCode bool
+
+	// HasHeatedBed toggles whether to add bed temperature settings to gcode.
+	HasHeatedBed bool
+
+	// StartGCode contains an array of strings to prepend the generated gcode.
+	StartGCode GCodeHunk
+
+	// EndGCode contains an array of strings to postpend the genreated gcode.
+	EndGCode GCodeHunk
 }
 
 // GoSliceOptions contains all options related to GoSlice itself.
@@ -295,6 +377,11 @@ type Options struct {
 	Filament FilamentOptions
 	Print    PrintOptions
 	GoSlice  GoSliceOptions
+}
+
+func (o Options) SetHasHeatedBed(val bool) Options {
+	o.Printer.HasHeatedBed = val
+	return o
 }
 
 func DefaultOptions() Options {
@@ -352,6 +439,23 @@ func DefaultOptions() Options {
 				Millimeter(100).ToMicrometer(),
 				0,
 			),
+			ForceSafeStartStopGCode: true,
+			HasHeatedBed:            true,
+			StartGCode: NewGCodeHunk(
+				[]string{
+					";SET BED TEMP",
+					"M190 S{print_bed_temperature} ; heat and wait for bed",
+					";SET HOTEND TEMP",
+					"M109 S{print_temperature} ; wait for hot end temperature",
+					"M107 ; disable fan",
+					"G1 Z5 F5000 ; lift nozzle",
+				}),
+			EndGCode: NewGCodeHunk(
+				[]string{
+					"M107 ; disable fan",
+					"G28 X0  ; home X axis to get head out of the way",
+					"M84 ;steppers off",
+				}),
 		},
 		GoSlice: GoSliceOptions{
 			PrintVersion:   false,
@@ -430,6 +534,10 @@ func ParseFlags() Options {
 		options.Printer.Center.Z(),
 	}
 	flag.Var(&center, "center", "The point where the model is finally placed.")
+	flag.BoolVar(&options.Printer.ForceSafeStartStopGCode, "force-safe-gcode", options.Printer.ForceSafeStartStopGCode, "Enforce temp settings in start and end gcode hunks.")
+	flag.BoolVar(&options.Printer.HasHeatedBed, "has-heated-bed", options.Printer.HasHeatedBed, "Should the bed be heated?")
+	flag.Var(&options.Printer.StartGCode, "start-gcode", "Intructions to use for starting gcode hunk.")
+	flag.Var(&options.Printer.EndGCode, "end-gcode", "Instructions to use for end gcode hunk.")
 
 	flag.Parse()
 
