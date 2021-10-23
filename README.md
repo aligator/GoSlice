@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/aligator/GoSlice.svg?style=svg)](https://circleci.com/gh/aligator/GoSlice)
+[![test](https://github.com/aligator/GoSlice/actions/workflows/test.yml/badge.svg)](https://github.com/aligator/GoSlice/actions/workflows/test.yml)
 
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/logo.png">
 
@@ -17,6 +17,7 @@ __Supported features:__
 * several options to customize slicing output
 * simple support generation
 * brim and skirt
+* custom start- / end-GCode
 
 <img width="200" alt="sliced Gopher logo" src="https://raw.githubusercontent.com/aligator/GoSlice/master/docs/GoSlice-print.png">
 
