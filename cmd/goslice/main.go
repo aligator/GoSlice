@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,17 +27,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	if _, err := os.Stat(o.GoSlice.InputFilePath); errors.Is(err, os.ErrNotExist) {
-		_, _ = fmt.Fprintf(os.Stderr, "the file doesn't exist\n")
-		os.Exit(2)
-	}
-
 	p := goslice.NewGoSlice(o)
 	err := p.Process()
 
 	if err != nil {
 		fmt.Println("error while processing file:", err)
-		os.Exit(3)
+		os.Exit(2)
 	}
 }
 

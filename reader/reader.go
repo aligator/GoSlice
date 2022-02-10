@@ -1,6 +1,9 @@
 package reader
 
 import (
+	"errors"
+	"os"
+
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/handler"
 	"github.com/hschendel/stl"
@@ -110,6 +113,9 @@ func Reader(options *data.Options) handler.ModelReader {
 
 func (r reader) Read(filename string) (data.Model, error) {
 	model := &model{}
+	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
+		return model, os.ErrNotExist
+	}
 	stl.CopyFile(filename, model)
 	return model, nil
 }
