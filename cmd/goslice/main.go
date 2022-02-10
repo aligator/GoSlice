@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/aligator/goslice"
-	"github.com/aligator/goslice/data"
 	"io"
 	"os"
+
+	"github.com/aligator/goslice"
+	"github.com/aligator/goslice/data"
 
 	flag "github.com/spf13/pflag"
 )
