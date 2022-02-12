@@ -60,7 +60,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "${{ steps.get_version.outputs.VERSION }}"
           prerelease: false
-          title: "godrop ${{ steps.get_version.outputs.VERSION }}"
+          title: "GoSlice ${{ steps.get_version.outputs.VERSION }}"
           files: |
             goslice-linux-amd64.tar.gz
             goslice-linux-armv7.tar.gz
