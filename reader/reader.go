@@ -18,49 +18,49 @@ func (f face) Points() [3]data.MicroVec3 {
 	return f.vectors
 }
 
-type model struct {
+type Model struct {
 	faces []data.Face
 }
 
-func (m *model) SetName(name string) {
+func (m *Model) SetName(name string) {
 	// not used yet
 	return
 }
 
-func (m *model) SetBinaryHeader(header []byte) {
+func (m *Model) SetBinaryHeader(header []byte) {
 	// not used yet
 	return
 }
 
-func (m *model) SetASCII(isASCII bool) {
+func (m *Model) SetASCII(isASCII bool) {
 	// not used yet
 	return
 }
 
-func (m *model) SetTriangleCount(n uint32) {
+func (m *Model) SetTriangleCount(n uint32) {
 	// not used yet
 	return
 }
 
-func (m *model) AppendTriangle(t stl.Triangle) {
+func (m *Model) AppendTriangle(t stl.Triangle) {
 	m.faces = append(m.faces, stlTriangleToFace(t))
 }
 
 func newModel(faces []data.Face) data.Model {
-	return &model{
+	return &Model{
 		faces: faces,
 	}
 }
 
-func (m model) FaceCount() int {
+func (m Model) FaceCount() int {
 	return len(m.faces)
 }
 
-func (m model) Face(index int) data.Face {
+func (m Model) Face(index int) data.Face {
 	return m.faces[index]
 }
 
-func (m model) Min() data.MicroVec3 {
+func (m Model) Min() data.MicroVec3 {
 	ret := m.faces[0].Points()[0].Copy()
 
 	for _, face := range m.faces {
@@ -82,7 +82,7 @@ func (m model) Min() data.MicroVec3 {
 	return ret
 }
 
-func (m model) Max() data.MicroVec3 {
+func (m Model) Max() data.MicroVec3 {
 	ret := m.faces[0].Points()[0].Copy()
 
 	for _, face := range m.faces {
@@ -112,7 +112,7 @@ func Reader(options *data.Options) handler.ModelReader {
 }
 
 func (r reader) Read(filename string) (data.Model, error) {
-	model := &model{}
+	model := &Model{}
 	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
 		return model, os.ErrNotExist
 	}
