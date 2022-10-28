@@ -3,16 +3,17 @@
 package renderer
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/aligator/goslice/data"
 	"github.com/aligator/goslice/gcode"
-	"strings"
-	"fmt"
 )
-	
+
 var (
-	HotendTempCodes = []string{"M104", "M109"}
-	BedTempCodes = []string{"M140", "M190"}
-	BedTempTemplate = "{print_bed_temperature}"
+	HotendTempCodes    = []string{"M104", "M109"}
+	BedTempCodes       = []string{"M140", "M190"}
+	BedTempTemplate    = "{print_bed_temperature}"
 	HotendTempTemplate = "{print_temperature}"
 )
 
@@ -32,11 +33,11 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 				b.AddCommand("M190 S%d ; heat and wait for bed", options.Filament.InitialBedTemperature)
 			}
 
-			if !options.Printer.StartGCode.DoesInstructionContainCodes(HotendTempCodes) {	
+			if !options.Printer.StartGCode.DoesInstructionContainCodes(HotendTempCodes) {
 				b.AddComment("SET HOTEND TEMP")
 				b.AddCommand("M109 S%d ; wait for hot end temperature", options.Filament.InitialHotEndTemperature)
 			}
-			
+
 		}
 		b.AddComment("START GCODE")
 		// starting gcode
@@ -49,7 +50,7 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 			}
 			b.AddCommand(instruction)
 		}
-		
+
 		b.AddCommand("G92 E0 ; reset extrusion distance")
 
 		b.SetExtrusion(options.Print.InitialLayerThickness, options.Printer.ExtrusionWidth)
@@ -61,6 +62,7 @@ func (PreLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.P
 		// set retraction
 		b.SetRetractionSpeed(options.Filament.RetractionSpeed)
 		b.SetRetractionAmount(options.Filament.RetractionLength)
+		b.SetRetractionZHop(options.Filament.RetractionZHop)
 
 		// force the InitialLayerSpeed for first layer
 		b.SetExtrudeSpeedOverride(options.Print.IntialLayerSpeed)
@@ -107,18 +109,17 @@ func (PostLayer) Render(b *gcode.Builder, layerNr int, maxLayer int, layer data.
 
 		if options.Printer.ForceSafeStartStopGCode {
 			// disable heaters
-			if !options.Printer.EndGCode.DoesInstructionContainCodes(HotendTempCodes) {	
+			if !options.Printer.EndGCode.DoesInstructionContainCodes(HotendTempCodes) {
 				b.AddCommand("M104 S0 ; Set Hot-end to 0C (off)")
 			}
-			
-			if options.Printer.HasHeatedBed && !options.Printer.EndGCode.DoesInstructionContainCodes(BedTempCodes){
+
+			if options.Printer.HasHeatedBed && !options.Printer.EndGCode.DoesInstructionContainCodes(BedTempCodes) {
 				b.AddCommand("M140 S0 ; Set bed to 0C (off)")
 			}
 		}
 		for _, instruction := range options.Printer.EndGCode.GCodeLines {
 			b.AddCommand(instruction)
 		}
-		
 
 	}
 

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
+
 	"github.com/aligator/goslice/clip"
 	"github.com/aligator/goslice/data"
-	"math"
 )
 
 // Builder creates GCode by combining several commands.
@@ -22,6 +23,7 @@ type Builder struct {
 
 	retractionSpeed  int
 	retractionAmount data.Millimeter
+	zHopOnRetract    data.Millimeter
 
 	filamentDiameter    data.Micrometer
 	extrusionMultiplier int
@@ -68,6 +70,10 @@ func (g *Builder) SetRetractionSpeed(retractionSpeed data.Millimeter) {
 
 func (g *Builder) SetRetractionAmount(retractionAmount data.Millimeter) {
 	g.retractionAmount = retractionAmount
+}
+
+func (g *Builder) SetRetractionZHop(zHopOnRetract data.Millimeter) {
+	g.zHopOnRetract = zHopOnRetract
 }
 
 func (g *Builder) AddCommand(command string, args ...interface{}) {
@@ -151,17 +157,36 @@ func (g *Builder) AddPolygon(currentLayer data.PartitionedLayer, polygon data.Pa
 			}
 
 			if isCrossing {
-				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount-g.retractionAmount)
+
+				x, y := g.currentPosition.X(), g.currentPosition.Y()
+
+				g.AddMove(data.NewMicroVec3(
+					x,
+					y,
+					z+g.zHopOnRetract.ToMicrometer(),
+				), -g.retractionAmount)
+
+				g.AddMove(data.NewMicroVec3(
+					polygon[i].X(),
+					polygon[i].Y(),
+					z+g.zHopOnRetract.ToMicrometer(),
+				), 0.0)
+
+				g.AddMove(data.NewMicroVec3(
+					polygon[i].X(),
+					polygon[i].Y(),
+					z,
+				), g.retractionAmount)
+
+			} else {
+
+				g.AddMove(data.NewMicroVec3(
+					polygon[i].X(),
+					polygon[i].Y(),
+					z), 0.0)
+
 			}
 
-			g.AddMove(data.NewMicroVec3(
-				polygon[i].X(),
-				polygon[i].Y(),
-				z), 0.0)
-
-			if isCrossing {
-				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount)
-			}
 			continue
 		}
 

@@ -135,7 +135,7 @@ func NewGCodeHunk(rows []string) GCodeHunk {
 	return GCodeHunk{GCodeLines: rows}
 }
 
-// GetInstructionCode parses the provided strings for retrieve the first part of the line 
+// GetInstructionCode parses the provided strings for retrieve the first part of the line
 // and creates an array of ones that are M or G codes.
 func (gch GCodeHunk) GetInstructionCode() []string {
 	var codes []string
@@ -271,6 +271,9 @@ type FilamentOptions struct {
 
 	// RetractionLength is the amount to retract in millimeter.
 	RetractionLength Millimeter
+
+	// RetractionZHop is the amount to lift head when retracting in millimeter.
+	RetractionZHop Millimeter
 
 	// Primary (fan 0) speed, at given layers
 	FanSpeed FanSpeedOptions
@@ -429,6 +432,7 @@ func DefaultOptions() Options {
 			InitialTemperatureLayerCount: 3,
 			RetractionSpeed:              30,
 			RetractionLength:             Millimeter(2),
+			RetractionZHop:               0,
 			FanSpeed:                     NewDefaultFanSpeedOptions(),
 			ExtrusionMultiplier:          100,
 		},
