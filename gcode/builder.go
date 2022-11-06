@@ -156,35 +156,37 @@ func (g *Builder) AddPolygon(currentLayer data.PartitionedLayer, polygon data.Pa
 				}
 			}
 
+			zMove := z
+
 			if isCrossing {
+				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount-g.retractionAmount)
 
-				x, y := g.currentPosition.X(), g.currentPosition.Y()
+				if g.zHopOnRetract > 0 {
+					zMove = z + g.zHopOnRetract.ToMicrometer()
 
-				g.AddMove(data.NewMicroVec3(
-					x,
-					y,
-					z+g.zHopOnRetract.ToMicrometer(),
-				), -g.retractionAmount)
+					g.AddMove(data.NewMicroVec3(
+						g.currentPosition.X(),
+						g.currentPosition.Y(),
+						zMove,
+					), 0.0)
+				}
+			}
 
-				g.AddMove(data.NewMicroVec3(
-					polygon[i].X(),
-					polygon[i].Y(),
-					z+g.zHopOnRetract.ToMicrometer(),
-				), 0.0)
+			g.AddMove(data.NewMicroVec3(
+				polygon[i].X(),
+				polygon[i].Y(),
+				zMove), 0.0)
 
-				g.AddMove(data.NewMicroVec3(
-					polygon[i].X(),
-					polygon[i].Y(),
-					z,
-				), g.retractionAmount)
+			if isCrossing {
+				if g.zHopOnRetract > 0 {
+					g.AddMove(data.NewMicroVec3(
+						polygon[i].X(),
+						polygon[i].Y(),
+						z,
+					), 0.0)
+				}
 
-			} else {
-
-				g.AddMove(data.NewMicroVec3(
-					polygon[i].X(),
-					polygon[i].Y(),
-					z), 0.0)
-
+				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount)
 			}
 
 			continue
