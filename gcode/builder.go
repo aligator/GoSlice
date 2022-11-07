@@ -88,28 +88,25 @@ func (g *Builder) AddComment(comment string, args ...interface{}) {
 	g.buf.WriteString(comment)
 }
 
-func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
+func (g *Builder) AddMoveSpeed(p data.MicroVec3, extrusion data.Millimeter, speed int) {
 	// Ignore moves which are of zero length.
 	if g.notFirstMove && g.currentPosition.X() == p.X() && g.currentPosition.Y() == p.Y() && g.currentPosition.Z() == p.Z() && extrusion == 0 {
 		return
 	}
 	g.notFirstMove = true
 
-	var speed int
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
-
-		if g.extrudeSpeedOverride <= 0 {
-			speed = g.extrudeSpeed
-		} else {
-			speed = g.extrudeSpeedOverride
-		}
 	} else {
 		g.buf.WriteString("G0")
-		speed = g.moveSpeed
 	}
 
-	g.buf.WriteString(fmt.Sprintf(" X%0.2f Y%0.2f", p.X().ToMillimeter(), p.Y().ToMillimeter()))
+	if p.X() != g.currentPosition.X() {
+		g.buf.WriteString(fmt.Sprintf(" X%0.2f", p.X().ToMillimeter()))
+	}
+	if p.Y() != g.currentPosition.Y() {
+		g.buf.WriteString(fmt.Sprintf(" Y%0.2f", p.Y().ToMillimeter()))
+	}
 	if p.Z() != g.currentPosition.Z() {
 		g.buf.WriteString(fmt.Sprintf(" Z%0.2f", p.Z().ToMillimeter()))
 	}
@@ -126,6 +123,23 @@ func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
 	g.buf.WriteString("\n")
 
 	g.currentPosition = p
+
+}
+
+func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
+
+	var speed int
+	if extrusion != 0 {
+		if g.extrudeSpeedOverride <= 0 {
+			speed = g.extrudeSpeed
+		} else {
+			speed = g.extrudeSpeedOverride
+		}
+	} else {
+		speed = g.moveSpeed
+	}
+
+	g.AddMoveSpeed(p, extrusion, speed)
 }
 
 func (g *Builder) AddPolygon(currentLayer data.PartitionedLayer, polygon data.Path, z data.Micrometer, open bool) error {
@@ -159,7 +173,7 @@ func (g *Builder) AddPolygon(currentLayer data.PartitionedLayer, polygon data.Pa
 			zMove := z
 
 			if isCrossing {
-				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount-g.retractionAmount)
+				g.AddMoveSpeed(g.currentPosition, -g.retractionAmount, g.retractionSpeed)
 
 				if g.zHopOnRetract > 0 {
 					zMove = z + g.zHopOnRetract.ToMicrometer()
@@ -186,7 +200,7 @@ func (g *Builder) AddPolygon(currentLayer data.PartitionedLayer, polygon data.Pa
 					), 0.0)
 				}
 
-				g.AddCommand("G1 F%v E%0.4f", g.retractionSpeed*60, g.extrusionAmount)
+				g.AddMoveSpeed(g.currentPosition, g.retractionAmount, g.retractionSpeed)
 			}
 
 			continue
