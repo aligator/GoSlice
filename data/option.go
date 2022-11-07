@@ -160,7 +160,7 @@ func (gch GCodeHunk) DoesInstructionContainCodes(targetCodes []string) bool {
 				break
 			}
 		}
-		if contained == true {
+		if contained {
 			break
 		}
 	}
@@ -527,7 +527,7 @@ func ParseFlags() Options {
 	flag.IntVar(&options.Filament.InitialTemperatureLayerCount, "initial-temperature-layer-count", options.Filament.InitialTemperatureLayerCount, "The number of layers which use the initial temperatures. After this amount of layers, the normal temperatures are used.")
 	flag.Var(&options.Filament.RetractionSpeed, "retraction-speed", "The speed used for retraction in mm/s.")
 	flag.Var(&options.Filament.RetractionLength, "retraction-length", "The amount to retract in millimeter.")
-	flag.Var(&options.Filament.RetractionZHop, "retraction-zhop", "The amount to lift the head when retracting in millimeter.")
+	flag.Var(&options.Filament.RetractionZHop, "retraction-z-hop", "The amount to lift head when retracting in millimeter.")
 	flag.Var(&options.Filament.FanSpeed, "fan-speed", "Comma separated layer/primary-fan-speed. eg. --fan-speed 3=20,10=40 indicates at layer 3 set fan to 20 and at layer 10 set fan to 40. Fan speed can range from 0-255.")
 	flag.IntVar(&options.Filament.ExtrusionMultiplier, "extrusion-multiplier", options.Filament.ExtrusionMultiplier, "The multiplier in % used to change the amount of filament being extruded. Can be used to mitigate under/over extrusion.")
 

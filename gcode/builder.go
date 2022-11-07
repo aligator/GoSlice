@@ -18,7 +18,9 @@ type Builder struct {
 	extrusionAmount                                             data.Millimeter
 	extrusionPerMM                                              data.Millimeter
 	currentPosition                                             data.MicroVec3
-	notFirstMove                                                bool
+	notFirstMoveX                                               bool
+	notFirstMoveY                                               bool
+	notFirstMoveZ                                               bool
 	moveSpeed, extrudeSpeed, currentSpeed, extrudeSpeedOverride int
 
 	retractionSpeed  int
@@ -89,11 +91,11 @@ func (g *Builder) AddComment(comment string, args ...interface{}) {
 }
 
 func (g *Builder) AddMoveSpeed(p data.MicroVec3, extrusion data.Millimeter, speed int) {
+	notFirstMove := g.notFirstMoveX || g.notFirstMoveY || g.notFirstMoveZ
 	// Ignore moves which are of zero length.
-	if g.notFirstMove && g.currentPosition.X() == p.X() && g.currentPosition.Y() == p.Y() && g.currentPosition.Z() == p.Z() && extrusion == 0 {
+	if notFirstMove && g.currentPosition.X() == p.X() && g.currentPosition.Y() == p.Y() && g.currentPosition.Z() == p.Z() && extrusion == 0 {
 		return
 	}
-	g.notFirstMove = true
 
 	if extrusion != 0 {
 		g.buf.WriteString("G1")
@@ -101,14 +103,17 @@ func (g *Builder) AddMoveSpeed(p data.MicroVec3, extrusion data.Millimeter, spee
 		g.buf.WriteString("G0")
 	}
 
-	if p.X() != g.currentPosition.X() {
+	if p.X() != g.currentPosition.X() || !g.notFirstMoveX {
 		g.buf.WriteString(fmt.Sprintf(" X%0.2f", p.X().ToMillimeter()))
+		g.notFirstMoveX = true
 	}
-	if p.Y() != g.currentPosition.Y() {
+	if p.Y() != g.currentPosition.Y() || !g.notFirstMoveY {
 		g.buf.WriteString(fmt.Sprintf(" Y%0.2f", p.Y().ToMillimeter()))
+		g.notFirstMoveY = true
 	}
-	if p.Z() != g.currentPosition.Z() {
+	if p.Z() != g.currentPosition.Z() || !g.notFirstMoveZ {
 		g.buf.WriteString(fmt.Sprintf(" Z%0.2f", p.Z().ToMillimeter()))
+		g.notFirstMoveZ = true
 	}
 
 	if g.currentSpeed != speed {
@@ -123,7 +128,6 @@ func (g *Builder) AddMoveSpeed(p data.MicroVec3, extrusion data.Millimeter, spee
 	g.buf.WriteString("\n")
 
 	g.currentPosition = p
-
 }
 
 func (g *Builder) AddMove(p data.MicroVec3, extrusion data.Millimeter) {
